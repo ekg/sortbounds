@@ -5,7 +5,8 @@ defaultTargets = ["SortBounds"]
 
 [[require]]
 name = "mathlib"
-path = "/home/bot/cadence/cadence-lean/.lake/packages/mathlib"
+scope = "leanprover-community"
+rev = "dec5b2b780537b6eaf7f5e5f000c12f7387fb24d"
 
 [[lean_lib]]
 name = "SortBounds"

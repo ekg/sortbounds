@@ -25,3 +25,6 @@ open SortBounds
 #print axioms SortBounds.radixSort_perm
 #print axioms SortBounds.countingSort_stable
 #print axioms SortBounds.radixSort_ignores_comparison
+#print axioms SortBounds.msortCount_sorted
+#print axioms SortBounds.msortCount_perm
+#print axioms SortBounds.msortCount_le

@@ -32,7 +32,15 @@ in the main results (see [`#print axioms`](#axioms)).
 | `SortBounds.radixSort_sorted` / `radixSort_perm` | LSD radix sort sorts (lexicographically) and moreover is a permutation |
 | `SortBounds.countingSort_stable` | counting sort is stable |
 | `SortBounds.radixSort_ignores_comparison` | radix sort makes **zero** element comparisons |
-| `SortBounds.radixCost` | radix sort costs exactly `d` passes of `n + b` unit operations |
+| `SortBounds.radixCost_eq_passes` | radix sort costs exactly `d` passes of `n + b` unit operations |
+| `SortBounds.radixSort_strict_sorted` | distinct keys are output in strict lexicographic order |
+| `SortBounds.radixSort_keys_congr` | the output depends only on the key vectors, not on the elements |
+| `SortBounds.msortCount_sorted` / `msortCount_perm` | counted merge sort sorts and is a permutation |
+| `SortBounds.msortCount_le` | merge sort uses at most `2·n·(⌈log₂ n⌉+1)` comparisons |
+
+Together, `msortCount_le` and `exists_input_cost_ge_quarter` say that the optimal
+worst case is `Θ(n log n)`: no algorithm does better than `n/4 · log₂ n`, and
+merge sort does `≤ 2n(⌈log₂ n⌉+1)`.
 
 ## The model
 
@@ -61,7 +69,12 @@ sort.
    drops* reachability; CLRS's height argument assumes a tree that no input
    follows. Here both the tree statement and the "some input" statement are
    proved, so nothing is lost.
-2. **"Best case" is not the claim.** Every comparison sort's *per-input* best
+2. **Randomized algorithms.** A randomized comparison sort is a distribution
+   over deterministic comparison trees; fixing the coin tosses gives a tree `t`,
+   so for every instantiation the worst case is `≥ log₂(n!)` by the theorems
+   here, hence so is the expected worst case. (Not formalized separately: it is
+   a two-line argument over the deterministic statement.)
+3. **"Best case" is not the claim.** Every comparison sort's *per-input* best
    case is `n − 1` comparisons (already sorted input). What is `Θ(n log n)` is
    the **optimal worst case** — the minimum over algorithms of the maximum over
    inputs — and, as proved here, the **average case** over uniformly random
@@ -84,6 +97,11 @@ pass to the familiar `Ω(n log n)` form.
 comparisons between elements at all** — it only distributes elements into `b`
 buckets `d` times, using the digits of their keys. Its cost is `d·(n+b)`
 elementary operations.
+
+Formally, `radixSort` takes no comparison argument at all and `radixSort_ignores_comparison`
+shows the output is independent of any comparison oracle (the honest content is
+`radixSort_keys_congr`: only the key vectors matter), while `radixSort_sorted`
+and `radixSort_perm`/`radixSort_strict_sorted` say it really sorts.
 
 That is not a counterexample to the lower bound, and the formalization makes
 the reason precise: the lower bound is a theorem about **comparison trees**
@@ -143,14 +161,21 @@ SortBounds/WorstCase.lean   worst case over actual inputs, log₂(n!) bound
 SortBounds/Stirling.lean    (n/2)^(n/2) ≤ n!, log₂(n!) ≥ n/4·log₂ n
 SortBounds/LowerBound.lean  headline Ω(n log n) theorems
 SortBounds/Average.lean     expected comparisons over random ordering
+SortBounds/Examples.lean    concrete trees: n = 2 sharp, n = 3 needs 3
 SortBounds/Radix.lean       counting sort, radix sort, no comparisons, cost
+SortBounds/UpperBound.lean  matching upper bound: a counted O(n log n) sort
 ```
+
+See [`docs/PRIOR-ART.md`](docs/PRIOR-ART.md) for the Isabelle, Coq and Lean 4
+prior art with exact theorem statements.
 
 ## Build
 
 ```sh
-lake build          # Lean 4.35.0-rc2 + Mathlib (path dependency, see lakefile.toml)
-grep -rn "sorry\|admit\|axiom" SortBounds/ || echo "no sorry/axiom"
+lake exe cache get   # prebuilt Mathlib oleans (zero downloads if already in ~/.cache/mathlib)
+lake build           # Lean 4.35.0-rc2 (lean-toolchain) + Mathlib (pinned in lake-manifest.json)
+make check           # build + grep for sorry/admit/axiom
+make axioms          # print the axioms each headline theorem depends on
 ```
 
 ## Axioms

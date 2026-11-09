@@ -5,4 +5,6 @@ import SortBounds.WorstCase
 import SortBounds.Stirling
 import SortBounds.LowerBound
 import SortBounds.Average
+import SortBounds.Examples
 import SortBounds.Radix
+import SortBounds.UpperBound

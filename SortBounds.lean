@@ -1,1 +1,8 @@
 import SortBounds.Basic
+import SortBounds.Tree
+import SortBounds.Aggregate
+import SortBounds.WorstCase
+import SortBounds.Stirling
+import SortBounds.LowerBound
+import SortBounds.Average
+import SortBounds.Radix

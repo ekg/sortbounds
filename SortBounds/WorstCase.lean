@@ -28,9 +28,8 @@ theorem worstCase_le_depth (t : Tree n) : worstCase t ≤ depth t := by
   intro p _
   exact cost_le_depth t (xOfPerm p)
 
-/-- **Worst-case comparison lower bound.**  Some ordering of `n` distinct keys
-makes a correct comparison sort do at least `2^c > n!`-forcing work: the
-worst case is at least `log₂(n!)`. -/
+/-- **Worst-case comparison lower bound, counting form.**  The worst case over
+the `n!` orderings of `n` distinct keys dominates `log₂(n!)`: `n! ≤ 2^worstCase`. -/
 theorem factorial_le_two_pow_worstCase {t : Tree n} (h : Correct (α := ℕ) t) :
     Nat.factorial n ≤ 2 ^ worstCase t := by
   have hsep : Separated t Finset.univ := separated_of_correct h

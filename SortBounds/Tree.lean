@@ -119,4 +119,33 @@ theorem cost_le_depth [LinearOrder α] (t : Tree n) (x : Fin n → α) : cost t 
     · exact Nat.add_le_add_left (le_trans ihl (le_max_left _ _)) 1
     · exact Nat.add_le_add_left (le_trans ihr (le_max_right _ _)) 1
 
+/-- The run of a comparison tree depends only on the *comparison pattern* of the
+input, not on the values themselves: two inputs that answer every comparison the
+same way produce the same output. -/
+theorem run_eq_of_pattern [LinearOrder α] {β : Type*} [LinearOrder β] (t : Tree n) {x : Fin n → α}
+    {y : Fin n → β} (h : ∀ i j, x i < x j ↔ y i < y j) : run t x = run t y := by
+  induction t with
+  | leaf σ => rfl
+  | node i j l r ihl ihr =>
+    show (if x i < x j then run l x else run r x) = (if y i < y j then run l y else run r y)
+    by_cases hlt : x i < x j
+    · rw [ite_eq_left hlt, ite_eq_left ((h i j).mp hlt)]
+      exact ihl
+    · rw [ite_eq_right hlt, ite_eq_right (fun hc => hlt ((h i j).mpr hc))]
+      exact ihr
+
+/-- The cost of a comparison tree depends only on the comparison pattern. -/
+theorem cost_eq_of_pattern [LinearOrder α] {β : Type*} [LinearOrder β] (t : Tree n) {x : Fin n → α}
+    {y : Fin n → β} (h : ∀ i j, x i < x j ↔ y i < y j) : cost t x = cost t y := by
+  induction t with
+  | leaf σ => rfl
+  | node i j l r ihl ihr =>
+    show 1 + (if x i < x j then cost l x else cost r x) =
+      1 + (if y i < y j then cost l y else cost r y)
+    by_cases hlt : x i < x j
+    · rw [ite_eq_left hlt, ite_eq_left ((h i j).mp hlt)]
+      exact congrArg (1 + ·) ihl
+    · rw [ite_eq_right hlt, ite_eq_right (fun hc => hlt ((h i j).mpr hc))]
+      exact congrArg (1 + ·) ihr
+
 end SortBounds

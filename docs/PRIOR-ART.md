@@ -35,9 +35,11 @@ were not checked against a primary source.
   derived from `asymp_equiv_ln_fact : (λn. ln (fact n)) ∼[at_top] (λn. n * ln n)`.
 
   Note: there is **no `sort` locale**; the model is the datatype above.  The
-  worst case is a maximum over linear orders — reachability of leaves is
-  deliberately not required (the AFP commentary says so).  Our
-  `WorstCase.lean` proves the input-attained form instead.
+  worst case `count_wc_queries Rs sorter` is a maximum over the `n!` linear
+  orders, i.e. already the *input-attained* form: leaves that no order reaches
+  simply never contribute.  `WorstCase.lean` here proves the same (over the
+  canonical inputs `xOfPerm p`) **and** the tree-depth form, which the AFP does
+  not state.
 
 * **Coq/Rocq (MathComp)**, Arthur Azevedo de Amorim, 2015-03-25,
   *Analyzing sorting algorithms* — <https://poleiro.info/posts/2015-03-25-analyzing-sorting-algorithms.html>
@@ -109,11 +111,16 @@ were not checked against a primary source.
 ## What this repository adds
 
 1. A small, dependency-light Lean 4 + Mathlib development (no Mathlib PR
-   required) with the *input-attained* worst case (`worstCase t` over the `n!`
-   canonical inputs), closing the reachability gap in the depth-based argument.
+   required) that derives both the *input-attained* worst case (`worstCase t`
+   over the `n!` canonical inputs, so the depth/reachability gap cannot bite)
+   **and** the tree-depth form from a single elementary counting argument, and
+   transfers the bound to arbitrary value types via comparison-pattern
+   invariance (`General.lean`).
 2. The average-case bound (`avg_cost_ge_log2_factorial`) derived from the same
    `(1/2)^cost` weight lemma, in Lean, with the analytic step made explicit.
-3. Radix/counting sort in the same repository as the lower bound: correctness,
+3. A counted merge sort with an explicit `O(n log n)` comparison bound
+   (`UpperBound.lean`), i.e. the matching upper half of `Θ(n log n)`.
+4. Radix/counting sort in the same repository as the lower bound: correctness,
    stability, comparison-freeness as a *theorem*, and the `d·(n+b)` ledger — so
    the "why doesn't radix sort contradict `Ω(n log n)`?" question is answered
    by the code rather than by prose.

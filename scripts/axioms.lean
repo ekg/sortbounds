@@ -19,6 +19,8 @@ open SortBounds
 #print axioms SortBounds.not_forall_cost_lt_quarter
 #print axioms SortBounds.avg_cost_ge_log2_factorial
 #print axioms SortBounds.max_cost_ge_log2_factorial
+#print axioms SortBounds.exists_input_cost_ge_of_orderEmb
+#print axioms SortBounds.exists_input_cost_ge_quarter_of_orderEmb
 #print axioms SortBounds.half_pow_le_factorial
 #print axioms SortBounds.logb_factorial_ge_quarter
 #print axioms SortBounds.radixSort_sorted

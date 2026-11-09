@@ -29,7 +29,7 @@ theorem cost_node (i j : Fin n) (l r : Tree n) (x : Fin n → ℕ) :
 
 /-- Injectivity hypothesis: distinct permutations in `S` are separated by the
 leaves their canonical inputs reach.  A correct sorting tree satisfies this for
-`S = univ` (`hdisting`). -/
+`S = univ` (`separated_of_correct`). -/
 def Separated (t : Tree n) (S : Finset (Equiv.Perm (Fin n))) : Prop :=
   ∀ p ∈ S, ∀ q ∈ S, run t (xOfPerm p) = run t (xOfPerm q) → p = q
 

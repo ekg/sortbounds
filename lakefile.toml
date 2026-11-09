@@ -1,0 +1,11 @@
+name = "sortbounds"
+version = "0.1.0"
+keywords = ["math", "algorithms", "sorting", "lower-bounds"]
+defaultTargets = ["SortBounds"]
+
+[[require]]
+name = "mathlib"
+path = "/home/bot/cadence/cadence-lean/.lake/packages/mathlib"
+
+[[lean_lib]]
+name = "SortBounds"

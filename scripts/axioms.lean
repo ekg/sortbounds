@@ -43,6 +43,8 @@ open SortBounds
 #print axioms SortBounds.Projects.SN.S_le_iff
 #print axioms SortBounds.Projects.SN.S_lower
 #print axioms SortBounds.Projects.SN.S_three
+#print axioms SortBounds.Projects.SN.S_four
+#print axioms SortBounds.Projects.SN.S_five
 #print axioms SortBounds.Projects.XY.pairSums_card_le
 #print axioms SortBounds.Projects.XY.naivePairsSorted_perm
 #print axioms SortBounds.Projects.XY.naivePairsSorted_count

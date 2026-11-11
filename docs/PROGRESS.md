@@ -23,7 +23,7 @@ other models"** — every open lane is about a model where the answer changes.
 | `Comparison` | comparison sorts | `exists_input_cost_ge_quarter`, `avg_cost_ge_log2_factorial` | **DONE** | frozen |
 | `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le`, `factorial_le_two_pow_length_of_sortsAll` | **DONE** | frozen |
 | `FordJohnson` | exact comparison counts, upper bound | `fjSort_count_le` (`fjCount`), `insertCount_count` | **M1 DONE** | M2/M3 open |
-| `SN` | exact `S(n)`, both bounds | `exists_correct_tree`, `S_spec`, `S_le_iff`, `S_lower`, `S 0..3` | **M1 DONE** | M2/M3 open |
+| `SN` | exact `S(n)`, both bounds | `S 0..3`, **`S 4 = 5`, `S 5 = 7`** | **M2 for n ≤ 5** | n ≥ 6 open |
 | `XY` | sorting `X+Y` | `pairSums`, `pairSums_card_le`, `naivePairsSorted_*` | **M1 DONE** | M2 gated |
 | `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement), `exists_decidesReal_distinct` | **M0 DONE** (semantics now witnessed) | M1+ gated |
 | `SAIS` | suffix arrays, cost model | `cmpFrom` soundness, `inspectCount_replicate`, `three_mul_naiveInspectSum` (cubic vs quadratic) | **M0 DONE** | M1 needs LCP-array construction |
@@ -62,8 +62,11 @@ other models"** — every open lane is about a model where the answer changes.
   hypothesis). `fjCount`'s closed form and the optimality table are M2/M3.
 * **SN** — `exists_correct_tree` (a compare-all-pairs tree, depth `n²`),
   `S`, `S_spec`, `S_le_iff`, `S_lower` (`⌈log₂ n!⌉ ≤ S n`), and
-  `S 0 = 0, S 1 = 0, S 2 = 1, S 3 = 3`. `S_eq_clog` (n ≤ 11) and `S 12 = 30`
-  are **not** proved; the contract marks them as targets.
+  `S 0 = 0, S 1 = 0, S 2 = 1, S 3 = 3`, and now **`S 4 = 5`, `S 5 = 7`**
+  (`Four.lean`, `Five.lean`: upper bounds from explicit 5- and 7-comparison
+  trees, lower bounds from `S_lower` since `⌈log₂ 4!⌉ = 5`, `⌈log₂ 5!⌉ = 7`).
+  So `S(n) = ⌈log₂ n!⌉` is machine-checked for `n ≤ 5`. `S_eq_clog` (n ≤ 11) and
+  `S 12 = 30` are **not** proved; the contract marks them as targets.
 * **XY** — `pairSums`, `pairSums_card_le`, `naivePairsSorted_*`, and the counted
   merge-sort run `naivePairsMsort_count`. Review caught a false claim in the
   prose (`Ω(n² log n)` for the sums problem); fixed — the M0 theorem is the
@@ -129,6 +132,7 @@ truth discipline).
 
 | Date | Change |
 | --- | --- |
+| 2026-11-11 | SN M2 for small n: `S 4 = 5`, `S 5 = 7` (integrated; the lane's two files needed an import fix). |
 | 2026-11-11 | Round-2 partial integration: BenOr witnesses (vacuity closed), SAIS cost model M0 (cubic-vs-quadratic `aⁿ` contrast), review prose fixes. |
 | 2026-11-11 | `Instances.Network`: sorting networks cannot beat the bound in comparator count (`n! ≤ 2^k`), only in depth. Round-2 lanes launched with 4h deadlines (BenOr witness, FordJohnson count, SN `S 4`/`S 5`, SAIS cost model). |
 | 2026-11-11 | Lanes ran: FordJohnson/SN/XY to M1, BenOr to M0. Review caught one false prose claim (XY) and one vacuity gap (BenOr); both recorded. |

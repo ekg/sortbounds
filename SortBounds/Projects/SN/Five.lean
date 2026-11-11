@@ -31,6 +31,7 @@ transpositions: `swapProd [(0, 1), (1, 2)]` is `Equiv.swap 0 1 * Equiv.swap 1 2`
 which maps `0 ↦ 1 ↦ 2 ↦ 0`; the identity is written `1`.
 -/
 import SortBounds.Projects.SN.Verify
+import SortBounds.Projects.SN.Basic
 
 namespace SortBounds.Projects.SN
 

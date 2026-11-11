@@ -17,6 +17,9 @@ import SortBounds.Projects.FordJohnson.Insertion
 import SortBounds.Projects.FordJohnson.MergeInsertion
 import SortBounds.Projects.SN.Basic
 import SortBounds.Projects.SN.Small
+import SortBounds.Projects.SN.Verify
+import SortBounds.Projects.SN.Four
+import SortBounds.Projects.SN.Five
 import SortBounds.Projects.XY.PairSums
 import SortBounds.Projects.XY.Naive
 import SortBounds.Projects.BenOr.Basic

@@ -177,6 +177,15 @@ theorem fjCountJ_le_recurrence (n : ℕ) (hn : 2 ≤ n) :
   simp only [fjCountJAux, hlt, ite_false]
   rw [fjCountJAux_congr ((m + 1) / 2) m ((m + 1) / 2) (by omega) (by omega)]
 
+/-- Nothing is inserted for a list of at most one element. -/
+theorem fjCountJ_eq_zero (n : ℕ) (h : n < 2) : fjCountJ n = 0 := by
+  show fjCountJAux n n = 0
+  rcases n with _ | _ | n
+  · rfl
+  · rw [fjCountJAux]
+    simp
+  · omega
+
 /-! ### The table -/
 
 /-- The cost of the insertion phase, computed. -/

@@ -359,18 +359,6 @@ theorem insertBatch_count [LinearOrder α] (ws : List α) (s T : ℕ) (batch : L
       ring
     omega
 
-/-- The slice a batch is made of: its `j`-th element (in insertion order) is the item of rank
-`hi - j` of the rank-ordered list. -/
-theorem getElem?_batch_slice {β : Type*} (l : List β) {lo hi : ℕ} (hlo : lo ≤ hi)
-    (hhi : hi ≤ l.length) (j : ℕ) (hj : j < hi - lo) :
-    (((l.drop lo).take (hi - lo)).reverse)[j]? = l[hi - 1 - j]? := by
-  rw [List.getElem?_reverse (by rw [List.length_reverse, List.length_take]; omega)]
-  rw [List.length_take, List.length_drop,
-    show min (hi - lo) (l.length - lo) = hi - lo by omega]
-  rw [List.getElem?_take, if_pos (by omega), List.getElem?_drop]
-  congr 1
-  omega
-
 /-! ### The Jacobsthal walk -/
 
 /-- First rank of batch `k`: the number of items already in the chain when batch `k` starts. -/
@@ -425,10 +413,8 @@ theorem jacBatch_getElem? (items : List (Option α × α)) (k : ℕ) {j : ℕ}
 theorem jacBatch_subset (items : List (Option α × α)) (k : ℕ) :
     ∀ q ∈ jacBatch items k, q ∈ items := by
   intro q hq
-  have hs : List.Sublist (jacBatch items k) items := by
-    rw [jacBatch]
-    exact List.Sublist.reverse ((List.take_sublist _ _).trans (List.drop_sublist _ _))
-  exact hs.subset hq
+  rw [jacBatch, List.mem_reverse] at hq
+  exact ((List.take_sublist _ _).trans (List.drop_sublist _ _)).subset hq
 
 /-- The batches tile the item list: batch `k` (in decreasing rank) together with everything
 from `jacHi` on is exactly the part of the list from `jacLo` on. -/
@@ -554,7 +540,7 @@ theorem insertJacobsthal_count [LinearOrder α] (items : List (Option α × α))
       exact hperm.append_right _
     have hlen' : (ins ++ (jacBatch items k).map Prod.snd).length
         = jacLo items.length (k + 1) := by
-      rw [List.length_append, hlen, jacBatch_length, jacLo_succ]
+      rw [List.length_append, List.length_map, hlen, jacBatch_length, jacLo_succ]
       omega
     have htail := ih (k + 1) (insertBatch (jacBatch items k) l).2
       (ins ++ (jacBatch items k).map Prod.snd) hperm' hlen' hsome hnone
@@ -562,3 +548,233 @@ theorem insertJacobsthal_count [LinearOrder α] (items : List (Option α × α))
     have hclog2 : min items.length (jac k) = jacHi items.length k := rfl
     simp only [insertJacobsthal, jacInsertCostAux, hclog, hclog2]
     omega
+
+/-! ### Merge-insertion in Jacobsthal order -/
+
+/-- Every loser is at most its partner: that is the upper bound the pairing gives. -/
+theorem pairUp_loser_le_winner [LinearOrder α] (l : List α) :
+    ∀ q ∈ (pairUp l).1.zip (pairUp l).2.1, q.2 ≤ q.1 := by
+  induction l using pairUp.induct with
+  | case1 => intro q hq; simp [pairUp] at hq
+  | case2 x => intro q hq; simp [pairUp] at hq
+  | case3 x y rest hyx ih =>
+    rw [pairUp_cons_of_le x y rest hyx]
+    intro q hq
+    rw [List.zip_cons_cons, List.mem_cons] at hq
+    rcases hq with rfl | hq
+    · exact hyx
+    · exact ih q hq
+  | case4 x y rest hnyx ih =>
+    rw [pairUp_cons_of_not_le x y rest hnyx]
+    intro q hq
+    rw [List.zip_cons_cons, List.mem_cons] at hq
+    rcases hq with rfl | hq
+    · exact le_of_lt (not_le.mp hnyx)
+    · exact ih q hq
+
+/-- The winner/loser pairs of a pairing, ordered by winner.  Bookkeeping: in merge-insertion
+the loser array travels with the winners through the recursive sort (module docstring). -/
+def sortedPairs [LinearOrder α] (p : List α × List α × Option α) : List (α × α) :=
+  sortPairs (p.1.zip p.2.1)
+
+theorem sortedPairs_length [LinearOrder α] (p : List α × List α × Option α)
+    (hlen : p.2.1.length = p.1.length) : (sortedPairs p).length = p.1.length := by
+  rw [sortedPairs, (sortPairs_perm _).length_eq, List.length_zip]
+  omega
+
+theorem sortedPairs_fst_perm [LinearOrder α] (p : List α × List α × Option α)
+    (hlen : p.2.1.length = p.1.length) :
+    List.Perm ((sortedPairs p).map Prod.fst) p.1 := by
+  refine ((sortPairs_perm (p.1.zip p.2.1)).map Prod.fst).trans ?_
+  rw [List.map_fst_zip (by omega)]
+
+theorem sortedPairs_snd_perm [LinearOrder α] (p : List α × List α × Option α)
+    (hlen : p.2.1.length = p.1.length) :
+    List.Perm ((sortedPairs p).map Prod.snd) p.2.1 := by
+  refine ((sortPairs_perm (p.1.zip p.2.1)).map Prod.snd).trans ?_
+  rw [List.map_snd_zip (by omega)]
+
+theorem sortedPairs_loser_le_winner [LinearOrder α] (p : List α × List α × Option α)
+    (h : ∀ q ∈ p.1.zip p.2.1, q.2 ≤ q.1) :
+    ∀ q ∈ sortedPairs p, q.2 ≤ q.1 := by
+  intro q hq
+  exact h q ((sortPairs_perm _).mem_iff.mp hq)
+
+/-- The items to insert once the winners are sorted: every loser with its partner as an upper
+bound, and the unpaired element (if any) with no bound at all. -/
+def insertItems [LinearOrder α] (p : List α × List α × Option α) : List (Option α × α) :=
+  (sortedPairs p).map (fun q => (some q.1, q.2)) ++ p.2.2.toList.map (fun x => (none, x))
+
+theorem insertItems_length [LinearOrder α] (p : List α × List α × Option α)
+    (hlen : p.2.1.length = p.1.length) :
+    (insertItems p).length = p.1.length + p.2.2.toList.length := by
+  rw [insertItems, List.length_append, List.length_map, List.length_map,
+    sortedPairs_length p hlen]
+
+theorem insertItems_map_snd [LinearOrder α] (p : List α × List α × Option α) :
+    (insertItems p).map Prod.snd = (sortedPairs p).map Prod.snd ++ p.2.2.toList := by
+  rw [insertItems, List.map_append, List.map_map]
+  congr 1
+  induction p.2.2.toList with
+  | nil => rfl
+  | cons x xs ih => simp [ih]
+
+theorem insertItems_bound [LinearOrder α] (p : List α × List α × Option α)
+    (h : ∀ q ∈ p.1.zip p.2.1, q.2 ≤ q.1) :
+    ∀ q ∈ insertItems p, ∀ b, q.1 = some b → q.2 ≤ b := by
+  intro q hq b hb
+  rw [insertItems, List.mem_append] at hq
+  rcases hq with hq | hq
+  · obtain ⟨q', hq', rfl⟩ := List.mem_map.mp hq
+    have hb' : q'.1 = b := Option.some.inj hb
+    rw [← hb']
+    exact sortedPairs_loser_le_winner p h q' hq'
+  · obtain ⟨x, _, rfl⟩ := List.mem_map.mp hq
+    exact absurd hb (by simp)
+
+/-- **Merge-insertion (Ford–Johnson, 1959), with the Jacobsthal insertion order.**  Pair up
+the elements, sort the winners recursively, and insert the losers — and the unpaired element of
+an odd-length input — each into the sorted prefix that precedes its own partner. -/
+def fjSortJ [LinearOrder α] (l : List α) : ℕ × List α :=
+  if l.length < 2 then (0, l)
+  else
+    let p := pairUp l
+    let r := insertJacobsthal (insertItems p) (insertItems p).length 0
+      ((sortedPairs p).map Prod.fst)
+    (p.1.length + (fjSortJ p.1).1 + r.1, r.2)
+termination_by l.length
+decreasing_by
+  have hlen := pairUp_fst_length l
+  omega
+
+/-- The pairing data of a list whose split we need repeatedly. -/
+theorem pairUp_lengths [LinearOrder α] (l : List α) (p : List α × List α × Option α)
+    (hp : pairUp l = p) : p.2.1.length = p.1.length := by
+  subst hp
+  rw [pairUp_snd_fst_length, pairUp_fst_length]
+
+theorem pairUp_length [LinearOrder α] (l : List α) (p : List α × List α × Option α)
+    (hp : pairUp l = p) : l.length = p.1.length + (p.1.length + p.2.2.toList.length) := by
+  subst hp
+  have h1 := pairUp_fst_length l
+  have h2 := pairUp_snd_fst_length l
+  have h := (pairUp_perm l).length_eq
+  rw [List.length_append, List.length_append] at h
+  omega
+
+/-- The chain of winners followed by the values of the items to insert is the whole input. -/
+theorem pairUp_items_perm [LinearOrder α] (l : List α) :
+    List.Perm (((sortedPairs (pairUp l)).map Prod.fst) ++ (insertItems (pairUp l)).map Prod.snd)
+      l := by
+  have hlenz : (pairUp l).2.1.length = (pairUp l).1.length := pairUp_lengths l _ rfl
+  have h1 : List.Perm ((sortedPairs (pairUp l)).map Prod.fst) (pairUp l).1 :=
+    sortedPairs_fst_perm _ hlenz
+  have h2 : List.Perm ((insertItems (pairUp l)).map Prod.snd)
+      ((pairUp l).2.1 ++ (pairUp l).2.2.toList) := by
+    rw [insertItems_map_snd]
+    exact (sortedPairs_snd_perm _ hlenz).append_right _
+  exact ((h1.append_right _).trans (List.Perm.append_left _ h2)).trans (pairUp_perm l).symm
+
+theorem fjSortJ_perm [LinearOrder α] (l : List α) : (fjSortJ l).2.Perm l := by
+  induction l using fjSortJ.induct with
+  | case1 l hlt =>
+    rw [fjSortJ]
+    simp only [hlt, ite_true]
+    exact List.Perm.refl l
+  | case2 l hge p ih =>
+    rw [fjSortJ]
+    simp only [hge, ite_false]
+    have hperm := insertJacobsthal_perm (insertItems (pairUp l)) (insertItems (pairUp l)).length 0
+      ((sortedPairs (pairUp l)).map Prod.fst) (by
+        rw [insertItems_length _ (pairUp_lengths l _ rfl)]; omega)
+    rw [show jacLo (insertItems (pairUp l)).length 0 = 0 by
+      simp [jacLo, jacPred], List.drop_zero] at hperm
+    exact hperm.trans (pairUp_items_perm l)
+
+theorem fjSortJ_sorted [LinearOrder α] (l : List α) : (fjSortJ l).2.Pairwise (· ≤ ·) := by
+  induction l using fjSortJ.induct with
+  | case1 l hlt =>
+    rw [fjSortJ]
+    simp only [hlt, ite_true]
+    exact pairwise_of_length_le_one (by omega)
+  | case2 l hge p ih =>
+    rw [fjSortJ]
+    simp only [hge, ite_false]
+    refine insertJacobsthal_sorted (insertItems (pairUp l)) _ 0
+      ((sortedPairs (pairUp l)).map Prod.fst) ?_ ?_
+    · exact List.Pairwise.map Prod.fst (fun _ _ h => h) (sortPairs_pairwise _)
+    · exact insertItems_bound _ (pairUp_loser_le_winner l)
+
+/-- **The count of merge-insertion**: `(fjSortJ l).1 ≤ fjCountJ l.length`, the literature's
+`F(n) = n/2 + F(n/2) + (Jacobsthal batch sum)`. -/
+theorem fjSortJ_count_le [LinearOrder α] (l : List α) : (fjSortJ l).1 ≤ fjCountJ l.length := by
+  suffices H : ∀ k (l : List α), l.length = k → (fjSortJ l).1 ≤ fjCountJ l.length from
+    H l.length l rfl
+  intro k
+  induction k using Nat.strong_induction_on with
+  | h k ih =>
+    intro l hl
+    rcases Nat.lt_or_ge l.length 2 with hlt | hge
+    · rw [fjSortJ]
+      simp only [hlt, ite_true]
+      rw [fjCountJ_eq_zero l.length hlt]
+    · have hlenz : (pairUp l).2.1.length = (pairUp l).1.length := pairUp_lengths l _ rfl
+      have hplen : l.length = (pairUp l).1.length + ((pairUp l).1.length
+          + (pairUp l).2.2.toList.length) := pairUp_length l _ rfl
+      have hto : (pairUp l).2.2.toList.length ≤ 1 := by
+        have := Option.length_toList (o := (pairUp l).2.2)
+        split at this <;> omega
+      have hM : (insertItems (pairUp l)).length
+          = (pairUp l).1.length + (pairUp l).2.2.toList.length := insertItems_length _ hlenz
+      have hrec : (fjSortJ (pairUp l).1).1 ≤ fjCountJ (pairUp l).1.length :=
+        ih _ (by rw [pairUp_fst_length]; omega) _ rfl
+      -- the `j`-th item's search window is bounded by its rank
+      have hmaplen : ((sortedPairs (pairUp l)).map (fun q => (some q.1, q.2))).length
+          = (sortedPairs (pairUp l)).length := List.length_map ..
+      have hsome : ∀ (j : ℕ) (q : Option α × α) (b : α),
+          (insertItems (pairUp l))[j]? = some q → q.1 = some b →
+          ((sortedPairs (pairUp l)).map Prod.fst).countP (· < b) ≤ j := by
+        intro j q b hjq hb
+        by_cases hjn : j < (sortedPairs (pairUp l)).length
+        · rw [insertItems, List.getElem?_append, if_pos (by rw [hmaplen]; exact hjn),
+            List.getElem?_map, List.getElem?_eq_getElem hjn] at hjq
+          simp only [Option.map_some, Option.some.injEq] at hjq
+          subst hjq
+          simp only at hb
+          rw [← hb]
+          exact countP_fst_lt_le_index _ j hjn (sortPairs_pairwise _)
+        · rw [insertItems, List.getElem?_append, if_neg (by rw [hmaplen]; omega)] at hjq
+          have hq1 : q.1 = none := by
+            obtain ⟨hget, hqe⟩ := List.getElem?_eq_some_iff.mp hjq
+            obtain ⟨y, _, hy⟩ := List.mem_map.mp (hqe ▸ List.getElem_mem hget)
+            rw [← hy]
+          rw [hq1] at hb
+          exact absurd hb (by simp)
+      -- the unpaired element rides at rank `ws.length`, the end of the chain
+      have hnonep : ∀ (j : ℕ) (q : Option α × α),
+          (insertItems (pairUp l))[j]? = some q → q.1 = none →
+          ((sortedPairs (pairUp l)).map Prod.fst).length ≤ j := by
+        intro j q hjq hn
+        by_cases hjn : j < (sortedPairs (pairUp l)).length
+        · rw [insertItems, List.getElem?_append, if_pos (by rw [hmaplen]; exact hjn),
+            List.getElem?_map, List.getElem?_eq_getElem hjn] at hjq
+          simp only [Option.map_some, Option.some.injEq] at hjq
+          subst hjq
+          simp only at hn
+          exact absurd hn (by simp)
+        · rw [List.length_map]
+          omega
+      have hcount := insertJacobsthal_count (insertItems (pairUp l))
+        ((sortedPairs (pairUp l)).map Prod.fst) (insertItems (pairUp l)).length 0
+        ((sortedPairs (pairUp l)).map Prod.fst) [] (by simp)
+        (by simp [jacLo, jacPred]) hsome hnonep
+      rw [hM] at hcount
+      rw [fjSortJ]
+      simp only [hge, ite_false]
+      rw [fjCountJ_le_recurrence l.length hge]
+      have hpos : (l.length + 1) / 2
+          = (pairUp l).1.length + (pairUp l).2.2.toList.length := by omega
+      rw [hpos, show l.length / 2 = (pairUp l).1.length from (pairUp_fst_length l).symm]
+      omega
+
+end SortBounds.Projects.FordJohnson

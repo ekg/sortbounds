@@ -18,6 +18,7 @@ values; the rest carry labels that `Correct` never inspects, because `Correct`
 quantifies over injective inputs only.
 -/
 import SortBounds.Projects.SN.Verify
+import SortBounds.Projects.SN.Basic
 
 namespace SortBounds.Projects.SN
 

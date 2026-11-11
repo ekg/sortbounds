@@ -11,20 +11,23 @@ then `11, 10, … , 6`, … — and each loser is searched for only among the ch
 its own partner.  Two things happen:
 
 * the `t`-th item of the order is inserted when `s` items are already in the chain, and only
-  `⌈log₂ (t + s + 1)⌉` comparisons are needed (the `t-1` winners below its partner plus the
+  `⌈log₂ (t + s)⌉` comparisons are needed (the `t-1` winners below its partner plus the
   `s` inserted elements); inside one Jacobsthal batch `t + s` is *constant*, so the batch
   costs the same per item and the windows stay perfectly balanced;
-* the price of that is one extra comparison per item compared with the whole-chain schedule.
 
 This file is the arithmetic half: the Jacobsthal numbers, the cost `jacInsertCost` of the
 insertion phase, the recurrence `fjCountJ` (`n/2 + fjCountJ (n/2) + jacInsertCost ⌈n/2⌉`) and
 the table
 
-  `fjCountJ 4 = 5`, `7`, `10`, `13`, `16`, `19`, `22`, `26` (= `F 5 … F 11`),
+  `fjCountJ 4 = 5`, `7`, `10`, `13`, `16`, `19`, `22`, `26` (= `F 4 … F 11`),
 
-which is exactly the optimal `S(n)` for `n ≤ 11`, together with `fjCountJ n = ⌈log₂ n!⌉`
-there.  `JacobsthalInsertion.lean` proves that the algorithm really does sort with that
-count; here `fjCountJ` is only arithmetic.
+and `fjCountJ n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11` (and `n = 20, 21`).  That is the *value* of the
+information-theoretic lower bound, which `SN.S_lower` proves to be a lower bound on the least
+tree depth — but **optimality is not claimed here**: turning it into "`fjCountJ n = S(n)`"
+needs a transfer from the list algorithm `fjSortJ` to a `Tree n` of the same depth, which is
+not formalised in this lane (see `Comparison/Bridge.lean` for the mechanism).
+`JacobsthalInsertion.lean` proves that the algorithm sorts and spends at most that many
+comparisons; here `fjCountJ` is only arithmetic.
 -/
 import SortBounds.Projects.FordJohnson.Count
 
@@ -194,31 +197,30 @@ theorem jacInsertCost_table : jacInsertCost 1 = 0 ∧ jacInsertCost 2 = 2 ∧ ja
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩ <;> decide
 
 /-- **The count of merge-insertion on `n = 4 … 11` elements**: `5, 7, 10, 13, 16, 19, 22,
-26`.  These are Ford and Johnson's values `F(4) … F(11)`, and they coincide with the optimal
-number of comparisons `S(n)` — the information-theoretic bound `⌈log₂ n!⌉` is reached. -/
+26`.  These are Ford and Johnson's values `F(4) … F(11)`; each equals `⌈log₂ n!⌉`, the value
+of the information-theoretic lower bound.  (That the bound is *attained* as a least tree depth
+— i.e. `fjCountJ n = S n` — is not claimed: it needs a list→`Tree` transfer.) -/
 theorem fjCountJ_table : fjCountJ 4 = 5 ∧ fjCountJ 5 = 7 ∧ fjCountJ 6 = 10 ∧ fjCountJ 7 = 13
     ∧ fjCountJ 8 = 16 ∧ fjCountJ 9 = 19 ∧ fjCountJ 10 = 22 ∧ fjCountJ 11 = 26 := by
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> decide
 
-/-- **The closed form of the count** (Knuth, TAOCP 5.3.1): `F(n) = Σ_{k=1}^{n} ⌈log₂ ⌈3k/4⌉⌉`,
-i.e. the `k`-th element of the insertion sequence is searched for in `⌈3k/4⌉` slots.  Checked
-here for every `n ≤ 22`, which covers the whole range where merge-insertion is known to be
-optimal. -/
+/-- **The closed form of the count** (Knuth, TAOCP 5.3.1):
+`F(n) = Σ_{k<n} ⌈log₂ ⌈(3(k+1) + 3)/4⌉⌉`.  Checked here for every `n ≤ 22`, the range of the
+literature's exact `S(n)` table (not a claim that merge-insertion is optimal throughout). -/
 theorem fjCountJ_eq_sum (n : ℕ) (hn : n ≤ 22) :
     fjCountJ n = ∑ k ∈ Finset.range n, Nat.clog 2 ((3 * (k + 1) + 3) / 4) := by
   interval_cases n <;> decide
 
-/-- **Merge-insertion is optimal up to eleven elements**: for `4 ≤ n ≤ 11` its count equals
-the information-theoretic lower bound `⌈log₂ n!⌉`.  That bound is the comparison lower bound
-of this repository (`SortBounds.Comparison.WorstCase.factorial_le_two_pow_worstCase`:
-`n! ≤ 2 ^ worstCase t`, so `⌈log₂ n!⌉ ≤ worstCase`), hence no comparison sort beats
-`fjCountJ` on those sizes and `fjCountJ n` *is* `S(n)` there. -/
+/-- **The count reaches the information-theoretic value for `4 ≤ n ≤ 11`**: `fjCountJ n =
+⌈log₂ n!⌉`.  `SN.S_lower` proves `⌈log₂ n!⌉ ≤ S n` (least correct-tree depth), so this is the
+best possible *value*; concluding `fjCountJ n = S n` would additionally need a list→`Tree`
+transfer, which this lane does not provide. -/
 theorem fjCountJ_eq_clog_factorial (n : ℕ) (h4 : 4 ≤ n) (h11 : n ≤ 11) :
     fjCountJ n = Nat.clog 2 (Nat.factorial n) := by
   interval_cases n <;> decide
 
-/-- The two further sizes where merge-insertion is known to be optimal: `n = 20` and `n = 21`
-(Ford–Johnson themselves; see `docs/PRIOR-ART.md`). -/
+/-- The two further sizes where the count reaches `⌈log₂ n!⌉`: `n = 20` and `n = 21`
+(Ford–Johnson's own observation; see `docs/PRIOR-ART.md`). -/
 theorem fjCountJ_eq_clog_factorial_large : fjCountJ 20 = Nat.clog 2 (Nat.factorial 20)
     ∧ fjCountJ 21 = Nat.clog 2 (Nat.factorial 21) := by
   refine ⟨?_, ?_⟩ <;> decide

@@ -219,10 +219,14 @@ theorem below_last_iff {n : ℕ} {x : Fin (n + 1) → ℕ} {σ : Equiv.Perm (Fin
   have hmn : m.val ≤ n := le_of_lt m.isLt
   constructor
   · intro hm
+    have hmem : m ∈ rankSet x σ := by
+      simp only [rankSet, Finset.mem_filter, Finset.mem_univ, true_and]
+      exact hm
     have hsub : (Finset.univ.filter fun k : Fin n => k.val < m.val + 1) ⊆ rankSet x σ := by
       intro k hk
       simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hk
-      exact rankSet_down (k' := k) hmono hm (Fin.le_def.2 (by omega))
+      have hkm : k ≤ m := Fin.le_def.2 (by omega)
+      exact rankSet_down hmono hmem hkm
     have := Finset.card_le_card hsub
     rw [card_filter_val_lt (by omega), hcard] at this
     omega
@@ -237,5 +241,100 @@ theorem below_last_iff {n : ℕ} {x : Fin (n + 1) → ℕ} {σ : Equiv.Perm (Fin
     have := Finset.card_le_card hsub
     rw [card_filter_val_lt hmn, hcard] at this
     omega
+
+/-- The `σ`-position of the prefix element at slot `t` is below the rank when `t`
+itself is below the rank. -/
+theorem slotIdx_val_lt {n : ℕ} {x : Fin (n + 1) → ℕ} {σ : Equiv.Perm (Fin n)}
+    {t : Fin (n + 1)} (h : t ≠ rankOf x σ) (hlt : t < rankOf x σ) :
+    (slotIdx (rankOf x σ) t h).val < (rankOf x σ).val := by
+  rw [slotIdx_val]
+  simp only [slotVal]
+  split_ifs with h'
+  · exact h'
+  · omega
+
+/-- The `σ`-position of the prefix element at slot `t` is at or above the rank
+when `t` is strictly above the rank. -/
+theorem le_rankOf_slotIdx_val {n : ℕ} {x : Fin (n + 1) → ℕ} {σ : Equiv.Perm (Fin n)}
+    {t : Fin (n + 1)} (ht : rankOf x σ < t) (h : t ≠ rankOf x σ) :
+    (rankOf x σ).val ≤ (slotIdx (rankOf x σ) t h).val := by
+  rw [slotIdx_val]
+  simp only [slotVal]
+  split_ifs with h'
+  · omega
+  · omega
+
+/-- **`insertPerm σ (rankOf x σ)` sorts `x`, given the prefix is sorted by `σ`.**
+
+The new element ends up at its true rank: slots before the rank hold prefix
+elements below it (`below_last_iff`), slots after hold prefix elements above it
+(by injectivity), and both groups keep the `σ`-order (`slotIdx_lt`). -/
+theorem insertPerm_sorts {n : ℕ} {σ : Equiv.Perm (Fin n)} {x : Fin (n + 1) → ℕ}
+    (hx : Function.Injective x)
+    (hmono : StrictMono fun k : Fin n => x (Fin.castSucc (σ k))) :
+    Sorts x (insertPerm σ (rankOf x σ)) := by
+  intro t₁ t₂ hlt
+  show x (insertPerm σ (rankOf x σ) t₁) < x (insertPerm σ (rankOf x σ) t₂)
+  by_cases h₂ : t₂ = rankOf x σ
+  · have hlt' : t₁ < rankOf x σ := h₂ ▸ hlt
+    have h₁ : t₁ ≠ rankOf x σ := ne_of_lt hlt'
+    rw [h₂, insertPerm_apply_self, insertPerm_apply_of_ne σ h₁]
+    exact (below_last_iff hmono _).2 (slotIdx_val_lt h₁ hlt')
+  · by_cases h₁ : t₁ = rankOf x σ
+    · have hlt' : rankOf x σ < t₂ := h₁ ▸ hlt
+      rw [h₁, insertPerm_apply_self, insertPerm_apply_of_ne σ h₂]
+      have hnot : ¬ x (Fin.castSucc (σ (slotIdx (rankOf x σ) t₂ h₂))) < x (Fin.last n) := by
+        intro hcon
+        have hpos := (below_last_iff hmono (slotIdx (rankOf x σ) t₂ h₂)).1 hcon
+        have hge := le_rankOf_slotIdx_val hlt' h₂
+        omega
+      refine lt_of_le_of_ne (le_of_not_gt hnot) ?_
+      exact fun hc => absurd (hx hc) (Fin.castSucc_ne_last _).symm
+    · rw [insertPerm_apply_of_ne σ h₁, insertPerm_apply_of_ne σ h₂]
+      exact hmono (slotIdx_lt h₁ h₂ hlt)
+
+/-! ### M1: binary search for the insertion rank
+
+The rank of the new element lies in the slot interval `[lo, hi)` (initially
+`[0, n)`); comparing the new element against the candidate in the middle of the
+interval shrinks it by half on either branch.  The invariant carried through the
+recursion is `lo ≤ rankOf x σ ≤ hi`, and the leaves emit `insertPerm σ lo`, which
+is the right permutation exactly when `lo = rankOf x σ`. -/
+
+/-- Binary search for the insertion rank in the slot interval `[lo, hi)`. -/
+noncomputable def insertSearch {n : ℕ} (σ : Equiv.Perm (Fin n)) :
+    Fin (n + 1) → Fin (n + 1) → Tree (n + 1)
+  | lo, hi =>
+    if h : lo < hi then
+      let m := lo.val + (hi.val - lo.val) / 2
+      Tree.node (Fin.last n) (Fin.castSucc (σ ⟨m, by omega⟩))
+        (insertSearch σ lo (Fin.castSucc ⟨m, by omega⟩))
+        (insertSearch σ ⟨m + 1, by omega⟩ hi)
+    else Tree.leaf (insertPerm σ lo)
+termination_by lo hi => hi.val - lo.val
+
+/-- **The insertion tree**: binary search for the rank of the new element among the
+`n` prefix positions, which are sorted in the order `σ`. -/
+noncomputable def insertTree {n : ℕ} (σ : Equiv.Perm (Fin n)) : Tree (n + 1) :=
+  insertSearch σ 0 (Fin.last n)
+
+/-- The unfolding of `insertSearch` on a nonempty slot interval: compare the new
+element against the candidate in the middle and recurse on the half containing the
+rank. -/
+theorem insertSearch_eq_node {n : ℕ} (σ : Equiv.Perm (Fin n)) {lo hi : Fin (n + 1)}
+    (h : lo < hi) :
+    insertSearch σ lo hi
+      = Tree.node (Fin.last n) (Fin.castSucc (σ ⟨lo.val + (hi.val - lo.val) / 2, by omega⟩))
+          (insertSearch σ lo (Fin.castSucc ⟨lo.val + (hi.val - lo.val) / 2, by omega⟩))
+          (insertSearch σ ⟨lo.val + (hi.val - lo.val) / 2 + 1, by omega⟩ hi) := by
+  conv_lhs => rw [insertSearch.eq_def]
+  simp only [dif_pos h]
+
+/-- The unfolding of `insertSearch` on an empty slot interval: emit the permutation
+for the rank `lo`. -/
+theorem insertSearch_eq_leaf {n : ℕ} (σ : Equiv.Perm (Fin n)) {lo hi : Fin (n + 1)}
+    (h : ¬ lo < hi) : insertSearch σ lo hi = Tree.leaf (insertPerm σ lo) := by
+  conv_lhs => rw [insertSearch.eq_def]
+  simp only [dif_neg h]
 
 end SortBounds.Projects.SortTree

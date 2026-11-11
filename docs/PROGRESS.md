@@ -62,7 +62,11 @@ other models"** — every open lane is about a model where the answer changes.
   `Jacobsthal.lean`), `fjSortJ_count_le : (fjSortJ l).1 ≤ fjCountJ l.length`,
   the closed form `fjCountJ_eq_sum : fjCountJ n = Σ_{k<n} ⌈log₂((3(k+1)+3)/4)⌉`
   for `n ≤ 22`, and `fjCountJ_table : fjCountJ 4..11 = 5,7,10,13,16,19,22,26` —
-  exactly the optimal `S(n)`. Smoke test: `fjSortJ [5,3,1,4,2]` costs 7.
+  the information-theoretic value `⌈log₂ n!⌉` in each case. Smoke test:
+  `fjSortJ [5,3,1,4,2]` costs 7. **Not claimed:** `fjCountJ n = S n` (needs a
+  list→`Tree` transfer; `Comparison/Bridge` has the mechanism) and *attainment*
+  (some input actually costing `fjCountJ n`). Review caught prose that claimed
+  both; fixed in `Jacobsthal.lean`/`JacobsthalInsertion.lean`/the lane README.
   **Caveat (documented in the lane):** two bookkeeping steps are uncharged (the
   winner/loser reordering and locating the window), so the count is for an
   idealised implementation; charging them needs an adversary argument.
@@ -146,6 +150,7 @@ truth discipline).
 
 | Date | Change |
 | --- | --- |
+| 2026-11-11 | Round-2 reviews applied: FordJohnson prose no longer claims `S n = fjCountJ n` or attainment; Ford–Johnson added to PRIOR-ART; SN/SAIS/BenOr doc drifts fixed. |
 | 2026-11-11 | FordJohnson M2/M3: verified Jacobsthal-order merge-insertion with the literature closed form and the optimal table `F(4..11)`. |
 | 2026-11-11 | 0-1 principle in Lean: thresholding commutes with comparators (`map_netRun`), so a network sorting all `Fin n → Fin 2` inputs sorts everything; concrete networks verified by `decide`. |
 | 2026-11-11 | SN M2 for small n: `S 4 = 5`, `S 5 = 7` (integrated; the lane's two files needed an import fix). |

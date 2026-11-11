@@ -8,7 +8,7 @@ insert the losers into a *growing sorted prefix* instead: the loser of the `t`-t
 winner is only ever searched for among the chain elements below its own partner, and the
 losers are visited in **Jacobsthal order** (`1`, then `3, 2`, then `5, 4`, then `11, …, 6`).
 Inside one batch `t + s` — the rank plus the number of items already inserted — is constant,
-so every binary search in the batch faces the same number `⌈log₂ (t+s+1)⌉` of slots: the
+so every binary search in the batch faces the same number `⌈log₂ (t+s)⌉` of slots: the
 searches are perfectly balanced, whence
 
   `F(n) = n/2 + F(n/2) + (sum over the Jacobsthal batches of (items in batch) · ⌈log₂ window⌉)`
@@ -24,8 +24,9 @@ What this file proves, for the algorithm `fjSortJ`:
 * `fjSortJ_count_le`  — `(fjSortJ l).1 ≤ fjCountJ l.length`, the literature's `F`.
 
 Together with `fjCountJ_table` (`F 4 … F 11 = 5, 7, 10, 13, 16, 19, 22, 26`) and
-`fjCountJ_eq_clog_factorial` this makes merge-insertion's optimality for `n ≤ 11`
-machine-checked.
+`fjCountJ_eq_clog_factorial` this shows the count reaches `⌈log₂ n!⌉` for `4 ≤ n ≤ 11`.
+It does **not** show `fjCountJ n = S n`: that needs a list→`Tree` transfer
+(`Comparison/Bridge.lean` has the mechanism, not the instance).
 
 ### What is counted, and what is not
 

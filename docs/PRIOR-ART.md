@@ -89,6 +89,19 @@ were not checked against a primary source.
 * **CLRS-Lean** §8.2–8.3: `countingSortBy`, `radixSortBy`, `radixSortBy_perm`,
   `radixSortBy_stable`, cost bound above.
 
+## Ford–Johnson (merge-insertion)
+
+* Ford & Johnson, *A tournament problem* (1959); Knuth, TAOCP vol. 3 §5.3.1
+  (algorithm M, the Jacobsthal insertion order, and the `S(n)` table).
+* Exact `S(n)` known for `n ≤ 22` (Peczarski 2004); Stober & Weiß 2022 settled
+  `S(16..18) = 46, 50, 54`, refuting Knuth's `S(16) = 45`.  Merge-insertion's
+  count reaches `⌈log₂ n!⌉` for `n ≤ 11` and `n = 20, 21`.
+* **No machine-checked Ford–Johnson found** (searched 2026-11-11): the closest
+  Lean work is Mathlib's `List.mergeSort` correctness, which has no count.
+  This repo's `Projects/FordJohnson` proves the algorithm's correctness and an
+  upper bound on its count (closed form for `n ≤ 22`, table `F(4..11)`), but not
+  attainment and not `S n = fjCountJ n`.
+
 ## Textbook statements
 
 * **CLRS Theorem 8.1** (§8.1): "Any comparison sort algorithm requires

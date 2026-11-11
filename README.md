@@ -19,33 +19,37 @@ in the main results (see [`#print axioms`](#axioms)).
 
 | Theorem | Statement |
 | --- | --- |
-| `SortBounds.factorial_le_two_pow_depth` | a correct comparison sort's decision tree has `n! ≤ 2 ^ depth` |
-| `SortBounds.factorial_le_two_pow_worstCase` | `n! ≤ 2 ^ (worst-case comparisons over inputs)` |
-| `SortBounds.exists_input_cost_ge` | **there is an input** with distinct keys needing `≥ log₂(n!)` comparisons |
-| `SortBounds.depth_ge_quarter` | `n ≥ 64 → depth ≥ n/4 · log₂ n` |
-| `SortBounds.exists_input_cost_ge_quarter` | `n ≥ 64 → some input needs `≥ n/4 · log₂ n` comparisons |
-| `SortBounds.not_forall_cost_lt_quarter` | no correct sort stays below `n/4 · log₂ n` on all inputs |
-| `SortBounds.avg_cost_ge_log2_factorial` | expected comparisons over a uniform random ordering is `≥ log₂(n!)` (equivalently: over `n` i.i.d. keys from any continuous distribution, whose induced ranking is uniform) |
-| `SortBounds.max_cost_ge_log2_factorial` | the maximum over inputs is `≥ log₂(n!)` |
-| `SortBounds.exists_input_cost_ge_of_orderEmb` | the same bound for **any** linear order containing `n` values in increasing order (`ℚ`, `ℝ`, …) |
-| `SortBounds.exists_input_cost_ge_of_finset` | in particular: any type with a finite subset of size `n` |
-| `SortBounds.half_pow_le_factorial` | `(n/2)^(n/2) ≤ n!` |
-| `SortBounds.logb_factorial_ge_quarter` | `n ≥ 64 → n/4 · log₂ n ≤ log₂(n!)` |
-| `SortBounds.radixSort_sorted` / `radixSort_perm` | LSD radix sort sorts (lexicographically) and moreover is a permutation |
-| `SortBounds.countingSort_stable` | counting sort is stable |
-| `SortBounds.radixSort_ignores_comparison` | the output is independent of any comparison oracle — `rfl`, because `radixSort` has no oracle parameter to consult |
-| `SortBounds.radixCost_eq_passes` | the stated cost model `radixCost d n b = d·(n+b)` is `d` passes of `n+b` unit operations (a definition plus arithmetic, not a measured run time) |
-| `SortBounds.radixSort_strict_sorted` | distinct keys are output in strict lexicographic order |
-| `SortBounds.radixSort_keys_congr` | the output depends only on the key vectors, not on the elements |
-| `SortBounds.msortCount_sorted` / `msortCount_perm` | counted merge sort sorts and is a permutation |
-| `SortBounds.msortCount_le` | merge sort uses at most `2·n·(⌈log₂ n⌉+1)` comparisons |
+| **the frame** | |
+| `Core.card_le_pow_of_prefixFree` | prefix-free `b`-ary transcripts of length `≤ c` number at most `b ^ c` (a corollary of Mathlib's Kraft inequality) |
+| `Core.logb_le_of_le_pow` | hence `log_b N ≤ c`: bits per probe |
+| `Core.mean_cost_ge_logb` | Kraft sum `≤ 1` ⇒ mean cost `≥ log_b N`, for **any** branching factor |
+| **comparison sorting** | |
+| `Comparison.factorial_le_two_pow_depth` | a correct comparison sort's tree has `n! ≤ 2 ^ depth` |
+| `Comparison.exists_input_cost_ge` | **there is an input** with distinct keys needing `≥ log₂(n!)` comparisons |
+| `Comparison.exists_input_cost_ge_quarter` | `n ≥ 64 → some input needs ≥ n/4 · log₂ n` comparisons |
+| `Comparison.avg_cost_ge_log2_factorial` | expected comparisons over a uniform random ordering is `≥ log₂(n!)` |
+| `Comparison.exists_input_cost_ge_of_orderEmb` | the same for **any** linear order with `n` values in increasing order (`ℚ`, `ℝ`, …) |
+| `Comparison.exists_depth_le_of_cost_le` | a tree whose every input costs `≤ d` can be replaced by one of depth `≤ d` — so "least depth" = "fewest comparisons that suffice" |
+| **the two halves, in one model** | |
+| `SortTree.sortTree_depth_le` | an explicit `Correct` tree of depth `≤ n(⌈log₂ n⌉+1)` |
+| `SortTree.S_sandwich` | **`⌈log₂ n!⌉ ≤ S n ≤ n(⌈log₂ n⌉+1)`**, both statements about `Tree n` |
+| **models where the bound changes** | |
+| `Instances.factorial_le_two_pow_length_of_sortsAll` | a sorting network needs `≥ log₂(n!)` **comparators** (it wins on depth, not work) |
+| `Instances.sortsAll_of_sorts_zeroOne` | the 0-1 principle, stated over `Fin n → Fin 2` so it is **decidable** |
+| `Instances.netTree_correct` | a verified network yields a correct `Tree n` of depth = #comparators |
+| `Instances.radixSort_sorted` / `radixSort_perm` / `radixSort_keys_congr` | radix sort is correct, and its output depends only on the key vectors — hence zero element comparisons |
+| **open lanes (what is *not* proved)** | |
+| `Projects.FordJohnson.fjCountJ_table` | `F(4..11) = 5,7,10,13,16,19,22,26` — Ford–Johnson's count reaches `⌈log₂ n!⌉`; **not** that `S n` equals it, and **not** attainment |
+| `Projects.SN.S_four` / `S_five` | `S 4 = 5`, `S 5 = 7` (least depth; `four_needs_five_comparisons` / `five_needs_seven_comparisons` give the comparison-count reading) — `n ≥ 6` open |
+| `Projects.BenOr.exists_decidesReal_distinct` | an algebraic decision tree of degree `n(n-1)` decides element distinctness — Ben-Or's *bound* is stated, not proved |
+| `Projects.SAIS.cmpFrom_lcp_advance` | comparing two suffixes can start after a known LCP, and the `aⁿ` contrast is cubic-vs-quadratic — the linear-time algorithms are not formalised |
+| `Projects.XY.pairSums` | the `X+Y` problem is modelled; the generic `N`-item bound is *not* a bound on it (Fredman's `O(n²)` scheme is why) |
 
-Informally the two halves say the optimal worst case is `Θ(n log n)` for
-`n ≥ 64`: no algorithm does better than `n/4 · log₂ n`, and merge sort does
-`≤ n(⌈log₂ n⌉+1)` comparisons (`msortCount_counts_le`; the advertised
-`msortCount_le` merely slackens this to `2n(⌈log₂ n⌉+1)`).  The two models — the
-decision `Tree n` and the list-based `msortCount` — are *not* formally bridged
-here: nobody has turned `msortCount` into a `Tree n`.
+Informally: the optimal worst case is `Θ(n log n)`, and that is now a *single-model*
+statement — `S_sandwich` bounds the least tree depth from both sides.  A list-model
+upper bound (`Instances.msortCount_le`) also exists and is not needed for that.
+
+## The model
 
 ## The model
 

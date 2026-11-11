@@ -417,6 +417,8 @@ theorem insertSearch_sorts {n : ℕ} (σ : Equiv.Perm (Fin n)) {x : Fin (n + 1) 
     · -- the new element is above the middle candidate: the rank is at least `midVal+1`
       refine ih2 (Fin.le_def.2 (midVal_succ_le_hi h)) ?_ hhi
       by_contra hcon
+      have hcon' : ¬ (midVal lo hi + 1 ≤ (rankOf x σ).val) := by
+        simpa only [Fin.val_mk] using hcon
       have hbelow : x (Fin.castSucc (σ (midCand lo hi h))) < x (Fin.last n) := by
         refine lt_of_le_of_ne (le_of_not_gt hlt) ?_
         exact fun hc => absurd (hx hc) (Fin.castSucc_ne_last _)
@@ -440,6 +442,7 @@ theorem insertTree_correct {n : ℕ} (σ : Equiv.Perm (Fin n)) {x : Fin (n + 1) 
     Sorts x (run (insertTree σ) x) := by
   refine insertSearch_sorts σ hx hmono 0 (Fin.last n) (Fin.zero_le _) (by simp) ?_
   simp only [Fin.val_last]
-  exact le_of_lt (rankOf x σ).isLt
+  have := (rankOf x σ).isLt
+  omega
 
 end SortBounds.Projects.SortTree

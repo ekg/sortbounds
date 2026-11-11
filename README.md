@@ -187,8 +187,10 @@ SortBounds/Projects/                research lanes, one directory each
   SAIS/         suffix arrays: cost model (queued)
 ```
 
-See [`docs/PRIOR-ART.md`](docs/PRIOR-ART.md) for the Isabelle, Coq and Lean 4
-prior art with exact theorem statements — including what is *already done* and
+See [`docs/MODELS.md`](docs/MODELS.md) for the reusable frame — one inequality,
+the models it has been instantiated in, what the bound becomes in each, and how
+each model escapes it — and [`docs/PRIOR-ART.md`](docs/PRIOR-ART.md) for the
+Isabelle, Coq and Lean 4 prior art with exact theorem statements — including what is *already done* and
 therefore not worth redoing.
 
 ## Build

@@ -981,7 +981,8 @@ theorem tailRank_zero (M r : ℕ) : tailRank M 0 0 r = r := by
 /-- **The state the insertion phase starts from**, for the attaining input: the `o`-th smallest
 winner in slot `o` with value `M + o`, its partner in slot `m + o` with value `attainVal M 0 o`,
 and the unpaired element of an odd input last. -/
-theorem arranged_transport {m M : ℕ} (hm : 2 * m ≤ n) (hMn : m + M = n) (x : Fin n → ℕ)
+theorem arranged_transport {m M : ℕ} (hm : 2 * m ≤ n) (hMn : m + M = n) (hM : M ≤ m + 1)
+    (x : Fin n → ℕ)
     (τ : Equiv.Perm (Fin m))
     (hw : ∀ o : Fin m, x ⟨(τ o).val, by have := (τ o).isLt; omega⟩ = M + o.val)
     (hl : ∀ o : Fin m, x ⟨m + (τ o).val, by have := (τ o).isLt; omega⟩
@@ -1000,21 +1001,43 @@ theorem arranged_transport {m M : ℕ} (hm : 2 * m ≤ n) (hMn : m + M = n) (x :
     have h2 : s.val < chainLen m M 0 0 := by rw [hcl]; exact hs
     rw [slotVal_of_winner h1 h2, hj0, Nat.add_zero, Nat.sub_zero]
   · rcases lt_or_ge s.val (2 * m) with hs2 | hs2
-    · have htr : transport m hm (1 : Equiv.Perm (Fin n)) τ s
+    · have hse : s = (⟨m + (s.val - m), by omega⟩ : Fin n) := Fin.ext (by simp only; omega)
+      have htr0 := transport_loser (o := s.val - m) m hm (1 : Equiv.Perm (Fin n)) τ
+        (show s.val - m < m by omega)
+      have hped : pendIdx m (show s.val - m < m by omega) = (⟨s.val - m, by omega⟩ : Fin m) := by
+        refine Fin.ext ?_
+        rw [pendIdx_val]
+      have hfin : (1 : Equiv.Perm (Fin n))
+            ⟨m + (τ (pendIdx m (show s.val - m < m by omega))).val, by
+              have := (τ (pendIdx m (show s.val - m < m by omega))).isLt; omega⟩
           = ⟨m + (τ ⟨s.val - m, by omega⟩).val, by
-              have := (τ ⟨s.val - m, by omega⟩).isLt; omega⟩ :=
-        transport_loser (o := s.val - m) m hm 1 τ (by omega)
-      rw [htr, hl ⟨s.val - m, by omega⟩]
-      have h1 : ¬ s.val < jacLo M 0 + 0 := by simp only [hj0, Nat.add_zero]; omega
-      have h2 : ¬ s.val < chainLen m M 0 0 := by rw [hcl]; omega
+              have := (τ ⟨s.val - m, by omega⟩).isLt; omega⟩ := by
+        refine Fin.ext ?_
+        exact congrArg (fun v => m + v) (congrArg Fin.val (congrArg τ hped))
+      have htr : transport m hm (1 : Equiv.Perm (Fin n)) τ ⟨m + (s.val - m), by omega⟩
+          = ⟨m + (τ ⟨s.val - m, by omega⟩).val, by
+              have := (τ ⟨s.val - m, by omega⟩).isLt; omega⟩ := htr0.trans hfin
+      rw [hse, htr, hl ⟨s.val - m, by omega⟩]
+      have hv : (⟨m + (s.val - m), by omega⟩ : Fin n).val = m + (s.val - m) := rfl
+      have h1 : ¬ (⟨m + (s.val - m), by omega⟩ : Fin n).val < jacLo M 0 + 0 := by
+        rw [hv]; simp only [hj0, Nat.add_zero]; omega
+      have h2 : ¬ (⟨m + (s.val - m), by omega⟩ : Fin n).val < chainLen m M 0 0 := by
+        rw [hv, hcl]; omega
       rw [slotVal_of_pending h1 h2, hcl, tailRank_zero]
       congr 1
+      simp only [Fin.val_mk]
       omega
-    · have htr : transport m hm (1 : Equiv.Perm (Fin n)) τ s = ⟨2 * m, by omega⟩ :=
-        transport_last m hm (by omega) 1 τ
-      rw [htr, hlast (by omega)]
-      have h1 : ¬ s.val < jacLo M 0 + 0 := by simp only [hj0, Nat.add_zero]; omega
-      have h2 : ¬ s.val < chainLen m M 0 0 := by rw [hcl]; omega
+    · have hsv : s.val = 2 * m := by omega
+      have hse : s = (⟨2 * m, by omega⟩ : Fin n) := Fin.ext (by simp only; omega)
+      have htr : transport m hm (1 : Equiv.Perm (Fin n)) τ ⟨2 * m, by omega⟩
+          = ⟨2 * m, by omega⟩ := transport_last m hm (by omega) 1 τ
+      rw [hse, htr, hlast (by omega)]
+      have hv : (⟨2 * m, by omega⟩ : Fin n).val = 2 * m := rfl
+      have h1 : ¬ (⟨2 * m, by omega⟩ : Fin n).val < jacLo M 0 + 0 := by
+        rw [hv]; simp only [hj0, Nat.add_zero]; omega
+      have h2 : ¬ (⟨2 * m, by omega⟩ : Fin n).val < chainLen m M 0 0 := by
+        rw [hv, hcl]; omega
       rw [slotVal_of_pending h1 h2, hcl, tailRank_zero]
       congr 1
+      simp only [Fin.val_mk]
       omega

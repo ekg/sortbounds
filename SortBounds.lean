@@ -36,6 +36,9 @@ import SortBounds.Projects.BenOr.Components
 import SortBounds.Projects.BenOr.Bound
 import SortBounds.Projects.BenOr.Witness
 import SortBounds.Projects.SAIS.LCP
+import SortBounds.Projects.SAIS.Array
+import SortBounds.Projects.SAIS.Chain
+import SortBounds.Projects.SAIS.Verify
 import SortBounds.Projects.SortTree.Main
 import SortBounds.Projects.FjTree.Main
 import SortBounds.Projects.FjTree.Correct

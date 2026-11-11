@@ -47,7 +47,8 @@ in the main results (see [`#print axioms`](#axioms)).
 | **open lanes (what is *not* proved)** | |
 | `Projects.SN.S_twelve` (`S 12 = 30`) | open, and **not reachable by counting**: `12! < 2^29`, so any `L ≤ 2^d` is a tree of depth `≤ d` and leaf counting gives only `⌈log₂ 12!⌉ = 29`.  The known proofs are pruned searches (Wells 1971; Peczarski 2004) |
 | `Projects.BenOr.exists_decidesReal_distinct` | an algebraic decision tree of degree `n(n-1)` decides element distinctness — Ben-Or's *bound* is stated, not proved |
-| `Projects.SAIS.cmpFrom_lcp_advance` | comparing two suffixes can start after a known LCP, and the `aⁿ` contrast is cubic-vs-quadratic — the linear-time algorithms are not formalised |
+| **`Projects.SAIS.verify_linear_time`** | **a suffix array is verifiable in exactly `s.length - 1` character inspections** (vs `Θ(n²)` naive), given the LCP array; `compare_lt_iff_saRank_lt` says a verified candidate *is* the suffix array |
+| `Projects.SAIS.inf'_lcpAt_le_lcp` | along *text* positions the LCP array gives only a sound lower bound (that is what licenses skipping); along a *sorted* chain it is the true LCP — `lcp_suffix_eq_inf'_of_increasing`. The naive/guided contrast on `aⁿ` is cubic-vs-quadratic; **sorting** in `O(n log n)` inspections is not formalised |
 | `Projects.XY.pairSums` | the `X+Y` problem is modelled; the generic `N`-item bound is *not* a bound on it (Fredman's `O(n²)` scheme is why) |
 
 Informally: the optimal worst case is `Θ(n log n)`, and that is now a *single-model*

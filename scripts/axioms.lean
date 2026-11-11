@@ -94,3 +94,7 @@ open SortBounds
 #print axioms SortBounds.Projects.SAIS.suffix_compare_eq_of_lcp
 #print axioms SortBounds.Projects.SAIS.cmpFrom_lcp_advance
 #print axioms SortBounds.Projects.SAIS.three_mul_naiveInspectSum
+#print axioms SortBounds.Projects.SAIS.verify_linear_time
+#print axioms SortBounds.Projects.SAIS.compare_lt_iff_saRank_lt
+#print axioms SortBounds.Projects.SAIS.lcp_suffix_eq_inf'_of_increasing
+#print axioms SortBounds.Projects.SAIS.inf'_lcpAt_ne_lcp

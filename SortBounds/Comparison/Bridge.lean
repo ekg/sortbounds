@@ -21,7 +21,7 @@ Contents (M0):
 * `run_liftTree` — the substituted tree behaves as the prefix tree followed by
   the leaf's tree (the nodes are carried along `Fin.castSucc`);
 * `liftTree_correct` — correctness transfers, given a leaf-level hypothesis;
-* `liftTree_depth_le` — depth is the prefix depth plus a leaf bound.
+* `depth_liftTree_le` — depth is the prefix depth plus a leaf bound.
 
 Next (M1): `insertTree (σ : Perm (Fin n)) : Tree (n+1)`, binary search for the
 rank of `x n` among `x (σ 0) < … < x (σ (n-1))`, with leaves

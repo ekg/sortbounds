@@ -14,7 +14,7 @@ machine-checked — i.e. **verified optimality of Ford–Johnson** at those size
 **Machinery already in place (all landed, build green).**
 
 * `Comparison/Bridge.liftTree` — substitute a family `Perm (Fin n) → Tree (n+1)` into
-  the leaves of a prefix tree; `liftTree_correct`, `liftTree_depth_le`.
+  the leaves of a prefix tree; `liftTree_correct`, `depth_liftTree_le`.
 * `Projects/SortTree.insertTree` — given the prefix order `σ`, binary-search the rank
   of `x (last n)` among `x (σ 0) < … < x (σ (n-1))`; `insertTree_correct`,
   `insertTree_depth_le : ≤ ⌈log₂(n+1)⌉ + 1`, and `insertPerm_sorts`.
@@ -40,7 +40,8 @@ open SortBounds
 /-- The decision tree of merge-insertion on `n` elements. -/
 noncomputable def fjTree : (n : ℕ) → Tree n
 theorem fjTree_correct (n : ℕ) : Correct (α := ℕ) (fjTree n)
-/-- Depth is at most the count `fjCountJ`, i.e. the count is realised by a tree. -/
+/-- Depth is at most the count `fjCountJ`.  (A depth bound alone is satisfied by
+any tree, e.g. `Tree.leaf 1`; the content arrives with `fjTree_correct`.) -/
 theorem fjTree_depth_le (n : ℕ) : depth (fjTree n) ≤ fjCountJ n
 
 /-- Hence the least depth is at most Ford–Johnson's count. -/
@@ -113,7 +114,9 @@ sizes.
   `FordJohnson`'s, so there is no sum identity to prove), the level `fjStage` with
   `fjStage_depth : ≤ depth rec + jacInsertCost M`, and the tree
   `fjTreeFuel`/`fjTree n`.  **Landed: `fjTree_depth_le : depth (fjTree n) ≤ fjCountJ n`**
-  — the count is realised by a `Tree n`.
+  — the depth of the tree built by `fjTree` is at most the count.  This is *only* a
+  depth bound: `Tree.leaf 1` satisfies it too, and it says nothing about sorting until
+  `fjTree_correct` lands.
 * **NOT landed (the one open obligation): `fjTree_correct`, hence neither
   `S_le_fjCountJ` nor `S_eq_clog`.**  Everything except the correctness invariant of the
   insertion phase is in place; below is the exact statement that remains.
@@ -123,8 +126,10 @@ sizes.
 `fjTree n` is `pairTree`, then (through `imageTree`) the recursive tree on the winners,
 `transport`, then the insertion phase.  Correctness of the first three stages is proved
 (`pairTree_spec`, `transport_*`, `substTree_correct`/`run_imageTree`).  What is missing
-is the invariant of `insBatches`, to be proved by induction with the recursion (this is
-`P` for `Basic.insSeq_sorts`, which is already generic): for the state `σ` at batch `k`,
+is the invariant of `insBatches`, to be proved by induction with the recursion.  The
+generic transfer lemma `Basic.insSeq_sorts` fixes the item slot at the chain tip, so it
+does **not** apply as-is: the batch phase needs the separate slot `q`, i.e.
+`insSeqAt_sorts`.  With that, the invariant is (for the state `σ` at batch `k`,
 position `j`, with chain length `c = m + jacLo M k + j`,
 
   `ChainSorted x σ c`  ∧  `W ⊆ chainSet σ c`  ∧
@@ -136,7 +141,7 @@ where `W = chainSet ρ m` is the winner set of the pairing state `ρ`,
 `pendBound M k (j+1) o = pendBound M k j (if o < cnt-j-1 then o else o+1)`.
 It is preserved because the pending items after the inserted one keep their slots, and
 the window is then exactly wide enough:
-`rankAt x σ c q ≤ cntWin + (q - m)`, `cntWin ≤ jacLo + cnt - 1 - j`, so
+`rankAt x σ c q ≤ cntWin + (c - m)` (via `Setup.rankAt_le_cntWin`), `cntWin ≤ jacLo + cnt - 1 - j`, so
 `rankAt ≤ 2·jacLo + cnt - 1 = jacLo + jacHi - 1 = w`; note `w` is *exactly* the window
 of `binIns`, with no slack.  The initial invariant (`k = j = 0`) follows from
 `transport_loser` and the pairing fact `x (loser) < x (partner)`; the final one

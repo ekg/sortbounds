@@ -11,7 +11,7 @@ SortBounds/Projects/FjTree/Main.lean
   slots `m … n-1`;
 * `insBatch`/`insBatches` — the insertion phase: the losers are inserted in Jacobsthal
   order, each in a window of `jacLo + jacHi` slots (`jacLo`/`jacHi` are the batch
-  boundaries of `FordJohnson.Jacobsthal`), which makes the depth exactly
+  boundaries of `FordJohnson.Jacobsthal`), which makes the depth at most
   `jacInsertCost` — the same sum by construction, so no arithmetic identification is
   needed.
 
@@ -137,7 +137,7 @@ theorem insBatch_depth (m M : ℕ) (hmM : m + M ≤ n) (hM : M ≤ m + 1) (hM1 :
             + (j * Nat.clog 2 (jacLo M k + jacHi M k) + B) := hstep
       _ = (j + 1) * Nat.clog 2 (jacLo M k + jacHi M k) + B := by ring
 
-/-- **Depth of the insertion phase**: exactly the Jacobsthal batch sum of
+/-- **Depth of the insertion phase**: at most the Jacobsthal batch sum of
 `FordJohnson.jacInsertCostAux`. -/
 theorem insBatches_depth (m M : ℕ) (hmM : m + M ≤ n) (hM : M ≤ m + 1) (hM1 : 1 ≤ M)
     (next : Equiv.Perm (Fin n) → Tree n) (B : ℕ) (hB : ∀ σ, depth (next σ) ≤ B) :
@@ -235,7 +235,8 @@ noncomputable def fjTreeFuel : (fuel n : ℕ) → Tree n
 /-- **The decision tree of merge-insertion on `n` elements.** -/
 noncomputable def fjTree (n : ℕ) : Tree n := fjTreeFuel n n
 
-/-- **`depth (fjTree n) ≤ fjCountJ n`**: the tree realises the literature's count. -/
+/-- **`depth (fjTree n) ≤ fjCountJ n`** for the tree built by `fjTree` — a depth bound
+only; `fjTree_correct` is what makes the tree sort. -/
 theorem fjTreeFuel_depth : ∀ (fuel k : ℕ), k ≤ fuel → depth (fjTreeFuel fuel k) ≤ fjCountJ k
   | 0, k, hk => by
     have hk0 : k = 0 := by omega

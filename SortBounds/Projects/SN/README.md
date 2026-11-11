@@ -192,3 +192,66 @@ machine-checked `S(n)` table found.
     evaluations, so expect a file of a few megabytes and a compile time of tens
     of minutes; that needs its own decision.  Reproducible search for `n ≥ 12`
     (where `⌈log₂ n!⌉` stops being attainable) is a different problem.
+* 2026-11-11 — **the certificate check scales: `correct_of_list_all` and an `n!`-sized
+  enumeration of the canonical inputs** (`Verify.lean`; `Six.lean`/`Seven.lean` moved
+  onto it).  Signatures landed (verbatim):
+
+  ```lean
+  theorem correct_of_list_all {t : Tree n} (L : List (Equiv.Perm (Fin n)))
+      (hL : ∀ p, p ∈ L) (h : L.all (fun p => decide (run t (xOfPerm p) = p)) = true) :
+      Correct (α := ℕ) t
+
+  theorem correct_of_allPerms {t : Tree n}
+      (h : (allPerms n).all (fun p => decide (run t (xOfPerm p) = p)) = true) :
+      Correct (α := ℕ) t
+
+  def allPerms (n : ℕ) : List (Equiv.Perm (Fin n))
+  theorem mem_allPerms (p : Equiv.Perm (Fin n)) : p ∈ allPerms n
+  ```
+
+  Supporting material: `inserts`, `mem_inserts`, `perm_of_mem_inserts`, `permsOf`,
+  `mem_foldr_inserts`, `mem_permsOf : t ∈ permsOf l ↔ t.Perm l` (completeness of the
+  generator), `permOfList`, `permOfList_symm_apply`.
+  * Three constraints shaped this, and all three are checked in Lean.
+    **The kernel must be able to evaluate the list.**  Lean's `List.permutations` is
+    defined by well-founded recursion and `decide` gets *stuck* on it — `example :
+    (List.permutations [1, 2, 3]).length = 6 := by decide` fails with "reduction got
+    stuck at `([1, 2, 3].permutationsAux []).length.beq 5`", and the same happens to
+    `(List.finRange 4).permutations` — so the enumeration is built from ordinary
+    structural recursions, `inserts` and `permsOf`, and `mem_permsOf` is a genuine
+    induction on the list (`List.permutations` itself is *not* used anywhere).
+    **It must not enumerate functions.**  `allPerms n` maps `permOfList` over the `n!`
+    orderings `permsOf (List.finRange n)` (via `attach`, so the `Nodup`/length/`∀ x, x ∈ l`
+    proofs travel with each ordering); it never touches the
+    `Fintype (Equiv.Perm (Fin n))` instance, which filters the `n ^ n` functions
+    `Fin n → Fin n` and was what dominated `decide` at `n = 6, 7`.  **The cheap side has
+    to be the side `xOfPerm` reads**: `xOfPerm p i = (p.symm i : ℕ)`, so `permOfList` is
+    oriented to make `(permOfList l …).symm k = l.get k` the definitional unfolding
+    (`permOfList_symm_apply` is `rfl`), leaving only the leaf equality to pay for
+    `p.toFun`.
+  * Timings (same machine, whole file, `lake env lean <file>`): `Seven.lean` 3 m 20 s →
+    2 m 13 s (`tree7_correct` alone ≈ 75 s), `Six.lean` 25 s → 23 s.  What went away is
+    the per-`n` `n ^ n` filter (`7 ^ 7 = 823543` resp. `6 ^ 6 = 46656` candidate
+    functions, each with a bijectivity decision); what remains is the `n!` tree walks,
+    which is what the certificate *says*.  So at fixed `n` it is a constant-factor win
+    (≈ 1.5× at `n = 7`) and it removes the term that grew like `n ^ n`.
+    Limits: `maxHeartbeats 0` is still needed (the `5040`-element `List.all` fold is
+    longer than the 200000-heartbeat default); `maxRecDepth` is still needed, now
+    `8000` (`Six.lean`) resp. `40000` (`Seven.lean`), because the fold is `n!` elements
+    deep (it was `4000`/`300000`).  `#print axioms` for `S_six`, `tree6_correct`,
+    `correct_of_list_all`, `mem_allPerms`: `[propext, Classical.choice, Quot.sound]` —
+    no `sorryAx`, no `Lean.ofReduceBool`.
+  * **`n = 8` was attempted and is *not* landed** (deliberately: lane `FjTree` landed
+    `S_eq_clog`, which already gives `S 8 = 16`, `S 9 = 19`, `S 10 = 22`, `S 11 = 26`).
+    `python3 search_optimal_tree.py 8 16` finds a depth-`16` tree on eight positions in
+    `6.9 s` — deterministic, unchanged script, and it still reproduces `tree6`/`tree7`
+    byte-for-byte — i.e. `80639` internal nodes, `40320` leaves, a `6.7 MB` Lean literal
+    in `511` pieces at the default `--threshold 120` (regenerate with
+    `--prefix tree8`).  That literal alone elaborates in `2 m 30 s` at `11 GB` RSS, but
+    the whole file, literal plus `tree8_correct := correct_of_allPerms (by decide)`, was
+    still running after `12 min` at `26.7 GB` RSS and was killed.  Nothing is left
+    behind (`Eight.lean` was removed, not kept half-checked).  If it is ever wanted: the
+    `40320`-element `decide` fold is the memory hog (`maxRecDepth ≥ 400000`, and the
+    evaluator keeps the whole lazy value live), so it wants either a *chunked* check
+    (`allPerms 8 = L₁ ++ … ++ Lₖ` with each `Lᵢ.all … = true` decided separately and
+    recombined) or a leaf-labelled certificate instead of a full tree literal.

@@ -1,7 +1,7 @@
 /-
 SortBounds/Projects/SN/Verify.lean
 
-The tools the explicit optimal trees (`Four.lean` … `Eight.lean`) are checked with:
+The tools the explicit optimal trees (`Four.lean` … `Seven.lean`) are checked with:
 
 * `netTree`: read a *comparator sequence* (a sorting network, or any fixed
   sequence of pairwise comparisons) as a comparison tree.  The tree is built in

@@ -10,6 +10,7 @@ import SortBounds.Comparison.Average
 import SortBounds.Comparison.General
 import SortBounds.Comparison.Examples
 import SortBounds.Comparison.Bridge
+import SortBounds.Comparison.Randomized
 import SortBounds.Instances.Radix
 import SortBounds.Instances.MergeSort
 import SortBounds.Instances.Network

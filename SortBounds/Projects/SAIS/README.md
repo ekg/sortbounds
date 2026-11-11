@@ -37,6 +37,40 @@ from), which is the open piece.
 Isabelle AFP `SuffixArray` (SA-IS correctness, 2024); Cheung thesis (SA-IS + BWT);
 Kasai et al. 2001 (LCP in linear time); Manber–Myers 1993; Nong–Zhang–Chan 2009.
 
+## M1 target (opened after `FjTree` and `SortTree` landed)
+
+The LCP question in its precise form: *if you know the LCP, what does a comparison
+cost?* With the machinery in `LCP.lean` (`lcp`, `cmpFrom`, `inspectCount`), the
+answer is: `inspectCount s k i j = 1 + (true lcp - k)`, so a comparison costs **one**
+inspection exactly when the supplied bound is the true LCP. The LCP *array* supplies
+exactly that for neighbouring suffixes, and — the classical min property — for any
+pair it supplies the minimum over the interval:
+
+```lean
+/-- `lcpAt s i` is the LCP of neighbouring suffixes `i` and `i+1`. -/
+def lcpAt (s : List α) (i : ℕ) : ℕ
+
+/-- **The LCP array's min property.**  For `i ≤ j`, the LCP of suffixes `i` and `j`
+is the minimum of `lcpAt` over `[i, j)`. -/
+theorem lcp_eq_inf_lcpAt {s : List α} {i j : ℕ} (hij : i ≤ j) :
+    lcp (suffix s i) (suffix s j) = (Finset.Ico i j).inf' ⟨i, ?_⟩ (lcpAt s)
+
+/-- Hence a comparison guided by the LCP array inspects exactly one position. -/
+theorem inspectCount_of_inf_lcpAt {s} {i j : ℕ} (hij : i ≤ j) :
+    inspectCount s ((Finset.Ico i j).inf' ⟨i, ?_⟩ (lcpAt s)) i j = 1
+
+/-- **A suffix array can be verified in linear inspections.**  If `sa` is a
+permutation of `0..n-1` and each neighbouring pair in `sa` is compared with the LCP
+array's bound, the total inspection count is `sa.length - 1`, versus `Θ(n²)` for
+naive comparison (already proved for `aⁿ`: `naiveInspectSum` is cubic). -/
+theorem sorted_check_linear (sa : List ℕ) : …
+```
+
+Order: M1a `lcpAt` + the min property (the real lemma); M1b
+`inspectCount_of_inf_lcpAt`; M1c the linear-verification corollary if time allows.
+Out of scope: SA-IS itself (Isabelle has its correctness); Kasai's O(n)
+construction of the array (state it, do not prove it).
+
 ## Log
 
 * **M0 landed** (`LCP.lean`). Cost model + the local accounting principle:

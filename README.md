@@ -55,8 +55,6 @@ upper bound (`Instances.msortCount_le`) also exists and is not needed for that.
 
 ## The model
 
-## The model
-
 A deterministic comparison-based algorithm **is** a binary decision tree
 (`SortBounds.Tree`): internal nodes ask `x i < x j?`, leaves carry a candidate
 output permutation. `run` executes the tree on an input, `cost` counts the
@@ -166,14 +164,33 @@ regardless of how the keys are represented.
   KeY (de Gouw, de Boer, Rot, JAR 2014, and the LNCS 10001 chapter) verifies
   counting/radix sort; CLRS-Lean proves an `O(d(n+k))` cost bound.
 
-So: the result is classical and has been machine-checked before (in Isabelle and
-Coq); what this repository adds is a small, readable Lean 4 + Mathlib version
-that (a) derives both the input-attained form and the tree-depth form from one
-elementary counting argument and transfers them to arbitrary value types,
-(b) proves the **average-case** bound, (c) formalizes a matching
-`O(n log n)` upper bound, and (d) places radix sort's correctness,
-comparison-freeness and cost ledger side by side with the lower bound, so the
-"why doesn't radix sort break the bound" question is answered by the code.
+**What is genuinely new here** (as of 2026-11-11, and stated modestly):
+
+1. **`S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`, and `n = 20, 21`** — merge-insertion
+   (Ford–Johnson) proved correct *as a decision tree* and shown to have depth
+   equal to the counting lower bound.  No formalization of this exists elsewhere
+   that we could find.  With `S_pin`, `S n` is pinned to within one comparison for
+   every `n ≤ 22`, and `S_eq_of_fjCountJ_eq` transfers any future size.
+2. **`Θ(n log n)` inside a single model** — `⌈log₂ n!⌉ ≤ S n ≤ n(⌈log₂ n⌉+1)`,
+   both halves about `Tree n`, with no list-model detour (`SortTree`).
+3. **The frame, as a library** — one inequality (Kraft, from Mathlib) gives the
+   worst case for any branching factor, and Gibbs gives the average case for any
+   branching factor; the models it has been instantiated in (comparison trees,
+   sorting networks + the 0-1 principle, radix, `X+Y`, algebraic decision trees,
+   LCP-guided string comparison) are listed with their escape hatches in
+   [`docs/MODELS.md`](docs/MODELS.md).
+4. **Trust machinery** — `make check` fails on a `sorry` in any declaration, on an
+   `axiom` or `native_decide` anywhere in `SortBounds/`, and on any listed theorem
+   depending on `sorryAx`; 79 theorems are audited; CI runs it on every push.  That
+   gate found a real silent failure (a renamed lemma left the audit erroring out
+   while still "passing").
+
+**What is not new**: the `Ω(n log n)` theorem itself (Isabelle 2017, Coq 2015,
+CLRS Thm 8.1), radix sort's correctness (Isabelle, KeY), SA-IS (Isabelle AFP),
+the 0-1 principle (Coq), AKS sorting networks (Lean, `girving/aks`), and the
+literature's exact `S(n)` table — we *re-derive* and cross-check, we do not
+discover.  `S 12 = 30` and the other non-counting lower bounds remain open here
+and everywhere else short of a pruned search.
 
 ## Layout
 

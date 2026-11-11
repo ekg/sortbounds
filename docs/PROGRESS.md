@@ -133,6 +133,10 @@ other models"** — every open lane is about a model where the answer changes.
    (`n! ≤ 2 ^ #comparators` for any sorting network) and
    `logb_factorial_le_length_of_sortsAll`. A network is a comparison algorithm with depth =
    comparator count, so networks win on depth (AKS: `O(log n)`), never on work.
+6a. ~~Network → tree bridge~~ **DONE**: `netTree`/`netTree_depth`/`netTree_run`/`netTree_correct`
+   — a verified network yields a correct `Tree n` of depth = #comparators, so
+   `four_wire_tree` gives a correct 4-wire tree with 5 comparisons *verified on 16 zero-one
+   inputs* instead of 24 orderings.
 6b. ~~0-1 principle~~ **DONE**: `sortsAll_of_sorts_zeroOne` (hypothesis over `Fin n → Fin 2`,
    hence **decidable**), `factorial_le_two_pow_length_of_sorts_zeroOne`, and
    `sorts_zeroOne_three_wire` verified by `decide` over 8 inputs. Concrete networks are now

@@ -20,6 +20,7 @@ and it is where the radix-sort escape visibly *does not* apply: radix sort is no
 a network of comparisons at all.
 -/
 import SortBounds.Comparison.Basic
+import SortBounds.Comparison.Tree
 
 namespace SortBounds
 
@@ -149,6 +150,75 @@ theorem logb_factorial_le_length_of_sortsAll {net : Network n} (h : SortsAll net
   have hpos : (0 : ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
   rw [Real.logb_le_iff_le_rpow (by norm_num : (1 : ℝ) < 2) hpos]
   simpa using hcast
+
+/-! ### From a network to a decision tree
+
+A network is a comparison algorithm with a fixed comparison sequence, so it induces
+a `Tree n` whose depth is exactly the number of comparators.  Hence a verified
+network is a *certificate* that `S n ≤ #comparators`, and the counting bound of
+this file can be read as: such a certificate cannot be shorter than `log₂(n!)`.
+-/
+
+/-- The wire permutation realised by a network, starting from an arbitrary
+accumulated permutation (used to follow the induced decision tree). -/
+def runPermFrom [LinearOrder α] (net : Network n) (x : Fin n → α)
+    (σ : Equiv.Perm (Fin n)) : Equiv.Perm (Fin n) :=
+  net.foldl (fun σ c => if x (σ c.1) ≤ x (σ c.2) then σ else σ * Equiv.swap c.1 c.2) σ
+
+theorem runPerm_eq_runPermFrom [LinearOrder α] (net : Network n) (x : Fin n → α) :
+    runPerm net x = runPermFrom net x 1 := rfl
+
+/-- The decision tree induced by a network: at each comparator, branch on the
+current relative order of its two wires, tracking the realised permutation. -/
+def netTree (net : Network n) (σ : Equiv.Perm (Fin n)) : SortBounds.Tree n :=
+  match net with
+  | [] => SortBounds.Tree.leaf σ
+  | (i, j) :: rest =>
+      SortBounds.Tree.node (σ i) (σ j) (netTree rest σ) (netTree rest (σ * Equiv.swap i j))
+
+/-- The induced tree has depth exactly the number of comparators. -/
+theorem netTree_depth (net : Network n) (σ : Equiv.Perm (Fin n)) :
+    SortBounds.depth (netTree net σ) = net.length := by
+  induction net generalizing σ with
+  | nil => rfl
+  | cons c rest ih =>
+    obtain ⟨i, j⟩ := c
+    simp only [netTree, SortBounds.depth, List.length_cons, ih]
+    omega
+
+/-- Running the induced tree computes the wire permutation of `runPermFrom`.
+Injectivity is needed: on tied values the tree branches on `<` while `runPermFrom`
+branches on `≤`, and injectivity is exactly what makes the two agree. -/
+theorem netTree_run [LinearOrder α] (net : Network n) (σ : Equiv.Perm (Fin n))
+    {x : Fin n → α} (hx : Function.Injective x) :
+    run (netTree net σ) x = runPermFrom net x σ := by
+  induction net generalizing σ with
+  | nil => rfl
+  | cons c rest ih =>
+    obtain ⟨i, j⟩ := c
+    simp only [netTree, run, runPermFrom, List.foldl_cons]
+    by_cases hij : i = j
+    · subst hij
+      have hswap : σ * Equiv.refl (Fin n) = σ := rfl
+      simp only [Equiv.swap_self]
+      rw [hswap, ite_eq_right (lt_irrefl _), ite_eq_left (le_refl _)]
+      exact ih σ
+    · have hne : x (σ i) ≠ x (σ j) := fun he => hij (σ.injective (hx he))
+      by_cases hle : x (σ i) ≤ x (σ j)
+      · have hlt : x (σ i) < x (σ j) := lt_of_le_of_ne hle hne
+        rw [ite_eq_left hlt, ite_eq_left hle]
+        exact ih σ
+      · have hlt : ¬ x (σ i) < x (σ j) := not_lt.mpr (le_of_lt (lt_of_not_ge hle))
+        rw [ite_eq_right hlt, ite_eq_right hle]
+        exact ih (σ * Equiv.swap i j)
+
+/-- **A verified network is an upper bound on the minimal tree depth.**  Any network
+that sorts all inputs yields a correct decision tree of depth `#comparators`. -/
+theorem netTree_correct {net : Network n} (h : SortsAll net) :
+    Correct (α := ℕ) (netTree net 1) := by
+  intro x hx
+  rw [netTree_run net 1 hx]
+  simpa [runPerm_eq_runPermFrom] using sorts_of_sortsAll h x hx
 
 /-! ### Non-vacuity: the one-comparator network on two wires really sorts -/
 

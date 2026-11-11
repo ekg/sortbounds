@@ -295,23 +295,78 @@ theorem insertPerm_sorts {n : ℕ} {σ : Equiv.Perm (Fin n)} {x : Fin (n + 1) �
 
 /-! ### M1: binary search for the insertion rank
 
-The rank of the new element lies in the slot interval `[lo, hi)` (initially
-`[0, n)`); comparing the new element against the candidate in the middle of the
-interval shrinks it by half on either branch.  The invariant carried through the
-recursion is `lo ≤ rankOf x σ ≤ hi`, and the leaves emit `insertPerm σ lo`, which
-is the right permutation exactly when `lo = rankOf x σ`. -/
+The rank of the new element lies in the slot interval `[lo, hi]` (initially
+`[0, n]`); comparing the new element against the candidate in the middle of the
+interval halves it on either branch.  The invariant carried through the recursion
+is `lo ≤ rankOf x σ ≤ hi`, and the leaves emit `insertPerm σ lo`, which is the
+right permutation exactly when `lo = rankOf x σ`. -/
+
+/-- The midpoint of the slot interval `[lo, hi)`, as a natural number. -/
+def midVal {n : ℕ} (lo hi : Fin (n + 1)) : ℕ := lo.val + (hi.val - lo.val) / 2
+
+theorem midVal_def {n : ℕ} (lo hi : Fin (n + 1)) : midVal lo hi = lo.val + (hi.val - lo.val) / 2 :=
+  rfl
+
+theorem le_midVal {n : ℕ} (lo hi : Fin (n + 1)) : lo.val ≤ midVal lo hi :=
+  Nat.le_add_right _ _
+
+theorem midVal_lt_hi {n : ℕ} {lo hi : Fin (n + 1)} (h : lo < hi) : midVal lo hi < hi.val := by
+  have hdiv : (hi.val - lo.val) / 2 < hi.val - lo.val :=
+    Nat.div_lt_self (by omega) (by norm_num)
+  have hsum : lo.val + (hi.val - lo.val) = hi.val := by omega
+  simp only [midVal]
+  omega
+
+theorem midVal_lt {n : ℕ} {lo hi : Fin (n + 1)} (h : lo < hi) : midVal lo hi < n := by
+  have := midVal_lt_hi h
+  have := hi.isLt
+  omega
+
+theorem midVal_succ_le_hi {n : ℕ} {lo hi : Fin (n + 1)} (h : lo < hi) :
+    midVal lo hi + 1 ≤ hi.val := by
+  have := midVal_lt_hi h
+  omega
+
+theorem midVal_succ_lt {n : ℕ} {lo hi : Fin (n + 1)} (h : lo < hi) :
+    midVal lo hi + 1 < n + 1 := by
+  have := midVal_lt_hi h
+  have := hi.isLt
+  omega
+
+theorem midVal_sub_lo {n : ℕ} {lo hi : Fin (n + 1)} (h : lo < hi) :
+    midVal lo hi - lo.val = (hi.val - lo.val) / 2 := by
+  have := le_midVal lo hi
+  simp only [midVal]
+  omega
+
+/-- The middle candidate position of the slot interval. -/
+def midCand {n : ℕ} (lo hi : Fin (n + 1)) (h : lo < hi) : Fin n :=
+  ⟨midVal lo hi, midVal_lt h⟩
+
+@[simp]
+theorem midCand_val {n : ℕ} (lo hi : Fin (n + 1)) (h : lo < hi) :
+    (midCand lo hi h).val = midVal lo hi := rfl
+
+@[simp]
+theorem midCand_castSucc_val {n : ℕ} (lo hi : Fin (n + 1)) (h : lo < hi) :
+    ((midCand lo hi h).castSucc : Fin (n + 1)).val = midVal lo hi := rfl
 
 /-- Binary search for the insertion rank in the slot interval `[lo, hi)`. -/
 noncomputable def insertSearch {n : ℕ} (σ : Equiv.Perm (Fin n)) :
     Fin (n + 1) → Fin (n + 1) → Tree (n + 1)
   | lo, hi =>
     if h : lo < hi then
-      let m := lo.val + (hi.val - lo.val) / 2
-      Tree.node (Fin.last n) (Fin.castSucc (σ ⟨m, by omega⟩))
-        (insertSearch σ lo (Fin.castSucc ⟨m, by omega⟩))
-        (insertSearch σ ⟨m + 1, by omega⟩ hi)
+      Tree.node (Fin.last n) (Fin.castSucc (σ (midCand lo hi h)))
+        (insertSearch σ lo (midCand lo hi h).castSucc)
+        (insertSearch σ ⟨midVal lo hi + 1, midVal_succ_lt h⟩ hi)
     else Tree.leaf (insertPerm σ lo)
 termination_by lo hi => hi.val - lo.val
+decreasing_by
+  · rw [midCand_castSucc_val, midVal_sub_lo h]
+    exact Nat.div_lt_self (by omega) (by norm_num)
+  · have h1 := le_midVal lo hi
+    have h2 := midVal_lt_hi h
+    omega
 
 /-- **The insertion tree**: binary search for the rank of the new element among the
 `n` prefix positions, which are sorted in the order `σ`. -/
@@ -324,17 +379,67 @@ rank. -/
 theorem insertSearch_eq_node {n : ℕ} (σ : Equiv.Perm (Fin n)) {lo hi : Fin (n + 1)}
     (h : lo < hi) :
     insertSearch σ lo hi
-      = Tree.node (Fin.last n) (Fin.castSucc (σ ⟨lo.val + (hi.val - lo.val) / 2, by omega⟩))
-          (insertSearch σ lo (Fin.castSucc ⟨lo.val + (hi.val - lo.val) / 2, by omega⟩))
-          (insertSearch σ ⟨lo.val + (hi.val - lo.val) / 2 + 1, by omega⟩ hi) := by
+      = Tree.node (Fin.last n) (Fin.castSucc (σ (midCand lo hi h)))
+          (insertSearch σ lo (midCand lo hi h).castSucc)
+          (insertSearch σ ⟨midVal lo hi + 1, midVal_succ_lt h⟩ hi) := by
   conv_lhs => rw [insertSearch.eq_def]
-  simp only [dif_pos h]
+  simp only [dite_eq_left h]
 
 /-- The unfolding of `insertSearch` on an empty slot interval: emit the permutation
 for the rank `lo`. -/
 theorem insertSearch_eq_leaf {n : ℕ} (σ : Equiv.Perm (Fin n)) {lo hi : Fin (n + 1)}
     (h : ¬ lo < hi) : insertSearch σ lo hi = Tree.leaf (insertPerm σ lo) := by
   conv_lhs => rw [insertSearch.eq_def]
-  simp only [dif_neg h]
+  simp only [dite_eq_right h]
+
+/-- **The binary search invariant**: if the true rank of the new element lies in the
+slot interval `[lo, hi]`, then `insertSearch` finds it. -/
+theorem insertSearch_sorts {n : ℕ} (σ : Equiv.Perm (Fin n)) {x : Fin (n + 1) → ℕ}
+    (hx : Function.Injective x)
+    (hmono : StrictMono fun k : Fin n => x (Fin.castSucc (σ k))) (lo hi : Fin (n + 1))
+    (hlohi : lo ≤ hi) (hlo : lo.val ≤ (rankOf x σ).val) (hhi : (rankOf x σ).val ≤ hi.val) :
+    Sorts x (run (insertSearch σ lo hi) x) := by
+  revert hlohi hlo hhi
+  induction lo, hi using insertSearch.induct with
+  | case1 lo hi h ih1 ih2 =>
+    intro hlohi hlo hhi
+    rw [insertSearch_eq_node σ h]
+    simp only [run]
+    split_ifs with hlt
+    · -- the new element is below the middle candidate: the rank is at most `midVal`
+      refine ih1 (Fin.le_def.2 (le_midVal lo hi)) hlo ?_
+      by_contra hcon
+      have hcon' : ¬ ((rankOf x σ).val ≤ midVal lo hi) := by
+        simpa only [midCand_castSucc_val] using hcon
+      have hrank : midVal lo hi < (rankOf x σ).val := by omega
+      refine absurd ((below_last_iff hmono (midCand lo hi h)).2 ?_) (not_lt.2 (le_of_lt hlt))
+      simpa only [midCand_val] using hrank
+    · -- the new element is above the middle candidate: the rank is at least `midVal+1`
+      refine ih2 (Fin.le_def.2 (midVal_succ_le_hi h)) ?_ hhi
+      by_contra hcon
+      have hbelow : x (Fin.castSucc (σ (midCand lo hi h))) < x (Fin.last n) := by
+        refine lt_of_le_of_ne (le_of_not_gt hlt) ?_
+        exact fun hc => absurd (hx hc) (Fin.castSucc_ne_last _)
+      have hval : midVal lo hi < (rankOf x σ).val := by
+        simpa only [midCand_val] using (below_last_iff hmono (midCand lo hi h)).1 hbelow
+      omega
+  | case2 lo hi h =>
+    intro hlohi hlo hhi
+    have hle : hi ≤ lo := Fin.not_lt.1 h
+    have hloeq : lo = rankOf x σ := by
+      refine Fin.ext ?_
+      exact le_antisymm hlo (by omega)
+    rw [insertSearch_eq_leaf σ h, hloeq]
+    exact insertPerm_sorts hx hmono
+
+/-- **`insertTree` is correct**: on an injective input whose prefix is sorted by
+`σ`, the binary search tree outputs the sorting permutation. -/
+theorem insertTree_correct {n : ℕ} (σ : Equiv.Perm (Fin n)) {x : Fin (n + 1) → ℕ}
+    (hx : Function.Injective x)
+    (hmono : StrictMono fun k : Fin n => x (Fin.castSucc (σ k))) :
+    Sorts x (run (insertTree σ) x) := by
+  refine insertSearch_sorts σ hx hmono 0 (Fin.last n) (Fin.zero_le _) (by simp) ?_
+  simp only [Fin.val_last]
+  exact le_of_lt (rankOf x σ).isLt
 
 end SortBounds.Projects.SortTree

@@ -195,4 +195,35 @@ theorem three_wire_bound :
     Nat.factorial 3 ≤ 2 ^ ([(0, 1), (1, 2), (0, 1)] : Network 3).length :=
   factorial_le_two_pow_length_of_sorts_zeroOne _ sorts_zeroOne_three_wire
 
+/-! ### The whole pipeline: verify on `2 ^ n` inputs, get a decision tree -/
+
+/-- The classical five-comparator network for four wires: sort the two pairs, then
+merge with three comparators.  Verified on all `2 ^ 4 = 16` zero-one inputs. -/
+theorem sorts_zeroOne_four_wire :
+    ∀ y : Fin 4 → Fin 2,
+      Monotone (netRun [(0, 1), (2, 3), (0, 2), (1, 3), (1, 2)] y) := by
+  decide
+
+theorem sortsAll_four_wire : SortsAll (n := 4) [(0, 1), (2, 3), (0, 2), (1, 3), (1, 2)] :=
+  sortsAll_of_sorts_zeroOne _ sorts_zeroOne_four_wire
+
+/-- **A correct comparison tree on four wires with five comparisons** — obtained
+from the verified network, not from a case analysis over `4!` orderings.  This is
+`S 4 ≤ 5` (`Projects/SN.S_four` proves the matching lower bound `5 ≤ S 4`). -/
+theorem four_wire_tree : ∃ t : Tree 4, Correct (α := ℕ) t ∧ depth t = 5 :=
+  ⟨netTree _ 1, netTree_correct sortsAll_four_wire, by rw [netTree_depth]; rfl⟩
+
+/-- And the counting bound is attained here: `4! = 24 ≤ 2 ^ 5 = 32`. -/
+theorem four_wire_count : Nat.factorial 4 ≤ 2 ^ 5 :=
+  factorial_le_two_pow_length_of_sorts_zeroOne _ sorts_zeroOne_four_wire
+
+/-- A five-wire network with nine comparators, again verified on `2 ^ 5 = 32`
+inputs rather than `5! = 120` orderings (nine is the optimal *network* size for
+five wires; the optimal adaptive count is seven, `Projects/SN.S_five`). -/
+theorem sorts_zeroOne_five_wire :
+    ∀ y : Fin 5 → Fin 2,
+      Monotone (netRun [(0, 1), (3, 4), (2, 4), (2, 3), (1, 4), (0, 3), (0, 2), (1, 3),
+        (1, 2)] y) := by
+  decide
+
 end SortBounds

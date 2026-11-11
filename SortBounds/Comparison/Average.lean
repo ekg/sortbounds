@@ -18,6 +18,7 @@ The analytic content is a single line: `log y ≤ y - 1` for `y > 0`, applied to
 `n! · log(n!) - log 2 · ∑ c p ≤ 0`, i.e. `∑ c p ≥ n! · log₂(n!)`.
 -/
 import SortBounds.Comparison.Aggregate
+import SortBounds.Core.Entropy
 
 namespace SortBounds
 
@@ -98,6 +99,21 @@ theorem avg_cost_ge_log2_factorial {n : ℕ} {t : Tree n} (h : Correct (α := �
     rw [← Real.log_div_log, hN]
   rw [hgoal]
   exact hdiv
+
+/-- **The average case is an instance of the frame.**  The same statement as
+`avg_cost_ge_log2_factorial`, re-derived from `Core.Entropy.mean_cost_ge_logb` with
+`b = 2` and the `n!` canonical inputs — a check that the abstraction in `Core` is the
+right one, not a re-proof.  (Kept beside the direct proof so the two can be compared.) -/
+theorem avg_cost_ge_log2_factorial_via_core {n : ℕ} {t : Tree n}
+    (h : Correct (α := ℕ) t) :
+    Real.logb 2 (Nat.factorial n)
+      ≤ (∑ p : Equiv.Perm (Fin n), (cost t (xOfPerm p) : ℝ)) / (Nat.factorial n) := by
+  have hK : ∑ p : Equiv.Perm (Fin n), (1 / 2 : ℝ) ^ cost t (xOfPerm p) ≤ 1 :=
+    sum_pow_cost_univ_le_one h
+  have hcard : 0 < Fintype.card (Equiv.Perm (Fin n)) := Fintype.card_pos_iff.mpr inferInstance
+  have key := mean_cost_ge_logb (ι := Equiv.Perm (Fin n)) (b := 2) (by norm_num) hcard
+    (fun p => cost t (xOfPerm p)) hK
+  rwa [Fintype.card_perm, Fintype.card_fin] at key
 
 /-- **Worst-case lower bound.**  Every `(1/2) ^ c p` is at least `(1/2) ^ M`, where
 `M` is the maximum number of comparisons; since the weights sum to at most `1`,

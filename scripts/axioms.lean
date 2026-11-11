@@ -12,7 +12,6 @@ open SortBounds
 #print axioms SortBounds.Sorts.unique
 #print axioms SortBounds.factorial_le_two_pow_depth
 #print axioms SortBounds.mean_cost_ge_logb
-#print axioms SortBounds.mean_cost_ge_logb_finset
 #print axioms SortBounds.exists_depth_le_of_cost_le
 #print axioms SortBounds.run_prune
 #print axioms SortBounds.factorial_le_two_pow_worstCase
@@ -22,6 +21,7 @@ open SortBounds
 #print axioms SortBounds.exists_input_cost_ge_quarter
 #print axioms SortBounds.not_forall_cost_lt_quarter
 #print axioms SortBounds.avg_cost_ge_log2_factorial
+#print axioms SortBounds.avg_cost_ge_log2_factorial_via_core
 #print axioms SortBounds.max_cost_ge_log2_factorial
 #print axioms SortBounds.exists_input_cost_ge_of_orderEmb
 #print axioms SortBounds.exists_input_cost_ge_quarter_of_orderEmb

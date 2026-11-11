@@ -269,7 +269,7 @@ theorem insertJacobsthal_eq (items : List (Option ℕ × ℕ)) (ws : List ℕ)
     (hitem_ws : ∀ q ∈ items, ∀ w ∈ ws, q.2 < w)
     (hitem_le : ∀ q ∈ items, ∀ b : ℕ, q.1 = some b → q.2 ≤ b)
     (hmono : ∀ k : ℕ, (jacBatch items k).Pairwise (fun p q => q.2 ≤ p.2))
-    (hcross : ∀ (k k' : ℕ) (q p : Option ℕ × ℕ), k ≤ k' → q ∈ jacBatch items k' →
+    (hcross : ∀ (k k' : ℕ) (q p : Option ℕ × ℕ), k < k' → q ∈ jacBatch items k' →
       p ∈ jacBatch items k → q.2 ≤ p.2) :
     ∀ (fuel k : ℕ) (l ins : List ℕ), l.Perm (ws ++ ins) → ins.length = jacLo items.length k →
       l.Pairwise (· ≤ ·) → (∀ y ∈ ins, ∀ w ∈ ws, y < w) →
@@ -348,11 +348,159 @@ theorem insertJacobsthal_eq (items : List (Option ℕ × ℕ)) (ws : List ℕ)
         rcases List.mem_append.mp hy with h | h
         · exact hins_q y h k' (le_trans (Nat.le_succ k) hk') q hq
         · obtain ⟨p, hp, rfl⟩ := List.mem_map.mp h
-          exact hcross k k' q p (le_trans (Nat.le_succ k) hk') hq hp)
+          exact hcross k k' q p (by omega) hq hp)
     have hstep : (insertJacobsthal items (fuel + 1) k l).1
         = (insertBatch (jacBatch items k) l).1
           + (insertJacobsthal items fuel (k + 1) (insertBatch (jacBatch items k) l).2).1 := rfl
     rw [hstep, hbatch', htail]
     simp only [jacInsertCostAux, jacLo, jacHi]
+
+/-! ### The insertion order as a function of the rank -/
+
+/-- `jacPred k = jac (k-1)`: the first rank of batch `k` is the last rank of batch `k-1`. -/
+theorem jacPred_eq_of_pos {k : ℕ} (hk : 0 < k) : jacPred k = jac (k - 1) := by
+  cases k with
+  | zero => omega
+  | succ j => rw [jacPred_succ]
+
+/-- Every rank lies in some batch, because `jac` dominates the identity. -/
+theorem jacBatchOf_exists (j : ℕ) : ∃ k, j < jac k := ⟨j, by have := le_jac j; omega⟩
+
+/-- **The batch holding rank `j`**: the least `k` with `j < jac k`, so that batch `k` holds the
+ranks `jacPred k … jac k - 1`. -/
+def jacBatchOf (j : ℕ) : ℕ := Nat.find (jacBatchOf_exists j)
+
+theorem jacBatchOf_spec (j : ℕ) : j < jac (jacBatchOf j) := Nat.find_spec (jacBatchOf_exists j)
+
+theorem jacBatchOf_le {j k : ℕ} (h : j < jac k) : jacBatchOf j ≤ k :=
+  Nat.find_min' (jacBatchOf_exists j) h
+
+/-- No rank is below the start of its own batch. -/
+theorem jacPred_jacBatchOf_le (j : ℕ) : jacPred (jacBatchOf j) ≤ j := by
+  rcases Nat.eq_zero_or_pos (jacBatchOf j) with h0 | h0
+  · simp [h0, jacPred]
+  · by_contra hcon
+    have hp : j < jac (jacBatchOf j - 1) := by
+      rw [← jacPred_eq_of_pos h0]
+      omega
+    have := jacBatchOf_le hp
+    omega
+
+/-- A rank is in the batch `k` exactly when `jacPred k ≤ j < jac k`. -/
+theorem jacBatchOf_eq {j k : ℕ} (h1 : j < jac k) (h2 : jacPred k ≤ j) : jacBatchOf j = k := by
+  refine le_antisymm (jacBatchOf_le h1) ?_
+  rcases Nat.eq_zero_or_pos k with hk | hk
+  · simp [hk]
+  · by_contra hcon
+    have hspec := jacBatchOf_spec j
+    have h2' : jac (k - 1) ≤ j := by
+      rw [← jacPred_eq_of_pos hk]
+      exact h2
+    have hmono : jac (jacBatchOf j) ≤ jac (k - 1) := jac_strictMono.monotone (by omega)
+    omega
+
+/-- `jacLo` is monotone in the batch index. -/
+theorem jacLo_mono (M : ℕ) {k k' : ℕ} (h : k ≤ k') : jacLo M k ≤ jacLo M k' := by
+  refine min_le_min_left M ?_
+  rcases Nat.eq_zero_or_pos k with rfl | hk
+  · exact Nat.zero_le _
+  · have hmono : jac (k - 1) ≤ jac (k' - 1) := jac_strictMono.monotone (by omega)
+    rwa [jacPred_eq_of_pos hk, jacPred_eq_of_pos (by omega)]
+
+/-- The batches tile the order: the largest window of batch `k` is still below the smallest
+window of any later batch. -/
+theorem jacHi_le_jacLo (M : ℕ) {k k' : ℕ} (h : k < k') : jacHi M k ≤ jacLo M k' :=
+  le_trans (le_of_eq (jacLo_succ M k).symm) (jacLo_mono M (by omega))
+
+/-! ### The values of the attaining input
+
+With `M` items to insert into a chain whose winners form the block `[K+M, K+M+m)`, the item of
+rank `j` gets the value `K + M - 1 - t(j)`, where `t(j) = jacLo + jacHi - 1 - j` counts the
+items inserted before it in the Jacobsthal order: the values of the items decrease along that
+order, so every item lies below everything already inserted and below every winner. -/
+
+/-- `t(j)`: the number of items inserted before the item of rank `j`. -/
+def attainT (M j : ℕ) : ℕ := jacLo M (jacBatchOf j) + jacHi M (jacBatchOf j) - 1 - j
+
+/-- The value of the item of rank `j`, the `(t(j)+1)`-st smallest of the `M` values
+`K … K + M - 1`. -/
+def attainVal (M K j : ℕ) : ℕ := K + (M - 1 - attainT M j)
+
+theorem jacLo_jacBatchOf_le (M j : ℕ) : jacLo M (jacBatchOf j) ≤ j :=
+  (min_le_right _ _).trans (jacPred_jacBatchOf_le j)
+
+theorem lt_jacHi_jacBatchOf (M j : ℕ) (hj : j < M) : j < jacHi M (jacBatchOf j) :=
+  lt_min hj (jacBatchOf_spec j)
+
+/-- `t(j)` is a position among the `M` items, so it is at most `M - 1`. -/
+theorem attainT_le (M j : ℕ) (hj : j < M) : attainT M j ≤ M - 1 := by
+  have h1 : jacLo M (jacBatchOf j) ≤ j := jacLo_jacBatchOf_le M j
+  have h2 : j < jacHi M (jacBatchOf j) := lt_jacHi_jacBatchOf M j hj
+  have h3 : jacHi M (jacBatchOf j) ≤ M := jacHi_le _ _
+  simp only [attainT]
+  omega
+
+/-- Within one batch the values increase with the rank (the batch is inserted in decreasing
+rank order). -/
+theorem attainT_lt_of_batch_eq (M j j' : ℕ) (h : j < j')
+    (hb : jacBatchOf j = jacBatchOf j') : attainT M j' < attainT M j := by
+  simp only [attainT, hb]
+  omega
+
+/-- Across batches the values decrease: everything inserted in a later batch lies below
+everything inserted in an earlier one. -/
+theorem attainT_lt_of_batch_lt (M j j' : ℕ) (hj : j < M) (hj' : j' < M)
+    (hb : jacBatchOf j < jacBatchOf j') : attainT M j < attainT M j' := by
+  have h1 : jacLo M (jacBatchOf j) ≤ j := jacLo_jacBatchOf_le M j
+  have h2 : j < jacHi M (jacBatchOf j) := lt_jacHi_jacBatchOf M j hj
+  have h3 : jacLo M (jacBatchOf j') ≤ j' := jacLo_jacBatchOf_le M j'
+  have h4 : j' < jacHi M (jacBatchOf j') := lt_jacHi_jacBatchOf M j' hj'
+  have h5 : jacHi M (jacBatchOf j) ≤ jacLo M (jacBatchOf j') := jacHi_le_jacLo M hb
+  simp only [attainT]
+  omega
+
+/-- The position `t` determines the rank: the batches partition the insertion order. -/
+theorem attainT_inj (M j j' : ℕ) (hj : j < M) (hj' : j' < M)
+    (h : attainT M j = attainT M j') : j = j' := by
+  rcases lt_trichotomy (jacBatchOf j) (jacBatchOf j') with hb | hb | hb
+  · have := attainT_lt_of_batch_lt M j j' hj hj' hb; omega
+  · rcases lt_trichotomy j j' with hlt | hlt | hlt
+    · have := attainT_lt_of_batch_eq M j j' hlt hb; omega
+    · exact hlt
+    · have := attainT_lt_of_batch_eq M j' j hlt hb.symm; omega
+  · have := attainT_lt_of_batch_lt M j' j hj' hj hb; omega
+
+/-- The values of the items are strictly between `K` and `K + M`. -/
+theorem attainVal_lt (M K j : ℕ) (hj : j < M) : attainVal M K j < K + M := by
+  have := attainT_le M j hj
+  simp only [attainVal]
+  omega
+
+theorem attainVal_le_self (M K j : ℕ) : attainVal M K j ≤ K + M + j :=
+  le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _)
+
+/-- Within one batch, the values increase with the rank. -/
+theorem attainVal_lt_of_batch_eq (M K j j' : ℕ) (hj : j < M) (hj' : j' < M) (h : j < j')
+    (hb : jacBatchOf j = jacBatchOf j') : attainVal M K j < attainVal M K j' := by
+  have h1 := attainT_lt_of_batch_eq M j j' h hb
+  have h2 := attainT_le M j' hj'
+  simp only [attainVal]
+  omega
+
+/-- Across batches the values decrease. -/
+theorem attainVal_lt_of_batch_lt (M K j j' : ℕ) (hj : j < M) (hj' : j' < M)
+    (hb : jacBatchOf j < jacBatchOf j') : attainVal M K j' < attainVal M K j := by
+  have h1 := attainT_lt_of_batch_lt M j j' hj hj' hb
+  have h2 := attainT_le M j hj
+  simp only [attainVal]
+  omega
+
+/-- The item values are distinct. -/
+theorem attainVal_inj (M K j j' : ℕ) (hj : j < M) (hj' : j' < M)
+    (h : attainVal M K j = attainVal M K j') : j = j' := by
+  have h1 := attainT_le M j hj
+  have h2 := attainT_le M j' hj'
+  simp only [attainVal] at h
+  exact attainT_inj M j j' hj hj' (by omega)
 
 end SortBounds.Projects.FordJohnson

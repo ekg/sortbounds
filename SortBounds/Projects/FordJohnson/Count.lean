@@ -68,10 +68,10 @@ theorem pow_clog_two_le (m : ℕ) (hm : 1 ≤ m) : 2 ^ Nat.clog 2 m ≤ m + m :=
   · simp
   · have hpos : 0 < Nat.clog 2 m := Nat.clog_pos (by norm_num) hm2
     have hlt := Nat.pow_pred_clog_lt_self (b := 2) (by norm_num) hm2
+    obtain ⟨k, hk⟩ := Nat.exists_eq_succ_of_ne_zero (Nat.pos_iff_ne_zero.mp hpos)
     have hsplit : 2 ^ Nat.clog 2 m = 2 * 2 ^ (Nat.clog 2 m).pred := by
-      conv_lhs => rw [show Nat.clog 2 m = (Nat.clog 2 m).pred + 1 by
-        rw [Nat.succ_pred_eq_of_pos hpos]]
-      rw [pow_succ']
+      rw [hk, pow_succ']
+      rfl
     rw [hsplit]
     have := Nat.mul_le_mul_left 2 hlt.le
     omega
@@ -98,49 +98,61 @@ theorem clog_two_mul_add_one_le (m : ℕ) : Nat.clog 2 (m + m + 1) ≤ Nat.clog 
 
 /-! ### The count of merge-insertion is `O(n log n)` -/
 
+/-- The recurrence of `fjCount` at an even argument: no unpaired element to insert. -/
+theorem fjCount_two_mul (m : ℕ) (hm : 1 ≤ m) :
+    fjCount (2 * m) = m + fjCount m + loserCost m := by
+  rw [fjCount]
+  split
+  · omega
+  · rw [show 2 * m / 2 = m by omega, show 2 * m % 2 = 0 by omega]
+    simp
+
+/-- The recurrence of `fjCount` at an odd argument: the unpaired element is inserted last,
+into a chain of `2m` elements. -/
+theorem fjCount_two_mul_add_one (m : ℕ) (hm : 1 ≤ m) :
+    fjCount (2 * m + 1) = m + fjCount m + loserCost m + Nat.clog 2 (2 * m + 1) := by
+  rw [fjCount]
+  split
+  · omega
+  · rw [show (2 * m + 1) / 2 = m by omega, show (2 * m + 1) % 2 = 1 by omega]
+    simp
+
 /-- **Merge-insertion is an `n log n` algorithm.**  The count `fjCount` of the schedule
 implemented by `fjSort` satisfies `fjCount n ≤ n (⌈log₂ n⌉ + 1)`.
 
 Recurrence: `⌊n/2⌋` comparisons pair the elements, the recursive call on the `⌊n/2⌋`
 winners costs `⌈log₂ (n/2)⌉ + 1` bits per winner, each of the `⌊n/2⌋` losers costs at most
 `⌈log₂ (n/2)⌉ + 1` comparisons, and the unpaired element costs two bits more than
-`⌈log₂ (n/2)⌉` at worst — the slack of `2⌊n/2⌋` elements covers it. -/
+`⌈log₂ (n/2)⌉` at worst — which the slack of `2⌊n/2⌋` elements covers. -/
 theorem fjCount_le (n : ℕ) : fjCount n ≤ n * (Nat.clog 2 n + 1) := by
   induction n using Nat.strong_induction_on with
   | h n ih =>
     rcases Nat.lt_or_ge n 2 with hlt | hge
     · interval_cases n <;> simp [fjCount]
-    · rcases Nat.even_or_odd n with ⟨m, hm⟩ | ⟨m, hm⟩
+    · rcases Nat.mod_two_eq_zero_or_one n with hpar | hpar
       · -- `n = 2m`: no unpaired element
+        obtain ⟨m, hm⟩ : ∃ m, n = 2 * m := ⟨n / 2, by omega⟩
         subst hm
         have hm1 : 1 ≤ m := by omega
-        have hstep : fjCount (m + m) = m + fjCount m + loserCost m := by
-          rw [fjCount]
-          rw [if_neg (by omega : ¬ m + m < 2)]
-          rw [show (m + m) / 2 = m by omega, show (m + m) % 2 = 0 by omega]
-          simp
-        rw [hstep]
+        rw [fjCount_two_mul m hm1]
         have hrec : fjCount m ≤ m * (Nat.clog 2 m + 1) := ih m (by omega)
         have hlos : loserCost m ≤ m * (Nat.clog 2 m + 1) := by
-          have := loserCost_le m
-          rwa [clog_two_add m hm1] at this
+          have h := loserCost_le m
+          rwa [clog_two_add m hm1] at h
         have hclog : Nat.clog 2 (m + m) = Nat.clog 2 m + 1 := clog_two_add m hm1
-        rw [hclog]
+        have htwo : 2 * m = m + m := by omega
+        rw [htwo, hclog]
         nlinarith
       · -- `n = 2m+1`: the unpaired element costs at most two extra bits
+        obtain ⟨m, hm⟩ : ∃ m, n = 2 * m + 1 := ⟨n / 2, by omega⟩
         subst hm
         have hm1 : 1 ≤ m := by omega
-        have hstep : fjCount (m + m + 1) =
-            m + fjCount m + loserCost m + Nat.clog 2 (m + m + 1) := by
-          rw [fjCount]
-          rw [if_neg (by omega : ¬ m + m + 1 < 2)]
-          rw [show (m + m + 1) / 2 = m by omega, show (m + m + 1) % 2 = 1 by omega]
-          simp
-        rw [hstep]
+        rw [fjCount_two_mul_add_one m hm1]
         have hrec : fjCount m ≤ m * (Nat.clog 2 m + 1) := ih m (by omega)
         have hlos : loserCost m ≤ m * (Nat.clog 2 m + 1) := by
-          have := loserCost_le m
-          rwa [clog_two_add m hm1] at this
+          have h := loserCost_le m
+          rwa [clog_two_add m hm1] at h
+        rw [show 2 * m + 1 = m + m + 1 by omega]
         have hbig := clog_two_mul_add_lt m hm1
         have hsmall := clog_two_mul_add_one_le m
         nlinarith

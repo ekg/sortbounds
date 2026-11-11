@@ -32,7 +32,10 @@ theorem S_one : S 1 = 0
 theorem S_two : S 2 = 1
 theorem S_three : S 3 = 3
 
-/-- M2 — **NOT PROVED YET** (kept here as the target, not as a claim). -/
+/-- M2 — **partly proved**: `S_four` and `S_five` in `Four.lean`/`Five.lean` are
+the `n = 4, 5` cases; the general statement is still the target, not a claim. -/
+theorem S_four : S 4 = 5
+theorem S_five : S 5 = 7
 theorem S_eq_clog (n) (h : n ≤ 11) : S n = Nat.clog 2 (Nat.factorial n)
 
 /-- M3 — **NOT PROVED YET** (research-level: `⌈log₂ 12!⌉ = 29 < 30`). -/
@@ -41,8 +44,13 @@ theorem S_twelve : S 12 = 30
 end SortBounds.Projects.SN
 ```
 
-**Status: M0 + M1 landed; M2 and M3 are open.** The contract block above lists all
-three so the targets stay pinned; only the first six signatures exist in code.
+**Status: M0 + M1 landed, M2 in progress (`S 4 = 5` and `S 5 = 7` landed),
+M3 open.** The contract block above lists all three milestones so the targets stay
+pinned; `S_eq_clog` and `S_twelve` do not exist in code yet.
+
+Files: `Basic.lean` (M0), `Small.lean` (M1), `Verify.lean` (tree builders and the
+canonical-input correctness reduction), `Four.lean` (`S 4 = 5`), `Five.lean`
+(`S 5 = 7`).  Build them in that order (`Verify` before `Four`/`Five`).
 
 ## Milestones
 
@@ -92,3 +100,40 @@ machine-checked `S(n)` table found.
     (`S 12 = 30`).  M2 still needs the generator/optimal-tree construction that
     the milestone notes expect from `FordJohnson` M1, plus correctness proofs
     for trees of depth up to 26; out of scope for this pass.
+* 2026-11-11 — **M2, first two cases landed**: `S_four : S 4 = 5` and
+  `S_five : S 5 = 7`, no `sorry` (`Verify.lean`, `Four.lean`, `Five.lean`).
+  * `Verify.lean` carries the two tools the explicit trees need, both generic in
+    `n`:
+    * `netTree` folds a fixed comparator sequence (a sorting network) into a
+      `Tree`, in wire coordinates, with `netTree_depth : depth (netTree ps π) =
+      ps.length`; `swapProd` writes a leaf permutation as a product of
+      transpositions.
+    * `correct_of_forall_run_xOfPerm : (∀ p, run t (xOfPerm p) = p) → Correct t`.
+      This is the load-bearing reduction: `run` depends only on the comparison
+      pattern (`run_eq_of_pattern`), and an injective input has the pattern of one
+      of the `n!` canonical inputs `xOfPerm p` (`pattern_rankPerm` on the ranking
+      permutation `rankPerm`, reused from `SortBounds/Comparison/General.lean`
+      rather than re-derived) — so *correctness on the `n!` canonical inputs
+      implies correctness*, and those `n!` checks are a finite computation the
+      kernel can do (`decide`).
+  * `Four.lean`: the upper bound is the classical five-comparator network
+    `(0,1),(2,3),(0,2),(1,3),(1,2)` (`tree4`), so depth `= 5` from the length of
+    the sequence; `tree4_correct` is the canonical-input check.
+  * `Five.lean`: seven comparisons is below the nine comparators of the optimal
+    five-wire network, so `tree5` is an adaptive tree (119 internal nodes, `120`
+    leaves, depth `7`, every node annotated with the number of orderings still
+    consistent with the answers that reach it).  Its skeleton was produced by an
+    exhaustive search over knowledge states *outside* Lean (239 states); the
+    search is not formalised, but nothing else is taken on trust:
+    `tree5_depth = 7`, `tree5_numLeaves = 120` and `tree5_correct` are all
+    kernel-checked, the last one again through
+    `correct_of_forall_run_xOfPerm`.
+  * Deliberate duplication: none.  `Five.lean` does not import the `FordJohnson`
+    lane; the tree is a decision tree, not a counted algorithm.
+  * `#print axioms` for `S_four`, `S_five`, `tree4_correct`, `tree5_correct`:
+    `[propext, Classical.choice, Quot.sound]` — no `sorryAx`, no
+    `Lean.ofReduceBool`.
+  * Next for M2: `n = 6` (10 comparisons, `720` canonical inputs) needs the same
+    machinery; the `decide` check grows to `720` kernel evaluations of a
+    depth-`10` tree, and the tree itself is best taken from a merge-insertion
+    construction (`FordJohnson` M1 gives the shape) rather than from a search.

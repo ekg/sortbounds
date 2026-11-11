@@ -17,10 +17,10 @@ This file exhibits the witnesses.
 * `exists_decidesReal_distinct` — **element distinctness is decided by a tree of
   degree `n * (n - 1)`**: one test, the polynomial `-(∏ p, (x p.1 - x p.2) ^ 2)`,
   is negative exactly on the distinct points.  This is the witness that the lane's
-  `decidesReal (distinctSet n)` hypothesis is satisfiable, and it is also why the
-  degree bound in `ADT.degreeLe` is not decoration: with `d = n * (n - 1)` the
-  height drops to `1`, so the *content* of Ben-Or's bound lives entirely in the
-  dependence of the constant on the fixed degree `d`.
+  `decidesReal (distinctSet n)` hypothesis is satisfiable.  It also shows why the
+  degree hypothesis is load-bearing rather than decoration: the same tree has
+  height `1`, so any statement of the bound with the degree allowed to grow with
+  `n` (here `d = n * (n - 1)`) would be false, and `d` has to be fixed.
 
 The sign argument is carried out over an arbitrary linear ordered field `K`, so it
 serves both semantics of the lane: `K = ℝ` with `f = algebraMap ℚ ℝ` is
@@ -85,9 +85,9 @@ theorem totalDegree_pair_sq_le (n : ℕ) (p : Fin n × Fin n) :
     _ ≤ 2 * 1 := Nat.mul_le_mul_left 2 hsub
     _ = 2 := by norm_num
 
-/-- **The degree of the distinctness test**: at most one per ordered pair of
-distinct coordinates, i.e. `n * (n - 1)`.  Exact, not slack: the product of `s`
-squares has total degree `2 * s` and there are `n.choose 2` pairs. -/
+/-- **The degree of the distinctness test**: at most `n * (n - 1)`, i.e. `2` per
+unordered coordinate pair (`n.choose 2` of them).  Only this inequality is needed
+by the witness. -/
 theorem totalDegree_distinctnessPoly_le (n : ℕ) :
     (distinctnessPoly n).totalDegree ≤ n * (n - 1) := by
   have h1 : (distinctnessPoly n).totalDegree
@@ -202,6 +202,38 @@ which is why Ben-Or's bound cannot be improved by dropping the degree hypothesis
 theorem exists_decidesReal_distinct (n : ℕ) :
     ∃ t : ADT n, t.degreeLe (n * (n - 1)) ∧ t.decidesReal (distinctSet n) :=
   ⟨distinctnessTree n, distinctnessTree_degreeLe n, distinctnessTree_decidesReal n⟩
+
+/-- Element distinctness is inhabited: the input `x i = i` has no collision.  With
+`distinctSet_ne_univ` this says `distinctSet n` is a nontrivial subset for
+`n ≥ 2`, so the hypothesis `decidesReal (distinctSet n)` cannot be met by a
+tree that never branches. -/
+theorem distinctSet_nonempty (n : ℕ) : (distinctSet n).Nonempty :=
+  ⟨fun i => (i : ℝ), fun _ _ h => Fin.ext (Nat.cast_injective h)⟩
+
+/-- The second half of non-triviality: for `n ≥ 2` the distinctness set is a
+*proper* subset of the inputs (the constant input has a collision). -/
+theorem distinctSet_ne_univ {n : ℕ} (hn : 2 ≤ n) : distinctSet n ≠ Set.univ := by
+  intro h
+  have hmem : (fun _ : Fin n => (0 : ℝ)) ∈ distinctSet n := by
+    rw [h]; exact Set.mem_univ _
+  have hij : (⟨0, by omega⟩ : Fin n) = ⟨1, by omega⟩ := hmem rfl
+  simp at hij
+
+/-- **A leaf cannot decide element distinctness** (`n ≥ 2`): with no test, the
+tree either accepts everything (contradicting `distinctSet_ne_univ`) or nothing
+(contradicting `distinctSet_nonempty`).  So `exists_decidesReal_distinct` needs a
+tree that genuinely branches — the hypothesis is not satisfied by a constant. -/
+theorem leaf_not_decidesReal_distinct {n : ℕ} (hn : 2 ≤ n) (b : Bool) :
+    ¬ (ADT.leaf b).decidesReal (distinctSet n) := by
+  intro h
+  cases b
+  · obtain ⟨x, hx⟩ := distinctSet_nonempty n
+    have hb : ADT.runReal (ADT.leaf false) x = false := rfl
+    have : ADT.runReal (ADT.leaf false) x = true := (h x).mpr hx
+    rw [hb] at this
+    exact Bool.noConfusion this
+  · have hall : ∀ x : Fin n → ℝ, x ∈ distinctSet n := fun x => (h x).mp rfl
+    exact distinctSet_ne_univ hn (Set.eq_univ_of_forall hall)
 
 /-- **The half-line witness in the real semantics**: the contract's one-test tree
 `halfLineTree` decides `{x | 0 ≤ x 0}` at real points too.  Together with

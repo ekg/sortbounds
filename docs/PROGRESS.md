@@ -25,8 +25,8 @@ other models"** — every open lane is about a model where the answer changes.
 | `FordJohnson` | exact comparison counts, upper bound | `fjSort_count_le` (`fjCount`), `insertCount_count` | **M1 DONE** | M2/M3 open |
 | `SN` | exact `S(n)`, both bounds | `exists_correct_tree`, `S_spec`, `S_le_iff`, `S_lower`, `S 0..3` | **M1 DONE** | M2/M3 open |
 | `XY` | sorting `X+Y` | `pairSums`, `pairSums_card_le`, `naivePairsSorted_*` | **M1 DONE** | M2 gated |
-| `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement) | **M0 DONE** | M1+ gated |
-| `SAIS` | suffix arrays, cost model | `…` | **QUEUED** | — |
+| `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement), `exists_decidesReal_distinct` | **M0 DONE** (semantics now witnessed) | M1+ gated |
+| `SAIS` | suffix arrays, cost model | `cmpFrom` soundness, `inspectCount_replicate`, `three_mul_naiveInspectSum` (cubic vs quadratic) | **M0 DONE** | M1 needs LCP-array construction |
 
 ## Decisions (and why)
 
@@ -70,10 +70,21 @@ other models"** — every open lane is about a model where the answer changes.
   generic `N`-item bound re-indexed, and Fredman's `O(n²)` scheme is exactly why
   it does not apply to sums.
 * **BenOr** — `ADT`, `height`, `numCells`, `run`, `decides`, `degreeLe`,
-  `ADT.card_cells_le`, plus the *statements* `BenOrBound`,
-  `ElementDistinctHeightBound`, `elementDistinctComponents`. Review found no
-  witness that `decidesReal (distinctSet n)` is satisfiable (vacuity risk on the
-  unproved statements); the witness lemma is the next task.
+  `ADT.card_cells_le`, the *statements* `BenOrBound`,
+  `ElementDistinctHeightBound`, `elementDistinctComponents`, **and now the
+  non-vacuity witnesses**: `exists_decidesReal_distinct` (a tree of degree
+  `n(n-1)` deciding element distinctness via `-(∏ᵢ<ⱼ (xᵢ-xⱼ)²)`, so
+  `decidesReal (distinctSet n)` is satisfiable) and `halfLineTree_decidesReal`
+  for the real semantics. The vacuity risk flagged by review is closed.
+* **SAIS** — M0 landed (`LCP.lean`, 657 lines): `suffix`, `lcp`, `cmpCounted`
+  with `cmpCounted_snd = lcp + 1`, `cmpFrom` (comparison that starts after a
+  supplied LCP bound) with `suffix_compare_eq_of_lcp` and `cmpFrom_lcp_advance`
+  (soundness of the skip), the per-comparison inspection count, and the exact
+  `aⁿ` contrast: `naiveInspectSum = n(n-1)(n+4)/6` vs
+  `guidedInspectSum = n(n-1)/2`, i.e. `3·naive = (n+4)·guided`. Review caught
+  three prose errors (labelled quadratic/linear when it is cubic/quadratic,
+  "characters" where the model charges *positions*, an off-by-one in `j = n+1`),
+  all fixed.
 
 ## Blockers and dependencies
 
@@ -118,6 +129,7 @@ truth discipline).
 
 | Date | Change |
 | --- | --- |
+| 2026-11-11 | Round-2 partial integration: BenOr witnesses (vacuity closed), SAIS cost model M0 (cubic-vs-quadratic `aⁿ` contrast), review prose fixes. |
 | 2026-11-11 | `Instances.Network`: sorting networks cannot beat the bound in comparator count (`n! ≤ 2^k`), only in depth. Round-2 lanes launched with 4h deadlines (BenOr witness, FordJohnson count, SN `S 4`/`S 5`, SAIS cost model). |
 | 2026-11-11 | Lanes ran: FordJohnson/SN/XY to M1, BenOr to M0. Review caught one false prose claim (XY) and one vacuity gap (BenOr); both recorded. |
 | 2026-11-09 | Repo restructured (`Core`/`Comparison`/`Instances`/`Projects`); `Core.Branching` landed; four lanes opened. |

@@ -13,10 +13,12 @@ machine-checked it.
 
 ## Contract
 
-Everything below is *in the environment today* and compiles. The label says what
-is established about it: `PROVED` = there is a proof in this lane; `STATED-ONLY`
-= the signature is a definition whose *proposition* nothing here proves (it is
-stated, cited, and used as a hypothesis — never `sorry`-ed).
+Everything below is *in the source today* and elaborated (`lake env lean` on each
+file; `Witness.lean` is new, so the integrator still has to import it into
+`SortBounds.lean`). The label says what is established about it: `PROVED` =
+there is a proof in this lane; `STATED-ONLY` = the signature is a definition
+whose *proposition* nothing here proves (it is stated, cited, and used as a
+hypothesis — never `sorry`-ed).
 
 ```lean
 namespace SortBounds.Projects.BenOr
@@ -92,6 +94,10 @@ theorem exists_decidesReal_distinct (n : ℕ) :
 theorem halfLineTree_decidesReal :
     halfLineTree.decidesReal {x : Fin 1 → ℝ | 0 ≤ x 0}                           -- PROVED
 
+theorem distinctSet_nonempty (n : ℕ) : (distinctSet n).Nonempty                -- PROVED
+theorem distinctSet_ne_univ {n : ℕ} (hn : 2 ≤ n) : distinctSet n ≠ Set.univ     -- PROVED
+theorem leaf_not_decidesReal_distinct {n : ℕ} (hn : 2 ≤ n) (b : Bool) :
+    ¬ (ADT.leaf b).decidesReal (distinctSet n)                                   -- PROVED
 theorem distinctnessTree_decides (n : ℕ) :
     (distinctnessTree n).decides {x : Fin n → ℚ | Function.Injective x}          -- PROVED
 
@@ -174,6 +180,10 @@ formalization found.
   The witness has height `1`, so it is no threat to the bound: it is available
   only at degree `n * (n - 1)`, and a statement fixing `d` excludes it once
   `n * (n - 1) > d` — which is exactly why `d` is fixed in `componentBound`.
+  Non-degeneracy of the witness: `distinctSet_nonempty` and `distinctSet_ne_univ`
+  (`distinctSet n` is neither empty nor everything for `n ≥ 2`), hence
+  `leaf_not_decidesReal_distinct` — a tree with no test cannot meet the
+  hypothesis, so the witness really does test.
   `#print axioms`: `propext, Classical.choice, Quot.sound`.
 * 2026-11-11 — Contract block above now records the M1 interface verbatim with
   per-signature `PROVED` / `STATED-ONLY` labels, so the unproved part of the

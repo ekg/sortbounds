@@ -47,3 +47,8 @@ open SortBounds
 #print axioms SortBounds.Projects.XY.naivePairsSorted_perm
 #print axioms SortBounds.Projects.XY.naivePairsSorted_count
 #print axioms SortBounds.Projects.BenOr.ADT.card_cells_le
+#print axioms SortBounds.Projects.BenOr.exists_decidesReal_distinct
+#print axioms SortBounds.Projects.BenOr.halfLineTree_decidesReal
+#print axioms SortBounds.Projects.SAIS.suffix_compare_eq_of_lcp
+#print axioms SortBounds.Projects.SAIS.cmpFrom_lcp_advance
+#print axioms SortBounds.Projects.SAIS.three_mul_naiveInspectSum

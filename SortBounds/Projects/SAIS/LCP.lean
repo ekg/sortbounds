@@ -29,9 +29,14 @@ This file makes that precise without touching any suffix-sorting algorithm.
   naive one;
 * the concrete contrast on `s = List.replicate n a` (all characters equal): every
   pair of distinct suffixes has `lcp (n - max i j)`, so the naive comparison
-  inspects `n - max i j + 1` characters while the guided one inspects exactly
+  inspects `n - max i j + 1` positions while the guided one inspects exactly
   `1` — and `naiveInspectSum` (summed over all pairs `i < j`) exceeds
   `guidedInspectSum` by a factor `(n + 4) / 3`.
+
+Two conventions of the model, stated so that they cannot be read into the theorems:
+the supplied `k` is **free** (maintaining LCP lower bounds is a separate cost, borne by
+the LCP-array construction, not by the comparison), and one inspection is charged per
+*position* compared rather than per character of each suffix.
 
 The statement is *not* that LCP-guided suffix sorting is `O(n log n)`: that needs
 a suffix-sorting algorithm plus the LCP array construction, neither of which is
@@ -62,6 +67,17 @@ def suffix (s : List α) (i : ℕ) : List α := s.drop i
 theorem suffix_eq_replicate {a : α} {n i : ℕ} :
     suffix (List.replicate n a) i = List.replicate (n - i) a :=
   List.drop_replicate
+
+theorem drop_succ_eq_tail_drop (l : List α) (k : ℕ) :
+    l.drop (k + 1) = (l.drop k).tail := by
+  induction l generalizing k with
+  | nil => simp
+  | cons x xs ih =>
+    cases k with
+    | zero => simp
+    | succ m =>
+      simp only [List.drop_succ_cons]
+      exact ih m
 
 /-! ### The longest common prefix -/
 
@@ -210,6 +226,18 @@ theorem take_min_length (a b : List α) :
     have := take_lcp a b
     rwa [h] at this
 
+/-- Dropping the first character of both lists shortens the `lcp` by at most one. -/
+theorem lcp_tail_tail (a b : List α) : lcp a b ≤ lcp a.tail b.tail + 1 := by
+  cases a with
+  | nil => simp
+  | cons x xs =>
+    cases b with
+    | nil => simp
+    | cons y ys =>
+      by_cases h : x = y
+      · rw [lcp_cons_cons, ite_eq_left h]; simp
+      · rw [lcp_cons_cons, ite_eq_right h]; simp
+
 /-- Prefixing both lists by the same list shifts the `lcp` by its length. -/
 theorem lcp_append_left (p x y : List α) :
     lcp (p ++ x) (p ++ y) = p.length + lcp x y := by
@@ -239,7 +267,9 @@ def cmpCounted : List α → List α → Ordering × ℕ
   | [], _ :: _ => (Ordering.lt, 1)
   | _ :: _, [] => (Ordering.gt, 1)
   | a :: as, b :: bs =>
-      if a = b then ((cmpCounted as bs).1, (cmpCounted as bs).2 + 1)
+      if a = b then
+        let r := cmpCounted as bs
+        (r.1, r.2 + 1)
       else (compare a b, 1)
 
 theorem cmpCounted_nil_nil : cmpCounted ([] : List α) [] = (Ordering.eq, 1) := rfl
@@ -389,26 +419,26 @@ theorem lcp_drop_lcp (a b : List α) : lcp (a.drop (lcp a b)) (b.drop (lcp a b))
   rw [hlen] at hsplit
   omega
 
-/-- **The LCP-guided comparison inspects exactly one character**: given the true `lcp`,
+/-- **The LCP-guided comparison inspects exactly one position**: given the true `lcp`,
 `cmpFrom` looks at the deciding position only.  (Correctness of that comparison is
 `cmpFrom_lcp_advance`; together they say a guided comparison costs `1`.) -/
 theorem inspectCount_lcp (s : List α) (i j : ℕ) :
     inspectCount s (lcp (suffix s i) (suffix s j)) i j = 1 := by
   rw [inspectCount_eq, lcp_drop_lcp]
 
-/-- **The `k` skipped characters cost nothing**: the guided comparison plus the `k`
-characters it was allowed to skip are never dearer than the naive comparison. -/
-theorem cmpFrom_inspectCount_le (s : List α) (k i j : ℕ)
-    (h : (suffix s i).take k = (suffix s j).take k) :
-    inspectCount s k i j + k ≤ inspectCount s 0 i j := by
-  have hsplit := lcp_eq_length_take_add (a := suffix s i) (b := suffix s j) h
-  have hlen : ((suffix s i).take k).length ≤ k := by
-    rw [List.length_take]
-    exact Nat.min_le_left _ _
-  rw [inspectCount_eq (k := k), inspectCount_zero, hsplit]
+/-- **Skipping one more character saves at most one inspection**: the model never
+credits a comparison with more than it skipped.  (The contrast on `aⁿ` is the case where
+each skipped character saves exactly one inspection.) -/
+theorem inspectCount_succ_le (s : List α) (k i j : ℕ) :
+    inspectCount s k i j ≤ inspectCount s (k + 1) i j + 1 := by
+  rw [inspectCount_eq (k := k), inspectCount_eq (k := k + 1),
+    drop_succ_eq_tail_drop (suffix s i) k, drop_succ_eq_tail_drop (suffix s j) k]
+  have := lcp_tail_tail ((suffix s i).drop k) ((suffix s j).drop k)
   omega
 
-/-- The saving is exact when `k` really is a prefix of both suffixes. -/
+/-- The saving is exact: when the first `k` characters of suffixes `i` and `j` agree
+(and `k` really is a prefix of suffix `i`), then the naive comparison spends exactly
+those `k` extra inspections. -/
 theorem inspectCount_eq_add (s : List α) (k i j : ℕ)
     (h : (suffix s i).take k = (suffix s j).take k) (hk : k ≤ (suffix s i).length) :
     inspectCount s 0 i j = k + inspectCount s k i j := by
@@ -418,4 +448,213 @@ theorem inspectCount_eq_add (s : List α) (k i j : ℕ)
   rw [inspectCount_eq (k := k), inspectCount_zero, hsplit, hlen]
   omega
 
+/-- **The `k` skipped characters cost nothing**: the guided comparison plus the `k`
+characters it was allowed to skip are never dearer than the naive comparison. -/
+theorem cmpFrom_inspectCount_le (s : List α) (k i j : ℕ)
+    (h : (suffix s i).take k = (suffix s j).take k) (hk : k ≤ (suffix s i).length) :
+    inspectCount s k i j + k ≤ inspectCount s 0 i j := by
+  rw [inspectCount_eq_add s k i j h hk]
+  exact Nat.add_comm _ _ |>.le
+
 end Skipping
+
+/-! ### The arithmetic of the two totals -/
+
+/-- Recurrence for `∑ j < n, j * (n + 1 - j)`, obtained by splitting off `j = n`. -/
+theorem sum_range_mul_succ (n : ℕ) :
+    (∑ j ∈ Finset.range (n + 1), j * (n + 2 - j)) =
+      (∑ j ∈ Finset.range n, j * (n + 1 - j)) + (∑ j ∈ Finset.range n, j) + 2 * n := by
+  rw [Finset.sum_range_succ]
+  have hterm : ∀ j ∈ Finset.range n, j * (n + 2 - j) = j * (n + 1 - j) + j := by
+    intro j hj
+    rw [Finset.mem_range] at hj
+    rw [show n + 2 - j = (n + 1 - j) + 1 by omega, Nat.mul_add, Nat.mul_one]
+  rw [Finset.sum_congr rfl hterm, Finset.sum_add_distrib,
+    show n * (n + 2 - n) = 2 * n by
+      rw [show n + 2 - n = 2 by omega]; omega]
+
+theorem sum_range_id_succ (n : ℕ) :
+    (∑ j ∈ Finset.range (n + 1), j) = (∑ j ∈ Finset.range n, j) + n :=
+  Finset.sum_range_succ _ _
+
+/-- Gauss's formula, stated over `ℤ` so that no truncated subtraction appears. -/
+theorem sum_range_id_twice_cast (n : ℕ) :
+    2 * ((∑ j ∈ Finset.range n, j : ℕ) : ℤ) = (n : ℤ) * ((n : ℤ) - 1) := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [sum_range_id_succ, Nat.cast_add]
+    have hn : ((n + 1 : ℕ) : ℤ) = (n : ℤ) + 1 := by push_cast; ring
+    rw [hn]
+    nlinarith [ih]
+
+/-- `∑ j < n, j * (n + 1 - j)` in closed form, over `ℤ`. -/
+theorem sum_range_mul_cast (n : ℕ) :
+    6 * ((∑ j ∈ Finset.range n, j * (n + 1 - j) : ℕ) : ℤ) =
+      (n : ℤ) * ((n : ℤ) - 1) * ((n : ℤ) + 4) := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [sum_range_mul_succ, Nat.cast_add, Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]
+    have hn : ((n + 1 : ℕ) : ℤ) = (n : ℤ) + 1 := by push_cast; ring
+    rw [hn]
+    have hg := sum_range_id_twice_cast n
+    nlinarith [ih, hg]
+
+/-! ### The concrete contrast: a string of one repeated character
+
+On `s = List.replicate n a` every character is the same, so two suffixes can only be
+told apart by their lengths: the `lcp` of suffixes `i` and `j` is `n - max i j`, the
+whole of the shorter one.  The naive comparison therefore inspects `n - max i j + 1`
+characters — `Θ(n)` — while the same comparison supplied with the true `lcp` inspects
+exactly `1`.
+
+Summed over all pairs `i < j` of suffixes the difference is a whole factor:
+`6 · naiveInspectSum = n (n-1) (n+4)` (cubic in `n`) while
+`2 · guidedInspectSum = n (n-1)` (quadratic): the naive total is exactly `(n + 4) / 3`
+times the guided one.  Both totals sum over the same `n (n-1) / 2` pairs, so the
+per-comparison factor `Θ(n)` shows up as a factor `Θ(n)` in the totals.
+-/
+
+section Replicate
+variable [LinearOrder α]
+
+theorem lcp_replicate (a : α) (p q : ℕ) :
+    lcp (List.replicate p a) (List.replicate q a) = min p q := by
+  induction p generalizing q with
+  | zero => simp
+  | succ p ih =>
+    cases q with
+    | zero => simp
+    | succ q =>
+      rw [List.replicate_succ, List.replicate_succ, lcp_cons_cons, ite_eq_left rfl, ih,
+        Nat.succ_min_succ]
+
+/-- Every pair of suffixes of `aⁿ` shares a prefix of length `n - max i j`. -/
+theorem lcp_suffix_replicate (a : α) (n i j : ℕ) :
+    lcp (suffix (List.replicate n a) i) (suffix (List.replicate n a) j) = n - max i j := by
+  rw [suffix_eq_replicate, suffix_eq_replicate, lcp_replicate, Nat.sub_min_sub_left]
+
+/-- The naive comparison inspects `n - max i j + 1` positions. -/
+theorem inspectCount_replicate (a : α) (n i j : ℕ) :
+    inspectCount (List.replicate n a) 0 i j = n - max i j + 1 := by
+  rw [inspectCount_zero, lcp_suffix_replicate, Nat.add_comm]
+
+/-- The guided comparison — supplied with the true `lcp` — inspects one position. -/
+theorem inspectCount_replicate_lcp (a : α) (n i j : ℕ) :
+    inspectCount (List.replicate n a) (n - max i j) i j = 1 := by
+  rw [← lcp_suffix_replicate a n i j]
+  exact inspectCount_lcp _ _ _
+
+/-- The guided comparison is still correct, so its single inspection is enough. -/
+theorem cmpFrom_replicate_lcp (a : α) (n i j : ℕ) :
+    cmpFrom (List.replicate n a) (n - max i j) i j =
+      compare (suffix (List.replicate n a) i) (suffix (List.replicate n a) j) := by
+  rw [← lcp_suffix_replicate a n i j]
+  exact cmpFrom_lcp_advance _ _ _
+
+/-- The sharpest single instance: comparing the whole string `aⁿ` with its suffix at `1`
+costs `n` inspections naively and `1` with the `lcp` supplied. -/
+theorem replicate_pair_cost (a : α) (n : ℕ) (hn : 1 ≤ n) :
+    inspectCount (List.replicate n a) 0 0 1 = n ∧
+      inspectCount (List.replicate n a) (n - 1) 0 1 = 1 := by
+  have hmax : max 0 1 = 1 := by norm_num
+  constructor
+  · rw [inspectCount_replicate, hmax]; omega
+  · rw [show n - 1 = n - max 0 1 by rw [hmax]]
+    exact inspectCount_replicate_lcp a n 0 1
+
+/-- Inspections spent by the naive comparison, summed over all pairs `i < j` of suffixes
+of `aⁿ`. -/
+def naiveInspectSum (a : α) (n : ℕ) : ℕ :=
+  ∑ j ∈ Finset.range n, ∑ i ∈ Finset.range j, inspectCount (List.replicate n a) 0 i j
+
+/-- Inspections spent by the `lcp`-guided comparison — each comparison of suffixes
+`i < j` is supplied with `n - j`, their true `lcp` — summed over all pairs `i < j`. -/
+def guidedInspectSum (a : α) (n : ℕ) : ℕ :=
+  ∑ j ∈ Finset.range n, ∑ i ∈ Finset.range j, inspectCount (List.replicate n a) (n - j) i j
+
+theorem naiveInspectSum_eq (a : α) (n : ℕ) :
+    naiveInspectSum a n = ∑ j ∈ Finset.range n, j * (n + 1 - j) := by
+  unfold naiveInspectSum
+  refine Finset.sum_congr rfl (fun j hj => ?_)
+  rw [Finset.mem_range] at hj
+  have hinner : ∀ i ∈ Finset.range j, inspectCount (List.replicate n a) 0 i j = n - j + 1 := by
+    intro i hi
+    rw [Finset.mem_range] at hi
+    rw [inspectCount_replicate, Nat.max_eq_right (by omega)]
+  rw [Finset.sum_congr rfl hinner, Finset.sum_const, Finset.card_range, nsmul_eq_mul,
+    Nat.cast_id]
+  congr 1
+  omega
+
+theorem guidedInspectSum_eq (a : α) (n : ℕ) :
+    guidedInspectSum a n = ∑ j ∈ Finset.range n, j := by
+  unfold guidedInspectSum
+  refine Finset.sum_congr rfl (fun j hj => ?_)
+  rw [Finset.mem_range] at hj
+  have hinner : ∀ i ∈ Finset.range j, inspectCount (List.replicate n a) (n - j) i j = 1 := by
+    intro i hi
+    rw [Finset.mem_range] at hi
+    rw [show n - j = n - max i j by rw [Nat.max_eq_right (by omega)]]
+    exact inspectCount_replicate_lcp a n i j
+  rw [Finset.sum_congr rfl hinner, Finset.sum_const, Finset.card_range, nsmul_eq_mul,
+    mul_one, Nat.cast_id]
+
+/-- **The naive total is cubic**: `6 · naiveInspectSum = n (n-1) (n+4)`. -/
+theorem naiveInspectSum_closed (a : α) (n : ℕ) :
+    6 * naiveInspectSum a n = n * (n - 1) * (n + 4) := by
+  rw [naiveInspectSum_eq]
+  rcases Nat.eq_zero_or_pos n with h0 | hpos
+  · subst h0
+    simp
+  · have hcast : ((n - 1 : ℕ) : ℤ) = (n : ℤ) - 1 := Nat.cast_sub (show 1 ≤ n by omega)
+    refine Nat.cast_injective (R := ℤ) ?_
+    rw [Nat.cast_mul, Nat.cast_mul, Nat.cast_mul, hcast, Nat.cast_add, Nat.cast_ofNat,
+      Nat.cast_ofNat]
+    exact sum_range_mul_cast n
+
+/-- **The guided total is quadratic**: `2 · guidedInspectSum = n (n-1)`. -/
+theorem guidedInspectSum_closed (a : α) (n : ℕ) :
+    2 * guidedInspectSum a n = n * (n - 1) := by
+  rw [guidedInspectSum_eq, mul_comm]
+  exact Finset.sum_range_id_mul_two n
+
+/-- **The cubic-vs-quadratic total contrast, exactly**: on a string of `n` equal characters,
+comparing every pair of distinct suffixes with the naive comparison inspects exactly
+`(n + 4) / 3` times as many characters as the `lcp`-guided comparison. -/
+theorem three_mul_naiveInspectSum (a : α) (n : ℕ) :
+    3 * naiveInspectSum a n = (n + 4) * guidedInspectSum a n := by
+  have h1 := naiveInspectSum_closed a n
+  have h2 := guidedInspectSum_closed a n
+  have key : 2 * (3 * naiveInspectSum a n) = 2 * ((n + 4) * guidedInspectSum a n) := by
+    have h1' : 2 * (3 * naiveInspectSum a n) = n * (n - 1) * (n + 4) := by
+      rw [← h1]; ring
+    have h2' : 2 * ((n + 4) * guidedInspectSum a n) = n * (n - 1) * (n + 4) := by
+      rw [← h2]; ring
+    rw [h1', h2']
+  exact Nat.eq_of_mul_eq_mul_left (by norm_num) key
+
+/-- Consequently the naive total is at least `n / 3` times the guided total. -/
+theorem guidedInspectSum_mul_le (a : α) (n : ℕ) :
+    n * guidedInspectSum a n ≤ 3 * naiveInspectSum a n := by
+  rw [three_mul_naiveInspectSum]
+  exact Nat.mul_le_mul_right _ (by omega)
+
+/-! ### Sanity checks
+
+The theorems above are not vacuous: below are concrete instances, evaluated by the
+kernel's own reduction (`decide`). -/
+
+/-- A case where suffixes `0` and `2` of `"aba"` differ but agree on their first
+character: the guided comparison (`k = 1`) is the true comparison. -/
+example : cmpFrom ['a', 'b', 'a'] 1 0 2
+    = compare (suffix ['a', 'b', 'a'] 0) (suffix ['a', 'b', 'a'] 2) := by decide
+
+/-- The naive total on `a⁴` is `16` inspections; the guided total is `6`. -/
+example : naiveInspectSum 'a' 4 = 16 := by decide
+example : guidedInspectSum 'a' 4 = 6 := by decide
+
+end Replicate
+
+end SortBounds.Projects.SAIS

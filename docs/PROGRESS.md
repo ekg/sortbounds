@@ -26,6 +26,7 @@ other models"** — every open lane is about a model where the answer changes.
 | `SN` | exact `S(n)`, both bounds | `S 0..3`, **`S 4 = 5`, `S 5 = 7`** | **M2 for n ≤ 5** | n ≥ 6 open |
 | `XY` | sorting `X+Y` | `pairSums`, `pairSums_card_le`, `naivePairsSorted_*` | **M1 DONE** | M2 gated |
 | `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement), `exists_decidesReal_distinct` | **M0 DONE** (semantics now witnessed) | M1+ gated |
+| `SortTree` | `Θ` inside one model | **`S_sandwich`**: `⌈log₂ n!⌉ ≤ S n ≤ n(⌈log₂ n⌉+1)` | **DONE** | — |
 | `SAIS` | suffix arrays, cost model | `cmpFrom` soundness, `inspectCount_replicate`, `three_mul_naiveInspectSum` (cubic vs quadratic) | **M0 DONE** | M1 needs LCP-array construction |
 
 ## Decisions (and why)

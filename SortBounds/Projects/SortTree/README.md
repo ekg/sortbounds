@@ -114,9 +114,8 @@ correctness only. `S n` values: Knuth TAOCP §5.3.1.
   `slotIdx` carries the side condition `t ≠ j`; `slotVal` is the total `ℕ`-valued
   version.  `insertSearch` is a well-founded recursion on `hi.val - lo.val`, whose
   equation lemmas are `insertSearch_eq_node`/`insertSearch_eq_leaf`.  `rankOf`
-  takes `σ` because the contract says so; it does not use it (the rank of the new
-  element does not depend on the presentation order of the prefix), which is
-  documented at the definition.
+  counts the prefix in the order `σ` (`rankSet`), i.e. it is *literally* the
+  insertion rank in the sorted prefix, not just its cardinality.
 
   Still open: the constant.  `n·(⌈log₂ n⌉+1)` is a coarse upper bound and is not
   claimed optimal — at `n = 3` the bound reads `9` while `S 3 = 3`

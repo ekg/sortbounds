@@ -60,6 +60,9 @@ open SortBounds
 #print axioms SortBounds.Projects.SN.S_five
 #print axioms SortBounds.Projects.SN.four_needs_five_comparisons
 #print axioms SortBounds.Projects.SN.five_needs_seven_comparisons
+#print axioms SortBounds.Projects.SortTree.sortTree_correct
+#print axioms SortBounds.Projects.SortTree.sortTree_depth_le
+#print axioms SortBounds.Projects.SortTree.S_sandwich
 #print axioms SortBounds.Projects.XY.pairSums_card_le
 #print axioms SortBounds.Projects.XY.naivePairsSorted_perm
 #print axioms SortBounds.Projects.XY.naivePairsSorted_count

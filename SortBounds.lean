@@ -32,3 +32,4 @@ import SortBounds.Projects.BenOr.Components
 import SortBounds.Projects.BenOr.Bound
 import SortBounds.Projects.BenOr.Witness
 import SortBounds.Projects.SAIS.LCP
+import SortBounds.Projects.SortTree.Main

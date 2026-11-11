@@ -137,21 +137,22 @@ theorem insertPerm_apply_of_ne {n : ℕ} (σ : Equiv.Perm (Fin n)) {j t : Fin (n
     (h : t ≠ j) : insertPerm σ j t = (σ (slotIdx j t h)).castSucc :=
   insertPermFun_of_ne σ h
 
-set_option linter.unusedVariables false in
+/-- The prefix positions whose value is below the new element's, listed in the order
+`σ`: exactly those that must come before the new element in the sorted order. -/
+def rankSet {n : ℕ} (x : Fin (n + 1) → ℕ) (σ : Equiv.Perm (Fin n)) : Finset (Fin n) :=
+  Finset.univ.filter fun k => x (Fin.castSucc (σ k)) < x (Fin.last n)
+
 /-- The rank of the new element among the sorted prefix, as a `Fin (n+1)`: the
-number of prefix elements below `x (Fin.last n)`.  (`σ` is part of the contract's
-signature but does not occur: the rank of the new element among the prefix does not
-depend on the order in which the prefix is presented.) -/
+number of prefix elements below `x (Fin.last n)`, counted in the order `σ` (the
+order the prefix is sorted in). -/
 noncomputable def rankOf {n : ℕ} (x : Fin (n + 1) → ℕ) (σ : Equiv.Perm (Fin n)) : Fin (n + 1) :=
-  ⟨(Finset.univ.filter fun k : Fin n => x (Fin.castSucc k) < x (Fin.last n)).card, by
-    have h := Finset.card_le_univ
-      (Finset.univ.filter fun k : Fin n => x (Fin.castSucc k) < x (Fin.last n))
+  ⟨(rankSet x σ).card, by
+    have h := Finset.card_le_univ (rankSet x σ)
     simp only [Fintype.card_fin] at h
     omega⟩
 
-theorem rankOf_val {n : ℕ} (x : Fin (n + 1) → ℕ) (σ : Equiv.Perm (Fin n)) :
-    (rankOf x σ).val = (Finset.univ.filter fun k : Fin n => x (Fin.castSucc k) < x (Fin.last n)).card :=
-  rfl
+theorem rankSet_card {n : ℕ} (x : Fin (n + 1) → ℕ) (σ : Equiv.Perm (Fin n)) :
+    (rankSet x σ).card = (rankOf x σ).val := rfl
 
 /-- The number of `Fin n` elements below `m`, i.e. the cardinality of the initial
 segment `{0, …, m-1}`. -/
@@ -168,27 +169,6 @@ theorem card_filter_val_lt {n m : ℕ} (hm : m ≤ n) :
       simp
   rw [hset, Finset.card_image_of_injective _ (Fin.castLE_injective hm), Finset.card_univ,
     Fintype.card_fin]
-
-/-- The prefix indices whose value is below the new element's value, read in the
-order `σ`: the insertion rank of the new element, as a set. -/
-def rankSet {n : ℕ} (x : Fin (n + 1) → ℕ) (σ : Equiv.Perm (Fin n)) : Finset (Fin n) :=
-  Finset.univ.filter fun k => x (Fin.castSucc (σ k)) < x (Fin.last n)
-
-theorem rankSet_eq_image {n : ℕ} (x : Fin (n + 1) → ℕ) (σ : Equiv.Perm (Fin n)) :
-    rankSet x σ
-      = (Finset.univ.filter fun k : Fin n => x (Fin.castSucc k) < x (Fin.last n)).image σ.symm := by
-  ext k
-  simp only [rankSet, Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_image]
-  constructor
-  · intro h
-    exact ⟨σ k, h, σ.symm_apply_apply k⟩
-  · rintro ⟨a, ha, rfl⟩
-    simpa using ha
-
-theorem rankSet_card {n : ℕ} (x : Fin (n + 1) → ℕ) (σ : Equiv.Perm (Fin n)) :
-    (rankSet x σ).card = (rankOf x σ).val := by
-  rw [rankSet_eq_image, Finset.card_image_of_injective _ σ.symm.injective]
-  rfl
 
 /-- `rankSet` is an initial segment of the ordering `σ`. -/
 theorem rankSet_down {n : ℕ} {x : Fin (n + 1) → ℕ} {σ : Equiv.Perm (Fin n)}

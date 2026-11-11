@@ -67,6 +67,51 @@ theorem jacLo_self (M : ℕ) (hM : 1 ≤ M) : jacLo M M = M := by
 
 /-! ### The insertion phase -/
 
+/-- The number of items of batch `k`. -/
+def cntB (M k : ℕ) : ℕ := jacHi M k - jacLo M k
+
+/-- The chain length of batch `k` at position `p` (i.e. with `p` items of the batch already
+inserted). -/
+def chainLen (m M k p : ℕ) : ℕ := m + jacLo M k + p
+
+/-- The slot the items of batch `k` come from: the insertions shift the next item of the
+batch up into exactly this slot. -/
+def itemSlot (m M k : ℕ) : ℕ := m + jacHi M k - 1
+
+/-- The window of every item of batch `k`: the `jacLo` winners below the partner plus the
+`jacHi` items in the chain once the batch is done, minus one. -/
+def winWindow (M k : ℕ) : ℕ := jacLo M k + jacHi M k - 1
+
+/-- The item slot of batch `k` is a slot of the arrangement. -/
+theorem itemSlot_lt (m M k : ℕ) (hmM : m + M ≤ n) (hM1 : 1 ≤ M) : itemSlot m M k < n := by
+  have h1 := jacHi_le M k
+  have h2 := jacHi_pos M k hM1
+  simp only [itemSlot]
+  omega
+
+/-- The item slot of batch `k` lies above every chain length the batch visits. -/
+theorem chainLen_le_itemSlot (m M k p : ℕ) (hp : p < cntB M k) :
+    chainLen m M k p ≤ itemSlot m M k := by
+  have h := jacLo_le_jacHi M k
+  simp only [chainLen, itemSlot, cntB] at *
+  omega
+
+/-- The window of batch `k` is inside the chain the batch visits. -/
+theorem winWindow_le_chainLen (m M k p : ℕ) (hM : M ≤ m + 1) (hM1 : 1 ≤ M) :
+    winWindow M k ≤ chainLen m M k p := by
+  have h1 := jacHi_le M k
+  have h2 := jacHi_pos M k hM1
+  simp only [winWindow, chainLen]
+  omega
+
+/-- The window of batch `k` is inside the item slot of a nonempty batch. -/
+theorem winWindow_le_itemSlot (m M k : ℕ) (hM : M ≤ m + 1) (hcnt : 0 < cntB M k) :
+    winWindow M k ≤ itemSlot m M k := by
+  have h1 := jacHi_le M k
+  have h2 := jacLo_le_jacHi M k
+  simp only [winWindow, itemSlot, cntB] at *
+  omega
+
 /-- Insert the items of batch `k` (there are `jacHi M k - jacLo M k` of them, the highest
 rank first), starting at position `j`, then continue with `next`.  Every item of a batch
 is searched for in the same window `[0, jacLo + jacHi - 1)`, and the pending item of rank
@@ -74,15 +119,27 @@ is searched for in the same window `[0, jacLo + jacHi - 1)`, and the pending ite
 batch while the chain grows. -/
 noncomputable def insBatch (m M : ℕ) (hmM : m + M ≤ n) (hM : M ≤ m + 1) (hM1 : 1 ≤ M)
     (next : Equiv.Perm (Fin n) → Tree n) :
-    (k : ℕ) → (j : ℕ) → j ≤ jacHi M k - jacLo M k → Equiv.Perm (Fin n) → Tree n
+    (k : ℕ) → (j : ℕ) → j ≤ cntB M k → Equiv.Perm (Fin n) → Tree n
   | k, 0, _, σ => next σ
   | k, j + 1, hj, σ =>
-    binIns (jacLo M k + jacHi M k - 1) 0 (jacLo M k + jacHi M k - 1)
-      (m + jacLo M k + j) (m + jacHi M k - 1)
-      (by have := jacHi_le M k; have := jacHi_pos M k hM1; omega)
-      (by have := jacLo_le M k; have := jacHi_le M k; omega)
-      (by have := jacHi_le M k; have := jacHi_pos M k hM1; omega)
+    binIns (winWindow M k) 0 (winWindow M k)
+      (chainLen m M k (cntB M k - 1 - j)) (itemSlot m M k)
+      (itemSlot_lt m M k hmM hM1)
+      (chainLen_le_itemSlot m M k (cntB M k - 1 - j) (by omega))
+      (winWindow_le_chainLen m M k (cntB M k - 1 - j) hM hM1)
       σ (insBatch m M hmM hM hM1 next k j (by omega))
+
+/-- One unfolding step of `insBatch`: it searches for the item at position `j` of the
+batch, i.e. the last one the batch still has to insert. -/
+theorem insBatch_succ (m M : ℕ) (hmM : m + M ≤ n) (hM : M ≤ m + 1) (hM1 : 1 ≤ M)
+    (next : Equiv.Perm (Fin n) → Tree n) (k j : ℕ) (hj : j + 1 ≤ cntB M k)
+    (σ : Equiv.Perm (Fin n)) :
+    insBatch m M hmM hM hM1 next k (j + 1) hj σ
+      = binIns (winWindow M k) 0 (winWindow M k) (chainLen m M k (cntB M k - 1 - j))
+          (itemSlot m M k) (itemSlot_lt m M k hmM hM1)
+          (chainLen_le_itemSlot m M k (cntB M k - 1 - j) (by omega))
+          (winWindow_le_chainLen m M k (cntB M k - 1 - j) hM hM1) σ
+          (insBatch m M hmM hM hM1 next k j (by omega)) := rfl
 
 /-- The insertion phase: `fuel` batches starting at batch `k`. -/
 noncomputable def insBatches (m M : ℕ) (hmM : m + M ≤ n) (hM : M ≤ m + 1) (hM1 : 1 ≤ M)
@@ -97,7 +154,7 @@ noncomputable def insBatches (m M : ℕ) (hmM : m + M ≤ n) (hM : M ≤ m + 1) 
 `⌈log₂ (jacLo + jacHi)⌉`. -/
 theorem insBatch_depth (m M : ℕ) (hmM : m + M ≤ n) (hM : M ≤ m + 1) (hM1 : 1 ≤ M)
     (next : Equiv.Perm (Fin n) → Tree n) (B : ℕ) (hB : ∀ σ, depth (next σ) ≤ B) :
-    ∀ (k j : ℕ) (hj : j ≤ jacHi M k - jacLo M k) (σ : Equiv.Perm (Fin n)),
+    ∀ (k j : ℕ) (hj : j ≤ cntB M k) (σ : Equiv.Perm (Fin n)),
       depth (insBatch m M hmM hM hM1 next k j hj σ)
         ≤ j * Nat.clog 2 (jacLo M k + jacHi M k) + B := by
   intro k j
@@ -109,30 +166,26 @@ theorem insBatch_depth (m M : ℕ) (hmM : m + M ≤ n) (hM : M ≤ m + 1) (hM1 :
     omega
   | succ j ih =>
     intro hj σ
-    have hstep := binIns_depth_le (jacLo M k + jacHi M k - 1) 0
-      (jacLo M k + jacHi M k - 1) (m + jacLo M k + j) (m + jacHi M k - 1)
-      (by have := jacHi_le M k; have := jacHi_pos M k hM1; omega)
-      (by have := jacLo_le M k; have := jacHi_le M k; omega)
-      (by have := jacHi_le M k; have := jacHi_pos M k hM1; omega) σ
+    have hstep := binIns_depth_le (winWindow M k) 0 (winWindow M k)
+      (chainLen m M k (cntB M k - 1 - j))
+      (itemSlot m M k) (itemSlot_lt m M k hmM hM1)
+      (chainLen_le_itemSlot m M k (cntB M k - 1 - j) (by omega))
+      (winWindow_le_chainLen m M k (cntB M k - 1 - j) hM hM1) σ
       (insBatch m M hmM hM hM1 next k j (by omega))
       (j * Nat.clog 2 (jacLo M k + jacHi M k) + B)
       (fun σ' => ih (by omega) σ') (by omega)
-    have hlog : Nat.clog 2 (jacLo M k + jacHi M k - 1 - 0 + 1)
+    have hlog : Nat.clog 2 (winWindow M k - 0 + 1)
         = Nat.clog 2 (jacLo M k + jacHi M k) := by
       have hp := jacHi_pos M k hM1
+      simp only [winWindow]
       rw [Nat.sub_zero]
       congr 1
       omega
-    rw [show insBatch m M hmM hM hM1 next k (j + 1) hj σ
-        = binIns (jacLo M k + jacHi M k - 1) 0 (jacLo M k + jacHi M k - 1)
-            (m + jacLo M k + j) (m + jacHi M k - 1)
-            (by have := jacHi_le M k; have := jacHi_pos M k hM1; omega)
-            (by have := jacLo_le M k; have := jacHi_le M k; omega)
-            (by have := jacHi_le M k; have := jacHi_pos M k hM1; omega) σ
-            (insBatch m M hmM hM hM1 next k j (by omega)) from rfl]
     rw [hlog] at hstep
-    calc depth (binIns (jacLo M k + jacHi M k - 1) 0 (jacLo M k + jacHi M k - 1)
-          (m + jacLo M k + j) (m + jacHi M k - 1) _ _ _ σ _)
+    rw [insBatch_succ]
+    calc depth (binIns (winWindow M k) 0 (winWindow M k)
+          (chainLen m M k (cntB M k - 1 - j)) (itemSlot m M k)
+          _ _ _ σ (insBatch m M hmM hM hM1 next k j _))
         ≤ Nat.clog 2 (jacLo M k + jacHi M k)
             + (j * Nat.clog 2 (jacLo M k + jacHi M k) + B) := hstep
       _ = (j + 1) * Nat.clog 2 (jacLo M k + jacHi M k) + B := by ring

@@ -17,7 +17,9 @@ the tree trustworthy are kernel-checked:
   bound of `factorial_le_numLeaves`, so there is no slack;
 * `tree7_correct`: it sorts every `ℕ`-valued input with pairwise distinct values —
   `correct_of_forall_run_xOfPerm` reduces this to the `7! = 5040` canonical
-  inputs, and `decide` checks those.
+  inputs, and `decide` checks those (`correct_of_allPerms`, which feeds the `5040`
+  canonical inputs to `decide` as an explicit list instead of filtering the
+  `7 ^ 7` functions `Fin 7 → Fin 7`).
 
 Every internal node is annotated with the number of orderings consistent with the
 answers that reach it, so the two children of a node add up to the node's own
@@ -15366,16 +15368,17 @@ theorem tree7_depth : depth tree7 = 13 := by decide
 /-- As many leaves as there are orderings of seven elements. -/
 theorem tree7_numLeaves : numLeaves tree7 = 5040 := by decide
 
--- `decide` enumerates `Equiv.Perm (Fin 7)`, and that `Fintype` instance filters
--- the `7 ^ 7 = 823543` functions `Fin 7 → Fin 7`, far deeper than the default
--- elaborator recursion limit of 1000; the computation is also far longer than
--- the default heartbeat budget, so both limits are lifted here.
+-- `decide` folds over the `7! = 5040` canonical inputs listed by `allPerms 7`
+-- (`Verify.lean`), so this no longer touches the `Fintype (Equiv.Perm (Fin 7))`
+-- instance that filters the `7 ^ 7 = 823543` functions `Fin 7 → Fin 7`.  The fold
+-- is still `5040` elements deep, past the elaborator's default recursion limit of
+-- 1000, and far past the default heartbeat budget, so both limits are lifted.
 set_option maxHeartbeats 0 in
-set_option maxRecDepth 300000 in
+set_option maxRecDepth 40000 in
 /-- The tree sorts: on all `7! = 5040` canonical inputs it outputs the sorting
 permutation, hence on every input with distinct values. -/
 theorem tree7_correct : Correct (α := ℕ) tree7 :=
-  correct_of_forall_run_xOfPerm (by decide)
+  correct_of_allPerms (by decide)
 
 /-- **`S 7 = 13`**: thirteen comparisons sort seven elements, and counting rules
 out twelve. -/

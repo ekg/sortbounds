@@ -117,34 +117,61 @@ sizes.
   — the depth of the tree built by `fjTree` is at most the count.  This is *only* a
   depth bound: `Tree.leaf 1` satisfies it too, and it says nothing about sorting until
   `fjTree_correct` lands.
-* **NOT landed (the one open obligation): `fjTree_correct`, hence neither
-  `S_le_fjCountJ` nor `S_eq_clog`.**  Everything except the correctness invariant of the
-  insertion phase is in place; below is the exact statement that remains.
+* **2026-02** `Correct.lean` — **`fjTree_correct`**: the tree sorts.  The generic transfer
+  lemma is `Basic.insSeqAt`/`insSeqAt_run` (a phase whose item slot `q` is *fixed* while the
+  chain grows — the shape a Jacobsthal batch has).  Its invariant is `Invar x W m M k p σ`
+  (batch `k`, position `p`, chain length `chainLen m M k p = m + jacLo M k + p`):
+  `ChainSorted x σ c` ∧ `W ⊆ chainSet σ c` ∧ `∀ o, cntWin x W (σ ⟨c+o⟩) ≤ pendBound M k p o`,
+  and `pendBound` is exactly `rank - 1` of the item in slot `c+o` (items of the current
+  batch first, in *descending* rank, then the later batches in ascending rank).  The whole
+  step is `rankAt_le_winWindow`: with `Setup.rankAt_le_cntWin`,
+  `cntWin ≤ jacHi - 1 - p` gives `rankAt ≤ (jacHi - 1 - p) + (jacLo + p) = jacLo + jacHi - 1`,
+  the window `winWindow` of `binIns`, with no slack.  Preservation is `invar_step` (the
+  shift lemmas `pendBound_shift_lo`/`_hi`), the batch is `insBatch_aux` (also the run
+  homomorphism `run (insBatch next) = run (next ∘ run (insBatch leaf))`), the phase is
+  `insBatches_sorts`/`insPhase_sorts`, the level is `fjStage_sorts` and the induction is
+  `fjTreeFuel_correct`.  The initial invariant is `cntWin_transport_le`: slot `m+o` holds
+  the partner of the `o`-th smallest winner, which is *smaller* than that winner, so at most
+  `o` winners lie below it.
+* **2026-02** `Optimal.lean` — **`S_le_fjCountJ`**, **`S_eq_clog`** (`4 ≤ n ≤ 11`) and
+  `S_eq_clog_large` (`S 20 = ⌈log₂ 20!⌉`, `S 21 = 66`), the last two from
+  `FordJohnson.fjCountJ_eq_clog_factorial(_large)` and `SN.S_lower`.  Cross-checked against
+  the hand-built trees of `Projects/SN`: `S_eq_clog` at `n = 4,5,6,7,11` gives `5, 7, 10,
+  13, 26`, the values of `SN.S_four/S_five/S_six/S_seven`, and `S 21 = 66` is Peczarski's
+  exact value.
 
-### What remains, precisely
+### Two defects found while proving `fjTree_correct` (both fixed here)
 
-`fjTree n` is `pairTree`, then (through `imageTree`) the recursive tree on the winners,
-`transport`, then the insertion phase.  Correctness of the first three stages is proved
-(`pairTree_spec`, `transport_*`, `substTree_correct`/`run_imageTree`).  What is missing
-is the invariant of `insBatches`, to be proved by induction with the recursion.  The
-generic transfer lemma `Basic.insSeq_sorts` fixes the item slot at the chain tip, so it
-does **not** apply as-is: the batch phase needs the separate slot `q`, i.e.
-`insSeqAt_sorts`.  With that, the invariant is (for the state `σ` at batch `k`,
-position `j`, with chain length `c = m + jacLo M k + j`,
+Both were invisible to `fjTree_depth_le`, which only counts comparisons.
 
-  `ChainSorted x σ c`  ∧  `W ⊆ chainSet σ c`  ∧
-  `∀ o, jacLo M k + j + o < M → cntWin x W (σ ⟨c+o, _⟩) ≤ pendBound M k j o`
+1. `Main.insBatch` used `m + jacLo M k + j` as the chain length of the insertion at position
+   `j` of a batch, while its recursion parameter `j` counts the insertions *still to come*:
+   the last item of a batch was searched for in the *shortest* chain (for `n = 5`, batch 1
+   inserted its second item at chain length `3` instead of `4`).  `chainLen` is now indexed
+   by the position `p` in the batch, `m + jacLo M k + p`; `insBatch_depth` reproved
+   unchanged (the depth bound only uses the window).
+2. `Setup.pairAux` put the **smaller** element of each pair in the chain slot, and `fjTree`
+   then inserted the *larger* partners into the chain of sorted smaller elements.  With that
+   convention the rank of an inserted partner is not bounded by its partner's chain position
+   at all — `n = 4`, `x = (0,1,2,3)` gives a tree that inserts the value `2` at rank `0` —
+   so the landed `fjTree` was not a correct tree for any `n ≥ 4`.  The comparison branch is
+   flipped (`pairAux`, `pairAux_decided`, `pairTree_spec`): the larger element goes into the
+   chain, the smaller one is inserted, and the single pairing comparison is the rank bound
+   (`x (partner) < x (winner)`, so at most `o` winners lie below the partner of the `o`-th
+   smallest winner).  Depth, `fjCountJ` and all four contract signatures are unchanged.
 
-where `W = chainSet ρ m` is the winner set of the pairing state `ρ`,
-`pendBound M k j o` is `jacLo M k + o` while `o + j < jacHi M k - jacLo M k` and
-`jacHi M k + (o - (jacHi M k - jacLo M k - j))` after, and with the shift lemma
-`pendBound M k (j+1) o = pendBound M k j (if o < cnt-j-1 then o else o+1)`.
-It is preserved because the pending items after the inserted one keep their slots, and
-the window is then exactly wide enough:
-`rankAt x σ c q ≤ cntWin + (c - m)` (via `Setup.rankAt_le_cntWin`), `cntWin ≤ jacLo + cnt - 1 - j`, so
-`rankAt ≤ 2·jacLo + cnt - 1 = jacLo + jacHi - 1 = w`; note `w` is *exactly* the window
-of `binIns`, with no slack.  The initial invariant (`k = j = 0`) follows from
-`transport_loser` and the pairing fact `x (loser) < x (partner)`; the final one
-(`k = j = 0`, `M` batches) from `jacLo_self` gives `c = n`, i.e. `Sorts`.
-`binIns` already takes `(c, q)` separately (`c` = chain length, `q` = item slot), which
-is the generalisation this invariant needs.
+### What remains
+
+Nothing for the contract.  Natural continuations, none of them started here:
+
+* `S_eq_clog` cannot be extended past `n = 11` on the strength of this tree: `fjCountJ` is
+  not even equal to `⌈log₂ n!⌉` for `12 ≤ n ≤ 19` or `n = 22`
+  (`Optimal.fjCountJ_not_attained`: `fjCountJ 12 = 30 > 29 = ⌈log₂ 12!⌉`,
+  `fjCountJ 22 = 71 > 70`), while the literature's
+  exact values (Peczarski) are `S 12 = 30`, `S 22 = 71`.  What is *not* machine-checked, and
+  would be the natural next target, is the lower-bound half there:
+  `S n ≥ ⌈log₂ n!⌉ + 1` for `12 ≤ n ≤ 19` and `n = 22` — a counting argument on the number
+  of *leaves* of depth `⌈log₂ n!⌉` trees, not anything about merge-insertion.
+* The four contract theorems are proved; `S 0 … 3` (`S 0 = S 1 = 0`, `S 2 = 1`, `S 3 = 3`)
+  are the SN lane's, and `S n ≤ fjCountJ n` from `S_le_fjCountJ` also holds there (trivially:
+  `fjCountJ n = 0` for `n < 2`).

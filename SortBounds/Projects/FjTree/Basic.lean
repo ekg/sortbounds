@@ -584,6 +584,58 @@ theorem insSeq_sorts (w : ℕ → ℕ) (hw : ∀ t, w t ≤ t)
     rw [hrun]
     exact hrec
 
+/-! ### An insertion phase with the item slot above the chain
+
+`insSeq` fixes the item slot at the chain tip (`s` is both the chain length and the slot of
+the item), which is what a plain insertion sort does.  A Jacobsthal batch needs the
+*opposite*: the item *slot* `q` stays put while the chain grows underneath it, so that one
+slot serves the whole batch (after each insertion the next item of the batch is shifted up
+into `q`).  `insSeqAt` is the transfer lemma for that shape of phase, and
+`insSeqAt_run` is the invariant argument: the state after the whole phase is some state
+satisfying `P` at the final chain length. -/
+
+/-- Insert `cnt` items, all taken from slot `q` (which stays fixed while the chain grows),
+each searched for in the window `[0, w)`, then continue with `next`.  The chain starts with
+`c ≤ q` slots and the last insertion sees `c + cnt - 1 ≤ q`. -/
+noncomputable def insSeqAt (q w : ℕ) (hqn : q < n)
+    (next : Equiv.Perm (Fin n) → Tree n) :
+    (cnt c : ℕ) → c + cnt ≤ q + 1 → w ≤ c → Equiv.Perm (Fin n) → Tree n
+  | 0, _, _, _, σ => next σ
+  | cnt + 1, c, hq, hw, σ =>
+    binIns w 0 w c q hqn (by omega) hw σ
+      (insSeqAt q w hqn next cnt (c + 1) (by omega) (by omega))
+
+/-- **Correctness of a phase whose item slot is fixed**: `P` is an invariant of the phase
+units — it stays true while the chain grows, and it bounds the rank of the item in slot `q`
+by the window `w`.  Then the phase ends in some state satisfying `P` at the final chain
+length `c + cnt`. -/
+theorem insSeqAt_run (q w : ℕ) (hqn : q < n) (hwq : w ≤ q)
+    (next : Equiv.Perm (Fin n) → Tree n)
+    {P : Equiv.Perm (Fin n) → ℕ → Prop} {x : Fin n → ℕ} (hx : Function.Injective x)
+    (hchain : ∀ (σ : Equiv.Perm (Fin n)) (c : ℕ), P σ c → ChainSorted x σ c)
+    (hrank : ∀ (σ : Equiv.Perm (Fin n)) (c : ℕ), c < n → P σ c →
+      rankAt x σ c ⟨q, hqn⟩ ≤ w)
+    (hstep : ∀ (σ : Equiv.Perm (Fin n)) (c : ℕ) (hcn : c < n) (hP : P σ c),
+      P (insertAt (rankAt x σ c ⟨q, hqn⟩) q
+        (by have h := hrank σ c hcn hP; omega) hqn σ) (c + 1)) :
+    ∀ (cnt c : ℕ) (hq : c + cnt ≤ q + 1) (hw : w ≤ c) (σ : Equiv.Perm (Fin n)), P σ c →
+      ∃ σ' : Equiv.Perm (Fin n),
+        run (insSeqAt q w hqn next cnt c hq hw σ) x = run (next σ') x ∧ P σ' (c + cnt)
+  | 0, c, _, _, σ, hP => ⟨σ, rfl, hP⟩
+  | cnt + 1, c, hq, hw, σ, hP => by
+    have hcn : c < n := by omega
+    have hcq : c ≤ q := by omega
+    have hrun := binIns_run w 0 w c q hqn hcq hw (by omega) σ
+      (insSeqAt q w hqn next cnt (c + 1) (by omega) (by omega)) x hx
+      (hchain σ c hP) (Nat.zero_le _) (hrank σ c hcn hP)
+    have hstep' : P (insertAt (rankAt x σ c ⟨q, hqn⟩) q
+        (by have h := hrank σ c hcn hP; omega) hqn σ) (c + 1) := hstep σ c hcn hP
+    obtain ⟨σ', hrun', hP'⟩ := insSeqAt_run q w hqn hwq next hx hchain hrank hstep cnt (c + 1)
+      (by omega) (by omega) _ hstep'
+    exact ⟨σ', by rw [insSeqAt, hrun, hrun'],
+      by have h : c + (cnt + 1) = c + 1 + cnt := by omega
+         rw [h]; exact hP'⟩
+
 /-! ### M0: binary insertion sort through the API
 
 Sanity check of the machinery: insert the elements in slots `1, …, n-1` one by one,

@@ -1,0 +1,24 @@
+name: lean
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with Mathlib cache
+        uses: leanprover/lean-action@v1
+        with:
+          # the project pins Mathlib by rev in lake-manifest.json; lean-action
+          # fetches the prebuilt oleans, so this is minutes rather than hours.
+          use-mathlib-cache: true
+          auto-config: false
+      - name: Trust audit (no sorry, no axiom, no native_decide)
+        run: make check
+      - name: Axiom dashboard
+        run: make trust

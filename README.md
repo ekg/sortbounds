@@ -202,9 +202,11 @@ therefore not worth redoing.
 ```sh
 lake exe cache get   # prebuilt Mathlib oleans (zero downloads if already in ~/.cache/mathlib)
 lake build           # Lean 4.35.0-rc2 (lean-toolchain) + Mathlib (pinned in lake-manifest.json)
-make check           # build + grep for sorry/admit/axiom
-make axioms          # print the axioms each headline theorem depends on
+make check           # build + no sorry + no axiom/native_decide + all listed theorems axiom-standard
+make trust           # the axiom audit alone, with a count
 ```
+
+CI runs `make check` and `make trust` on every push (`.github/workflows/lean.yml`).
 
 ## Axioms
 

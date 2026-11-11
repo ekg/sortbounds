@@ -109,14 +109,19 @@ Pair `k` with `m + k` (`k < m = n/2`); the unpaired element of an odd-length inp
 in slot `2m = n-1`.  The state left behind lists the winner of pair `k` in slot `k` and
 the loser in slot `m+k`, so the winners already occupy a contiguous prefix. -/
 
-/-- The pairing stage: compare the two slots of pair `k` and, if the second is smaller,
-swap them. -/
+/-- The pairing stage: compare the two slots of pair `k` and, if the first is smaller, swap
+them, so that slot `k` ends up holding the **larger** element of the pair and slot `m+k` the
+smaller one.  The larger elements go on to be sorted (they are the candidate "winners" of
+the merge-insertion literature, the ones whose order is settled first); the smaller ones
+are inserted into that sorted chain, where the pairing comparison is exactly the bound on
+their rank. -/
 noncomputable def pairAux (m : ℕ) (hm : 2 * m ≤ n) :
     (k : ℕ) → k ≤ m → Equiv.Perm (Fin n) → Tree n
   | 0, _, σ => Tree.leaf σ
   | k + 1, hk, σ =>
-    Tree.node (σ ⟨k, by omega⟩) (σ ⟨m + k, by omega⟩) (pairAux m hm k (by omega) σ)
+    Tree.node (σ ⟨k, by omega⟩) (σ ⟨m + k, by omega⟩)
       (pairAux m hm k (by omega) (σ * Equiv.swap ⟨k, by omega⟩ ⟨m + k, by omega⟩))
+      (pairAux m hm k (by omega) σ)
 
 /-- **The pairing tree** for `n` positions. -/
 noncomputable def pairTree (n : ℕ) : Tree n :=
@@ -133,26 +138,29 @@ theorem pairAux_agree (m : ℕ) (hm : 2 * m ≤ n) :
     simp only [pairAux, run]
     by_cases h : x (σ ⟨k, by omega⟩) < x (σ ⟨m + k, by omega⟩)
     · rw [ite_eq_left h]
-      exact pairAux_agree m hm k (by omega) σ x i (by
-        rcases hi with ⟨a, b⟩ | a
-        · exact Or.inl ⟨by omega, b⟩
-        · exact Or.inr (by omega))
-    · rw [ite_eq_right h]
-      rw [pairAux_agree m hm k (by omega) _ x i (by
-        rcases hi with ⟨a, b⟩ | a
-        · exact Or.inl ⟨by omega, b⟩
-        · exact Or.inr (by omega))]
+      have hstep := pairAux_agree m hm k (by omega)
+        (σ * Equiv.swap ⟨k, by omega⟩ ⟨m + k, by omega⟩) x i (by
+          rcases hi with ⟨a, b⟩ | a
+          · exact Or.inl ⟨by omega, b⟩
+          · exact Or.inr (by omega))
+      rw [hstep]
       show σ ((Equiv.swap ⟨k, by omega⟩ ⟨m + k, by omega⟩) i) = σ i
       rw [Equiv.swap_apply_of_ne_of_ne
         (by intro hc; have h2 := congrArg Fin.val hc; simp only [Fin.val_mk] at h2; omega)
         (by intro hc; have h2 := congrArg Fin.val hc; simp only [Fin.val_mk] at h2; omega)]
+    · rw [ite_eq_right h]
+      exact pairAux_agree m hm k (by omega) σ x i (by
+        rcases hi with ⟨a, b⟩ | a
+        · exact Or.inl ⟨by omega, b⟩
+        · exact Or.inr (by omega))
 
-/-- **The pairing tree decides every pair below `k`**, whatever state it starts from. -/
+/-- **The pairing tree decides every pair below `k`**: the *smaller* element of pair `t`
+sits in slot `m + t` and the larger one in slot `t`, whatever state the tree starts from. -/
 theorem pairAux_decided (m : ℕ) (hm : 2 * m ≤ n) :
     ∀ (k : ℕ) (hk : k ≤ m) (σ : Equiv.Perm (Fin n)) (x : Fin n → ℕ)
       (hx : Function.Injective x) (i j : Fin n)
       (hex : ∃ t, t < k ∧ i.val = t ∧ j.val = m + t),
-      x (run (pairAux m hm k hk σ) x i) < x (run (pairAux m hm k hk σ) x j)
+      x (run (pairAux m hm k hk σ) x j) < x (run (pairAux m hm k hk σ) x i)
   | 0, _, σ, x, hx, i, j, hex => by
     obtain ⟨t, ht, -, -⟩ := hex
     omega
@@ -165,18 +173,6 @@ theorem pairAux_decided (m : ℕ) (hm : 2 * m ≤ n) :
     by_cases h : x (σ ⟨k, hkn⟩) < x (σ ⟨m + k, hmkn⟩)
     · rw [ite_eq_left h]
       rcases Nat.lt_succ_iff_lt_or_eq.mp ht with h' | h'
-      · exact pairAux_decided m hm k (by omega) σ x hx i j ⟨t, h', hi, hj⟩
-      · have hiv : (i : ℕ) = k := by omega
-        have hjv : (j : ℕ) = m + k := by omega
-        clear hi hj ht h'
-        have hik : i = ⟨k, by omega⟩ := fin_ext_eq i.isLt (by omega) hiv
-        have hjk : j = ⟨m + k, by omega⟩ := fin_ext_eq j.isLt (by omega) hjv
-        rw [hik, hjk,
-          pairAux_agree m hm k (by omega) σ x ⟨k, by omega⟩ (Or.inl ⟨le_rfl, hlt⟩),
-          pairAux_agree m hm k (by omega) σ x ⟨m + k, by omega⟩ (Or.inr le_rfl)]
-        exact h
-    · rw [ite_eq_right h]
-      rcases Nat.lt_succ_iff_lt_or_eq.mp ht with h' | h'
       · exact pairAux_decided m hm k (by omega) _ x hx i j ⟨t, h', hi, hj⟩
       · have hiv : (i : ℕ) = k := by omega
         have hjv : (j : ℕ) = m + k := by omega
@@ -186,11 +182,24 @@ theorem pairAux_decided (m : ℕ) (hm : 2 * m ≤ n) :
         rw [hik, hjk,
           pairAux_agree m hm k (by omega) _ x ⟨k, by omega⟩ (Or.inl ⟨le_rfl, hlt⟩),
           pairAux_agree m hm k (by omega) _ x ⟨m + k, by omega⟩ (Or.inr le_rfl)]
-        show x ((σ * Equiv.swap (⟨k, by omega⟩ : Fin n) ⟨m + k, by omega⟩) (⟨k, by omega⟩ : Fin n))
-          < x ((σ * Equiv.swap (⟨k, by omega⟩ : Fin n) ⟨m + k, by omega⟩)
+        show x ((σ * Equiv.swap (⟨k, by omega⟩ : Fin n) ⟨m + k, by omega⟩)
             (⟨m + k, by omega⟩ : Fin n))
-        rw [Equiv.Perm.mul_apply, Equiv.Perm.mul_apply, Equiv.swap_apply_left,
-          Equiv.swap_apply_right]
+          < x ((σ * Equiv.swap (⟨k, by omega⟩ : Fin n) ⟨m + k, by omega⟩)
+            (⟨k, by omega⟩ : Fin n))
+        rw [Equiv.Perm.mul_apply, Equiv.Perm.mul_apply, Equiv.swap_apply_right,
+          Equiv.swap_apply_left]
+        exact h
+    · rw [ite_eq_right h]
+      rcases Nat.lt_succ_iff_lt_or_eq.mp ht with h' | h'
+      · exact pairAux_decided m hm k (by omega) σ x hx i j ⟨t, h', hi, hj⟩
+      · have hiv : (i : ℕ) = k := by omega
+        have hjv : (j : ℕ) = m + k := by omega
+        clear hi hj ht h'
+        have hik : i = ⟨k, by omega⟩ := fin_ext_eq i.isLt (by omega) hiv
+        have hjk : j = ⟨m + k, by omega⟩ := fin_ext_eq j.isLt (by omega) hjv
+        rw [hik, hjk,
+          pairAux_agree m hm k (by omega) σ x ⟨k, by omega⟩ (Or.inl ⟨le_rfl, hlt⟩),
+          pairAux_agree m hm k (by omega) σ x ⟨m + k, by omega⟩ (Or.inr le_rfl)]
         refine lt_of_le_of_ne (not_lt.1 h) (fun hc => ?_)
         have h2 : (⟨m + k, hmkn⟩ : Fin n) = (⟨k, hkn⟩ : Fin n) := σ.injective (hx hc)
         have h3 : m + k = k := by simpa using congrArg Fin.val h2
@@ -204,13 +213,13 @@ theorem pairAux_depth (m : ℕ) (hm : 2 * m ≤ n) :
     simp only [pairAux, depth, pairAux_depth]
     omega
 
-/-- **Correctness of the pairing stage**: it decides every pair, so the winner of pair `t`
-sits in slot `t` and the loser in slot `m+t`. -/
+/-- **Correctness of the pairing stage**: it decides every pair, so the larger element of
+pair `t` sits in slot `t` and the smaller one in slot `m+t`. -/
 theorem pairTree_spec {m : ℕ} (hm : 2 * m ≤ n) (x : Fin n → ℕ) (hx : Function.Injective x) :
     depth (pairAux m hm m le_rfl (1 : Equiv.Perm (Fin n))) = m ∧
       ∀ (t : ℕ) (ht : t < m),
-        x (run (pairAux m hm m le_rfl 1) x ⟨t, by omega⟩)
-          < x (run (pairAux m hm m le_rfl 1) x ⟨m + t, by omega⟩) :=
+        x (run (pairAux m hm m le_rfl 1) x ⟨m + t, by omega⟩)
+          < x (run (pairAux m hm m le_rfl 1) x ⟨t, by omega⟩) :=
   ⟨pairAux_depth m hm m le_rfl 1, fun t ht =>
     pairAux_decided m hm m le_rfl 1 x hx ⟨t, by omega⟩ ⟨m + t, by omega⟩
       ⟨t, ht, rfl, rfl⟩⟩

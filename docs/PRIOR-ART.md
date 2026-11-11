@@ -108,6 +108,21 @@ were not checked against a primary source.
   `lg(n!) ≥ (n/2)lg n`; no textbook sentence stating `n! ≥ (n/2)^(n/2)`
   verbatim was located — treat as folklore.
 
+## Mathlib already has (checked before writing)
+
+* **Kraft's inequality**:
+  `InformationTheory.IsPrefixFree.finsetSum_one_div_card_pow_length_le_one`
+  (`Mathlib/InformationTheory/Coding/Kraft.lean`, 2026, Elazar Gershuni), plus
+  `PrefixFree.lean` (`IsPrefixFree`), `KraftMcMillan.lean`,
+  `UniquelyDecodable.lean`, and `InformationTheory/KullbackLeibler/*` (Gibbs'
+  inequality material).
+  Consequence: `Core.Branching.card_le_pow_of_prefixFree` should be — and now is
+  — a *corollary* of Kraft, not a re-proof. It went from ~110 lines of bespoke
+  padding combinatorics to ~40 lines of instantiation. Any future "bits per
+  probe" work must build on that file.
+* **Nothing** on decision trees, comparison lower bounds, sorting networks,
+  suffix arrays, or LCP (grep, 2026-11-11). Those remain open ground in Mathlib.
+
 ## What this repository adds
 
 1. A small, dependency-light Lean 4 + Mathlib development (no Mathlib PR

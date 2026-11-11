@@ -96,8 +96,11 @@ other models"** — every open lane is about a model where the answer changes.
 3. `SN` M2: `S 4 = 5`, `S 5 = 7` by explicit optimal trees. *Running.*
 4. `SAIS` M0: `cmpFrom` soundness under a known LCP, plus the quadratic-vs-linear character
    contrast on `aⁿ`. *Running.*
-5. `Core` instantiation: re-derive `Comparison.Aggregate.card_le_pow_of_cost_le` from
-   `Core.Branching` so the reusable lemma is *used*, not merely adjacent. (Integrator.)
+5. ~~`Core` leads with Mathlib~~ **DONE**: `card_le_pow_of_prefixFree` is now a
+   corollary of Mathlib's Kraft inequality
+   (`InformationTheory.IsPrefixFree.finsetSum_one_div_card_pow_length_le_one`),
+   not a re-proof: `Core/Branching.lean` dropped from ~110 lines of bespoke
+   padding combinatorics to 76 lines of instantiation. Recorded in PRIOR-ART.
 6. ~~`Instances.Network`~~ **DONE**: `factorial_le_two_pow_length_of_sortsAll`
    (`n! ≤ 2 ^ #comparators` for any sorting network) and
    `logb_factorial_le_length_of_sortsAll`. A network is a comparison algorithm with depth =

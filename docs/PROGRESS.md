@@ -105,7 +105,11 @@ other models"** — every open lane is about a model where the answer changes.
    (`n! ≤ 2 ^ #comparators` for any sorting network) and
    `logb_factorial_le_length_of_sortsAll`. A network is a comparison algorithm with depth =
    comparator count, so networks win on depth (AKS: `O(log n)`), never on work.
-7. `XY` M2, `BenOr` M1+: research gates, only with a concrete plan.
+7. `Comparison/Bridge` M1: `insertTree (σ) : Tree (n+1)` — binary search for the rank of
+   `x n` among the prefix order `σ`, leaves `insertPerm σ j` (`Fin.succAbove`/`decomposeFin'`
+   territory), then `sortTree n` by iterating `liftTree`, giving `S n ≤ n·(⌈log₂ n⌉+1)` and
+   hence `Θ(n log n)` **inside one model**. M0 (substitution, depth, correctness transfer) landed.
+8. `XY` M2, `BenOr` M1+: research gates, only with a concrete plan.
 
 Working agreement: see `AGENTS.md` (autonomy, 4h lane deadlines, background fan-out,
 truth discipline).

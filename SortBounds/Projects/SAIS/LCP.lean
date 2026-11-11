@@ -224,3 +224,198 @@ theorem suffix_lcp_def (s : List α) (i j : ℕ) :
     lcp (suffix s i) (suffix s j) = lcp (s.drop i) (s.drop j) := rfl
 
 end Lcp
+
+/-! ### The cost model: a comparison that counts the characters it inspects -/
+
+section Cost
+variable [LinearOrder α]
+
+/-- Compare two lists character by character, returning both the `Ordering` and the
+number of characters inspected.  One inspection per position examined — positions that
+agree are examined, the deciding position too — and a comparison of two empty lists
+still counts `1` (an implementation cannot know it has nothing to compare for free). -/
+def cmpCounted : List α → List α → Ordering × ℕ
+  | [], [] => (Ordering.eq, 1)
+  | [], _ :: _ => (Ordering.lt, 1)
+  | _ :: _, [] => (Ordering.gt, 1)
+  | a :: as, b :: bs =>
+      if a = b then ((cmpCounted as bs).1, (cmpCounted as bs).2 + 1)
+      else (compare a b, 1)
+
+theorem cmpCounted_nil_nil : cmpCounted ([] : List α) [] = (Ordering.eq, 1) := rfl
+
+theorem cmpCounted_nil_cons (b : α) (bs : List α) :
+    cmpCounted [] (b :: bs) = (Ordering.lt, 1) := rfl
+
+theorem cmpCounted_cons_nil (a : α) (as : List α) :
+    cmpCounted (a :: as) [] = (Ordering.gt, 1) := rfl
+
+theorem cmpCounted_cons_cons (a b : α) (as bs : List α) :
+    cmpCounted (a :: as) (b :: bs) =
+      if a = b then ((cmpCounted as bs).1, (cmpCounted as bs).2 + 1)
+      else (compare a b, 1) := rfl
+
+/-- The instrumented comparison computes the same answer as `compare`. -/
+theorem cmpCounted_fst (a b : List α) : (cmpCounted a b).1 = compare a b := by
+  induction a generalizing b with
+  | nil =>
+    cases b with
+    | nil => rfl
+    | cons y ys => rfl
+  | cons x xs ih =>
+    cases b with
+    | nil => rfl
+    | cons y ys =>
+      by_cases h : x = y
+      · rw [cmpCounted_cons_cons, ite_eq_left h, ih, List.compare_cons_cons]
+        rw [show compare x y = Ordering.eq from by simp [h], Ordering.eq_then]
+      · have hne : compare x y ≠ Ordering.eq := fun hc => h (compare_eq_iff_eq.mp hc)
+        rw [cmpCounted_cons_cons, ite_eq_right h, List.compare_cons_cons]
+        cases hc : compare x y with
+        | lt => rfl
+        | gt => rfl
+        | eq => exact absurd hc hne
+
+/-- The number of characters inspected is the `lcp` plus the one comparison that
+decides the outcome. -/
+theorem cmpCounted_snd (a b : List α) : (cmpCounted a b).2 = lcp a b + 1 := by
+  induction a generalizing b with
+  | nil => cases b <;> rfl
+  | cons x xs ih =>
+    cases b with
+    | nil => rfl
+    | cons y ys =>
+      by_cases h : x = y
+      · rw [cmpCounted_cons_cons, ite_eq_left h, lcp_cons_cons, ite_eq_left h, ih]
+      · rw [cmpCounted_cons_cons, ite_eq_right h, lcp_cons_cons, ite_eq_right h]
+
+end Cost
+
+/-! ### Skipping a known common prefix -/
+
+section Skipping
+variable [LinearOrder α]
+
+/-- Cost model: comparing `a` with `b` while being allowed to skip a common prefix of
+length `k` costs one inspection per position examined past the prefix, plus the
+comparing inspection that decides the outcome. -/
+def cmpCost (k : ℕ) (a b : List α) : ℕ := (cmpCounted (a.drop k) (b.drop k)).2
+
+/-- Compare suffix `i` with suffix `j` of `s`, given that their first `k` characters
+agree: the comparison starts at position `k`. -/
+def cmpFrom (s : List α) (k i j : ℕ) : Ordering :=
+  (cmpCounted ((suffix s i).drop k) ((suffix s j).drop k)).1
+
+/-- The characters inspected by `cmpFrom s k i j`, i.e. `cmpCost` at the two suffixes. -/
+def inspectCount (s : List α) (k i j : ℕ) : ℕ :=
+  cmpCost k (suffix s i) (suffix s j)
+
+/-- Comparing with a known prefix costs `1 + (the `lcp` past that prefix)`. -/
+theorem cmpCost_eq (k : ℕ) (a b : List α) :
+    cmpCost k a b = 1 + lcp (a.drop k) (b.drop k) := by
+  rw [cmpCost, cmpCounted_snd, Nat.add_comm]
+
+theorem inspectCount_eq (s : List α) (k i j : ℕ) :
+    inspectCount s k i j = 1 + lcp ((suffix s i).drop k) ((suffix s j).drop k) := by
+  rw [inspectCount, cmpCost_eq, Nat.add_comm]
+
+/-- Comparing the suffixes with no prefix supplied is the plain character-by-character
+comparison. -/
+@[simp] theorem inspectCount_zero (s : List α) (i j : ℕ) :
+    inspectCount s 0 i j = 1 + lcp (suffix s i) (suffix s j) := by
+  rw [inspectCount_eq]
+  simp
+
+/-! #### Skipping a common prefix does not change the answer -/
+
+/-- Prefixing both sides by the same list does not change the comparison. -/
+theorem compare_append_append_left (p x y : List α) :
+    compare (p ++ x) (p ++ y) = compare x y := by
+  induction p with
+  | nil => rfl
+  | cons c cs ih =>
+    rw [List.cons_append, List.cons_append, List.compare_cons_cons,
+      show compare c c = Ordering.eq from by simp, Ordering.eq_then]
+    exact ih
+
+/-- If the first `k` characters of `a` and `b` agree, then comparing the remainders is
+the same as comparing `a` with `b`. -/
+theorem compare_drop_drop_of_take_eq {a b : List α} {k : ℕ} (h : a.take k = b.take k) :
+    compare (a.drop k) (b.drop k) = compare a b := by
+  have ha : a = a.take k ++ a.drop k := (List.take_append_drop k a).symm
+  have hb : b = a.take k ++ b.drop k := by rw [h, List.take_append_drop]
+  conv_rhs => rw [ha, hb]
+  rw [compare_append_append_left]
+
+/-- **Soundness of the cost model**: if suffixes `i` and `j` agree on their first `k`
+characters, then skipping them costs nothing in correctness — `cmpFrom s k i j` is the
+true comparison of the two suffixes. -/
+theorem suffix_compare_eq_of_lcp (s : List α) (k i j : ℕ)
+    (h : (suffix s i).take k = (suffix s j).take k) :
+    cmpFrom s k i j = compare (suffix s i) (suffix s j) := by
+  rw [cmpFrom, cmpCounted_fst]
+  exact compare_drop_drop_of_take_eq h
+
+/-- A prefix shorter than the `lcp` is a common prefix. -/
+theorem take_eq_of_le_lcp {a b : List α} {k : ℕ} (hk : k ≤ lcp a b) : a.take k = b.take k :=
+  take_eq_take_iff.mpr (Or.inl hk)
+
+theorem cmpFrom_eq_compare_of_le_lcp (s : List α) (k i j : ℕ)
+    (hk : k ≤ lcp (suffix s i) (suffix s j)) :
+    cmpFrom s k i j = compare (suffix s i) (suffix s j) :=
+  suffix_compare_eq_of_lcp s k i j (take_eq_of_le_lcp hk)
+
+/-- **Advancing `k` to the true LCP keeps the comparison correct.** -/
+theorem cmpFrom_lcp_advance (s : List α) (i j : ℕ) :
+    cmpFrom s (lcp (suffix s i) (suffix s j)) i j =
+      compare (suffix s i) (suffix s j) :=
+  cmpFrom_eq_compare_of_le_lcp s _ i j le_rfl
+
+/-! #### The skipped characters cost nothing -/
+
+/-- Splitting the `lcp` at a common prefix of length `k`. -/
+theorem lcp_eq_length_take_add {a b : List α} {k : ℕ} (h : a.take k = b.take k) :
+    lcp a b = (a.take k).length + lcp (a.drop k) (b.drop k) := by
+  have ha : a = a.take k ++ a.drop k := (List.take_append_drop k a).symm
+  have hb : b = a.take k ++ b.drop k := by rw [h, List.take_append_drop]
+  conv_lhs => rw [ha, hb]
+  rw [lcp_append_left]
+
+/-- Nothing is left to compare once the true `lcp` has been skipped. -/
+theorem lcp_drop_lcp (a b : List α) : lcp (a.drop (lcp a b)) (b.drop (lcp a b)) = 0 := by
+  have hsplit := lcp_eq_length_take_add (a := a) (b := b) (take_eq_of_le_lcp (le_refl (lcp a b)))
+  have hlen : (a.take (lcp a b)).length = lcp a b := by
+    rw [List.length_take, Nat.min_eq_left (lcp_le_left a b)]
+  rw [hlen] at hsplit
+  omega
+
+/-- **The LCP-guided comparison inspects exactly one character**: given the true `lcp`,
+`cmpFrom` looks at the deciding position only.  (Correctness of that comparison is
+`cmpFrom_lcp_advance`; together they say a guided comparison costs `1`.) -/
+theorem inspectCount_lcp (s : List α) (i j : ℕ) :
+    inspectCount s (lcp (suffix s i) (suffix s j)) i j = 1 := by
+  rw [inspectCount_eq, lcp_drop_lcp]
+
+/-- **The `k` skipped characters cost nothing**: the guided comparison plus the `k`
+characters it was allowed to skip are never dearer than the naive comparison. -/
+theorem cmpFrom_inspectCount_le (s : List α) (k i j : ℕ)
+    (h : (suffix s i).take k = (suffix s j).take k) :
+    inspectCount s k i j + k ≤ inspectCount s 0 i j := by
+  have hsplit := lcp_eq_length_take_add (a := suffix s i) (b := suffix s j) h
+  have hlen : ((suffix s i).take k).length ≤ k := by
+    rw [List.length_take]
+    exact Nat.min_le_left _ _
+  rw [inspectCount_eq (k := k), inspectCount_zero, hsplit]
+  omega
+
+/-- The saving is exact when `k` really is a prefix of both suffixes. -/
+theorem inspectCount_eq_add (s : List α) (k i j : ℕ)
+    (h : (suffix s i).take k = (suffix s j).take k) (hk : k ≤ (suffix s i).length) :
+    inspectCount s 0 i j = k + inspectCount s k i j := by
+  have hsplit := lcp_eq_length_take_add (a := suffix s i) (b := suffix s j) h
+  have hlen : ((suffix s i).take k).length = k := by
+    rw [List.length_take, Nat.min_eq_left hk]
+  rw [inspectCount_eq (k := k), inspectCount_zero, hsplit, hlen]
+  omega
+
+end Skipping

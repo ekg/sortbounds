@@ -30,6 +30,8 @@ open SortBounds
 #print axioms SortBounds.msortCount_sorted
 #print axioms SortBounds.msortCount_perm
 #print axioms SortBounds.msortCount_le
+#print axioms SortBounds.factorial_le_two_pow_length_of_sortsAll
+#print axioms SortBounds.sorts_of_sortsAll
 -- lanes
 #print axioms SortBounds.Projects.FordJohnson.insertCount_count
 #print axioms SortBounds.Projects.FordJohnson.fjSort_count_le

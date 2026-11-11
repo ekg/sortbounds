@@ -10,6 +10,7 @@ import SortBounds.Comparison.General
 import SortBounds.Comparison.Examples
 import SortBounds.Instances.Radix
 import SortBounds.Instances.MergeSort
+import SortBounds.Instances.Network
 -- lanes
 import SortBounds.Projects.FordJohnson.Insertion
 import SortBounds.Projects.FordJohnson.MergeInsertion

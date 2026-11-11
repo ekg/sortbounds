@@ -21,7 +21,7 @@ other models"** — every open lane is about a model where the answer changes.
 | --- | --- | --- | --- | --- |
 | `Core` | bits per probe | `card_le_pow_of_prefixFree`, `logb_le_of_le_pow` | **DONE** | M0 |
 | `Comparison` | comparison sorts | `exists_input_cost_ge_quarter`, `avg_cost_ge_log2_factorial` | **DONE** | frozen |
-| `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le` | **DONE** | frozen |
+| `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le`, `factorial_le_two_pow_length_of_sortsAll` | **DONE** | frozen |
 | `FordJohnson` | exact comparison counts, upper bound | `fjSort_count_le` (`fjCount`), `insertCount_count` | **M1 DONE** | M2/M3 open |
 | `SN` | exact `S(n)`, both bounds | `exists_correct_tree`, `S_spec`, `S_le_iff`, `S_lower`, `S 0..3` | **M1 DONE** | M2/M3 open |
 | `XY` | sorting `X+Y` | `pairSums`, `pairSums_card_le`, `naivePairsSorted_*` | **M1 DONE** | M2 gated |
@@ -87,10 +87,31 @@ other models"** — every open lane is about a model where the answer changes.
   geometry; `M0` only is the committed deliverable.
 * `SAIS` is queued behind `XY`, which will exercise the same weighted cost model.
 
+## Queue (take the next item without asking)
+
+1. `BenOr` witness: `∃ t, t.degreeLe (n*(n-1)) ∧ t.decidesReal (distinctSet n)` — removes the
+   vacuity risk on the unproved Ben-Or statements. *Running.*
+2. `FordJohnson` M2/M3: `fjCount n ≤ n·(⌈log₂ n⌉+1)` for the existing recurrence, then the real
+   Jacobsthal-order count with the table `F(4..11) = 5,7,10,13,16,19,22,26`. *Running.*
+3. `SN` M2: `S 4 = 5`, `S 5 = 7` by explicit optimal trees. *Running.*
+4. `SAIS` M0: `cmpFrom` soundness under a known LCP, plus the quadratic-vs-linear character
+   contrast on `aⁿ`. *Running.*
+5. `Core` instantiation: re-derive `Comparison.Aggregate.card_le_pow_of_cost_le` from
+   `Core.Branching` so the reusable lemma is *used*, not merely adjacent. (Integrator.)
+6. ~~`Instances.Network`~~ **DONE**: `factorial_le_two_pow_length_of_sortsAll`
+   (`n! ≤ 2 ^ #comparators` for any sorting network) and
+   `logb_factorial_le_length_of_sortsAll`. A network is a comparison algorithm with depth =
+   comparator count, so networks win on depth (AKS: `O(log n)`), never on work.
+7. `XY` M2, `BenOr` M1+: research gates, only with a concrete plan.
+
+Working agreement: see `AGENTS.md` (autonomy, 4h lane deadlines, background fan-out,
+truth discipline).
+
 ## Changelog
 
 | Date | Change |
 | --- | --- |
+| 2026-11-11 | `Instances.Network`: sorting networks cannot beat the bound in comparator count (`n! ≤ 2^k`), only in depth. Round-2 lanes launched with 4h deadlines (BenOr witness, FordJohnson count, SN `S 4`/`S 5`, SAIS cost model). |
 | 2026-11-11 | Lanes ran: FordJohnson/SN/XY to M1, BenOr to M0. Review caught one false prose claim (XY) and one vacuity gap (BenOr); both recorded. |
 | 2026-11-09 | Repo restructured (`Core`/`Comparison`/`Instances`/`Projects`); `Core.Branching` landed; four lanes opened. |
 | 2026-11-09 | Initial development: comparison model, Ω(n log n) (worst/average/any value type), radix, counted merge sort. |

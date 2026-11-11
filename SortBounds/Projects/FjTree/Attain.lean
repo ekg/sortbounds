@@ -1041,3 +1041,102 @@ theorem arranged_transport {m M : ℕ} (hm : 2 * m ≤ n) (hMn : m + M = n) (hM 
       congr 1
       simp only [Fin.val_mk]
       omega
+
+/-! ### The count is attained -/
+
+theorem fjTreeFuel_cost_attn : ∀ (fuel n : ℕ), n ≤ fuel →
+    cost (fjTreeFuel fuel n) (attnFun n) = fjCountJ n
+  | 0, n, hn => by
+    have hn0 : n = 0 := by omega
+    subst hn0
+    simp only [fjTreeFuel, cost]
+    exact (fjCountJ_eq_zero 0 (by omega)).symm
+  | fuel + 1, 0, _ => by
+    simp only [fjTreeFuel, cost]
+    exact (fjCountJ_eq_zero 0 (by omega)).symm
+  | fuel + 1, 1, _ => by
+    simp only [fjTreeFuel, cost]
+    exact (fjCountJ_eq_zero 1 (by omega)).symm
+  | fuel + 1, k + 2, _ => by
+    have hm2 : 2 * ((k + 2) / 2) ≤ k + 2 := Nat.mul_div_le (k + 2) 2
+    have hMn : (k + 2) / 2 + ((k + 2) - (k + 2) / 2) = k + 2 := by omega
+    have hMle : (k + 2) - (k + 2) / 2 ≤ (k + 2) / 2 + 1 := sub_div_le (k + 2)
+    have hM1 : 1 ≤ (k + 2) - (k + 2) / 2 := one_le_sub_div (k + 2) (by omega)
+    have hm1 : 1 ≤ (k + 2) / 2 := by omega
+    have hrec : cost (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))
+        = fjCountJ ((k + 2) / 2) := fjTreeFuel_cost_attn fuel ((k + 2) / 2) (by omega)
+    -- the pairing stage decides every pair in favour of the winner
+    have hpairs : ∀ (t : ℕ) (ht : t < (k + 2) / 2),
+        attnFun (k + 2) ⟨(k + 2) / 2 + t, by omega⟩ < attnFun (k + 2) ⟨t, by omega⟩ := by
+      intro t ht
+      rw [attnFun_winner (i := (⟨t, by omega⟩ : Fin (k + 2))) ht]
+      have hlt := attnFun_nonwinner_lt (i := (⟨(k + 2) / 2 + t, by omega⟩ : Fin (k + 2)))
+        (by simp only [Fin.val_mk]; omega)
+      have h2 : attnFun (k + 2) ⟨(k + 2) / 2 + t, by omega⟩
+          < (k + 2) - (k + 2) / 2 := hlt
+      omega
+    rw [fjTreeFuel, cost_substTree, cost_pairTree, run_pairTree_one (k + 2) _ hpairs]
+    -- the stage: the winners are sorted, transported, and the losers inserted
+    have hwin : ∀ o : Fin ((k + 2) / 2),
+        attnFun (k + 2) ⟨((run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) o).val,
+          by have := (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2)) o).isLt; omega⟩
+          = ((k + 2) - (k + 2) / 2) + o.val := by
+      intro o
+      have hlt : ((run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) o).val
+          < (k + 2) / 2 := (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2)) o).isLt
+      rw [attnFun_winner (i := (⟨((run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) o).val,
+        by omega⟩ : Fin (k + 2))) hlt]
+      congr 1
+      have hsorts : Sorts (attnFun ((k + 2) / 2))
+          (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) :=
+        (fjTreeFuel_correct fuel ((k + 2) / 2) (by omega)) _ (attnFun_injective _)
+      have hb : ∀ i, attnFun ((k + 2) / 2) i < (k + 2) / 2 := attnFun_lt _
+      exact eq_val_of_strictMono hsorts hb o
+    have hitem : ∀ o : Fin ((k + 2) / 2),
+        attnFun (k + 2) ⟨(k + 2) / 2 + ((run (fjTreeFuel fuel ((k + 2) / 2))
+            (attnFun ((k + 2) / 2))) o).val,
+          by have := (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2)) o).isLt; omega⟩
+          = attainVal ((k + 2) - (k + 2) / 2) 0 o.val := by
+      intro o
+      have hlt : ((run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) o).val
+          < (k + 2) / 2 := (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2)) o).isLt
+      rw [attnFun_item (i := (⟨(k + 2) / 2 + ((run (fjTreeFuel fuel ((k + 2) / 2))
+        (attnFun ((k + 2) / 2))) o).val, by omega⟩ : Fin (k + 2))) (by simp only [Fin.val_mk]; omega)
+        (by simp only [Fin.val_mk]; omega)]
+      congr 1
+      exact hwin o
+    have hlast : ∀ (h : 2 * ((k + 2) / 2) < k + 2),
+        attnFun (k + 2) ⟨2 * ((k + 2) / 2), h⟩ = attainVal ((k + 2) - (k + 2) / 2) 0 ((k + 2) / 2) := by
+      intro h
+      rw [attnFun_last (i := (⟨2 * ((k + 2) / 2), h⟩ : Fin (k + 2)))
+        (by simp only [Fin.val_mk]; omega) (by simp only [Fin.val_mk]; omega)]
+    have harr := arranged_transport hm2 hMn hMle (attnFun (k + 2))
+      (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) hwin hitem hlast
+    have himg : cost (imageTree (fun i : Fin ((k + 2) / 2) =>
+          (1 : Equiv.Perm (Fin (k + 2))) ⟨i.val, by have := i.isLt; omega⟩)
+        (fun τ => transport ((k + 2) / 2) hm2 (1 : Equiv.Perm (Fin (k + 2))) τ)
+        (fjTreeFuel fuel ((k + 2) / 2))) (attnFun (k + 2)) = fjCountJ ((k + 2) / 2) := by
+      rw [cost_imageTree]
+      have hfun : (fun i : Fin ((k + 2) / 2) => attnFun (k + 2)
+          ((1 : Equiv.Perm (Fin (k + 2))) ⟨i.val, by have := i.isLt; omega⟩))
+          = fun i : Fin ((k + 2) / 2) => ((k + 2) - (k + 2) / 2) + attnFun ((k + 2) / 2) i := by
+        funext i
+        exact attnFun_winner (i := (⟨i.val, by omega⟩ : Fin (k + 2))) i.isLt
+      rw [hfun, cost_add_const, hrec]
+    have hrunimg : run (imageTree (fun i : Fin ((k + 2) / 2) =>
+          (1 : Equiv.Perm (Fin (k + 2))) ⟨i.val, by have := i.isLt; omega⟩)
+        (fun τ => transport ((k + 2) / 2) hm2 (1 : Equiv.Perm (Fin (k + 2))) τ)
+        (fjTreeFuel fuel ((k + 2) / 2))) (attnFun (k + 2))
+        = transport ((k + 2) / 2) hm2 (1 : Equiv.Perm (Fin (k + 2)))
+          (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) := by
+      rw [run_imageTree]
+      have hfun : (fun i : Fin ((k + 2) / 2) => attnFun (k + 2)
+          ((1 : Equiv.Perm (Fin (k + 2))) ⟨i.val, by have := i.isLt; omega⟩))
+          = fun i : Fin ((k + 2) / 2) => ((k + 2) - (k + 2) / 2) + attnFun ((k + 2) / 2) i := by
+        funext i
+        exact attnFun_winner (i := (⟨i.val, by omega⟩ : Fin (k + 2))) i.isLt
+      rw [hfun, run_add_const]
+    rw [fjStage, cost_substTree, himg, hrunimg,
+      insPhase_cost hm1 (by omega) hMn hMle hM1 (attnFun_injective (k + 2)) harr]
+    rw [hrec, fjCountJ_le_recurrence (k + 2) (by omega),
+      show (k + 2 + 1) / 2 = (k + 2) - (k + 2) / 2 from (sub_div_eq (k + 2)).symm]

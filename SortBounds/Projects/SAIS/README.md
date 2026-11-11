@@ -99,6 +99,40 @@ Order: M1a `lcpAt` + the min property (the real lemma); M1b
 Out of scope: SA-IS itself (Isabelle has its correctness); Kasai's O(n)
 construction of the array (state it, do not prove it).
 
+## M2 target: Kasai's linear-time LCP array (opened 2026-11-11)
+
+`verify_linear_time` says a suffix array can be *verified* in `n-1` inspections
+**given its LCP array**.  The missing half is producing that array.  Kasai's
+algorithm does it in `O(n)` character inspections, by exploiting
+`lcp (rank i) ≥ lcp (rank (i-1)) - 1`: shift one position right, and the common
+prefix can only lose one character.
+
+```lean
+/-- The inverse of a suffix array, as a function. -/
+def saRank (sa : List ℕ) (i : ℕ) : ℕ
+
+/-- **Kasai's algorithm**, with a character-inspection counter.  Input: the string
+and its suffix array.  Output: `lcp[k] = lcp (suffix (sa k)) (suffix (sa (k+1)))`
+(up to `n-2`) together with the number of inspected character pairs. -/
+def kasai (s : List α) (sa : List ℕ) : List ℕ × ℕ
+
+/-- The array is correct: entry `k` really is that LCP. -/
+theorem kasai_lcp_correct (s : List α) (sa : List ℕ) (hsa : IsSaCandidate s sa) :
+    ∀ k < sa.length - 1, (kasai s sa).1.getD k 0 = lcp (suffix s (sa.getD k 0)) (suffix s (sa.getD (k+1) 0))
+
+/-- **And it is linear**: at most `2 * s.length` inspected pairs, not `Θ(n²)`. -/
+theorem kasai_cost_le (s : List α) (sa : List ℕ) : (kasai s sa).2 ≤ 2 * s.length
+```
+
+Order: M2a `saRank` + `kasai` as a computable function (a `while` loop with an
+explicit fuel/counter is fine — the *cost* is the theorem, not the runtime);
+M2b correctness of the entries; M2c the `2n` bound, whose proof is the amortised
+argument `h` drops by at most one per text position.  Landing this plus
+`verify_linear_time` gives a complete linear-time *account* of suffix-array
+verification: Kasai produces the LCP array in `2n` inspections, the checker verifies
+the array in `n-1`.  Out of scope: bearing the suffix array itself (SA-IS), and
+making `kasai` fast in Lean's runtime.
+
 ## Log
 
 * **M0 landed** (`LCP.lean`). Cost model + the local accounting principle:

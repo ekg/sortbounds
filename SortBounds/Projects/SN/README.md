@@ -32,14 +32,17 @@ theorem S_one : S 1 = 0
 theorem S_two : S 2 = 1
 theorem S_three : S 3 = 3
 
-/-- M2: the information bound is attained up to `n = 11`. -/
+/-- M2 — **NOT PROVED YET** (kept here as the target, not as a claim). -/
 theorem S_eq_clog (n) (h : n ≤ 11) : S n = Nat.clog 2 (Nat.factorial n)
 
-/-- M3 (research-level, may not land): the first gap. -/
+/-- M3 — **NOT PROVED YET** (research-level: `⌈log₂ 12!⌉ = 29 < 30`). -/
 theorem S_twelve : S 12 = 30
 
 end SortBounds.Projects.SN
 ```
+
+**Status: M0 + M1 landed; M2 and M3 are open.** The contract block above lists all
+three so the targets stay pinned; only the first six signatures exist in code.
 
 ## Milestones
 
@@ -68,4 +71,24 @@ machine-checked `S(n)` table found.
 
 ## Log
 
-* (empty)
+* 2026-11-11 — **M0 + M1 landed**, no `sorry` (`Basic.lean`, `Small.lean`;
+  validate with `lake env lean SortBounds/Projects/SN/Basic.lean`, and
+  `Small.lean` after `Basic` is built).
+  * `exists_correct_tree` is proved by a deliberately dumb tree: compare every
+    ordered pair of positions (`allPairs`, `pairTree`), then read the sorted
+    order off the completed table (`losses` / `sortKey` / `sortPos` /
+    `tablePerm`, correctness `tablePerm_sorts`).  Depth is quadratic, so it
+    certifies existence and makes `S` well defined, nothing more.  No
+    `MergeSort`/`FordJohnson` input was needed, so nothing was duplicated from
+    those lanes.
+  * `S` is `sInf` of the achievable depths (`Nat.sInf` is spelled `sInf` in
+    this Mathlib pin); `S_spec`/`S_le_iff` come from `Nat.sInf_mem` /
+    `Nat.sInf_le`, `S_lower` from `factorial_le_two_pow_depth` +
+    `Nat.clog_le_iff_le_pow`.
+  * M1: `S 0 = 0`, `S 1 = 0`, `S 2 = 1` (via `SortBounds.tree2`),
+    `S 3 = 3` (new explicit `tree3`, `depth tree3 = 3`,
+    `⌈log₂ 3!⌉ = 3` by counting).
+  * Not attempted: **M2** (`S n = ⌈log₂ n!⌉` for `n ≤ 11`) and **M3**
+    (`S 12 = 30`).  M2 still needs the generator/optimal-tree construction that
+    the milestone notes expect from `FordJohnson` M1, plus correctness proofs
+    for trees of depth up to 26; out of scope for this pass.

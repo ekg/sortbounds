@@ -10,3 +10,13 @@ import SortBounds.Comparison.General
 import SortBounds.Comparison.Examples
 import SortBounds.Instances.Radix
 import SortBounds.Instances.MergeSort
+-- lanes
+import SortBounds.Projects.FordJohnson.Insertion
+import SortBounds.Projects.FordJohnson.MergeInsertion
+import SortBounds.Projects.SN.Basic
+import SortBounds.Projects.SN.Small
+import SortBounds.Projects.XY.PairSums
+import SortBounds.Projects.XY.Naive
+import SortBounds.Projects.BenOr.Basic
+import SortBounds.Projects.BenOr.Components
+import SortBounds.Projects.BenOr.Bound

@@ -60,4 +60,31 @@ formalization found.
 
 ## Log
 
-* (empty)
+* 2026-11-11 — **M0 done** (`Basic.lean`): `ADT`, `ADT.height`, `ADT.numCells`,
+  `ADT.run`, `ADT.decides`, `ADT.degreeLe`, and `ADT.card_cells_le`
+  (`t.numCells ≤ 2 ^ t.height`).  Non-vacuity and degree checks:
+  `halfLineTree_decides`, `halfLineTree_degreeLe`.  Validated with
+  `lake env lean`; `#print axioms` gives only `propext, Classical.choice,
+  Quot.sound`.
+* 2026-11-11 — **M1 done** (`Components.lean`, `Bound.lean`).  *Modelling
+  decision:* the component count lives over `ℝ`, not `ℚ` — `ℚ` is totally
+  disconnected, so "`n!` components" is already false at `n = 1` over `ℚ`.  The
+  trees keep the contract's `ℚ`-coefficient `MvPolynomial` tests; `ADT.runReal` /
+  `ADT.decidesReal` read those coefficients at real points, and `ADT.run` /
+  `ADT.decides` stay the rational semantics of the contract.
+  Stated, not proved (`def … : Prop`, no `sorry`):
+  `elementDistinctComponents n` := `numComponents (distinctSet n) = n!`,
+  `componentBound d`, `BenOrBound`, `BenOrDistinctness d`,
+  `ElementDistinctHeightBound d`.  Proved: `numComponents_eq_one_of_isPreconnected`,
+  `elementDistinctComponents_zero`, `elementDistinctComponents_one`,
+  `componentBound_distinctness` (`componentBound d` + `n!` components ⇒
+  `Ω(log n!)`), `log_factorial_ge_sixteenth` (`n log n / 16 ≤ log n!`, all `n`),
+  `elementDistinctHeightBound_of_distinctness`, `benOrBound_distinctness`, and
+  `elementDistinctHeightBound_of_benOrBound` (`BenOrBound` + `n!` components ⇒
+  `Ω(n log n)` for element distinctness at every fixed degree).
+* 2026-11-11 — Not attempted, by design: the two algebraic-geometry inputs
+  (`elementDistinctComponents`, i.e. `n!` convex ordering regions separated by
+  `sign (x i - x j)`; and `componentBound`, Ben-Or 1983 with Milnor–Thom
+  component bounds).  `log_factorial_ge_sixteenth` belongs in
+  `SortBounds/Comparison/Stirling.lean` — outside this lane's write scope; the
+  integrator may move it.

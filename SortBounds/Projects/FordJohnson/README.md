@@ -62,4 +62,15 @@ machine-checked found.
 
 ## Log
 
-* (empty)
+* 2026-11-11 — **M0 landed** (`Insertion.lean`): `insertCount` with
+  `insertCount_perm`, `insertCount_sorted`, `insertCount_count`
+  (`≤ ⌈log₂(list.length+1)⌉`).
+* 2026-11-11 — **M1 landed** (`MergeInsertion.lean`): `pairUp` (+perm/length
+  lemmas), `insertAll`/`insertAllCost` (`insertAll_count`), `loserCost`,
+  `fjCount` (structural recursion with `termination_by`), and
+  `fjSort_perm`/`fjSort_sorted`/`fjSort_count_le`.
+  The lane worker hit the 30-minute cap with `fjSort_count_le`'s final
+  arithmetic goal unsolved; the integrator finished it (unfold `loserCost`,
+  `rw [hm] at hrec ⊢` to align the recursive call on the winners, then split on
+  the unpaired element and `omega`).
+* M2 (`fjCount` closed form) and M3 (optimality for `n ≤ 11`, `20`, `21`): open.

@@ -30,3 +30,16 @@ open SortBounds
 #print axioms SortBounds.msortCount_sorted
 #print axioms SortBounds.msortCount_perm
 #print axioms SortBounds.msortCount_le
+-- lanes
+#print axioms SortBounds.Projects.FordJohnson.insertCount_count
+#print axioms SortBounds.Projects.FordJohnson.fjSort_count_le
+#print axioms SortBounds.Projects.FordJohnson.fjSort_sorted
+#print axioms SortBounds.Projects.FordJohnson.fjSort_perm
+#print axioms SortBounds.Projects.SN.exists_correct_tree
+#print axioms SortBounds.Projects.SN.S_le_iff
+#print axioms SortBounds.Projects.SN.S_lower
+#print axioms SortBounds.Projects.SN.S_three
+#print axioms SortBounds.Projects.XY.pairSums_card_le
+#print axioms SortBounds.Projects.XY.naivePairsSorted_perm
+#print axioms SortBounds.Projects.XY.naivePairsSorted_count
+#print axioms SortBounds.Projects.BenOr.ADT.card_cells_le

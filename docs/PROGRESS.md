@@ -22,10 +22,10 @@ other models"** — every open lane is about a model where the answer changes.
 | `Core` | bits per probe | `card_le_pow_of_prefixFree`, `logb_le_of_le_pow` | **DONE** | M0 |
 | `Comparison` | comparison sorts | `exists_input_cost_ge_quarter`, `avg_cost_ge_log2_factorial` | **DONE** | frozen |
 | `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le` | **DONE** | frozen |
-| `FordJohnson` | exact comparison counts, upper bound | `fj_cast_count`, `fj_take_count` | **ACTIVE** | M1/M3 |
-| `SN` | exact `S(n)`, both bounds | `exists_correct_tree`, `S_eq_*` table | **ACTIVE** | M0/M1 |
-| `XY` | sorting `X+Y` | `xy_*` model + bounds | **ACTIVE** | M0 |
-| `BenOr` | algebraic decision trees | statement + model | **ACTIVE** | M0 |
+| `FordJohnson` | exact comparison counts, upper bound | `fjSort_count_le` (`fjCount`), `insertCount_count` | **M1 DONE** | M2/M3 open |
+| `SN` | exact `S(n)`, both bounds | `exists_correct_tree`, `S_spec`, `S_le_iff`, `S_lower`, `S 0..3` | **M1 DONE** | M2/M3 open |
+| `XY` | sorting `X+Y` | `pairSums`, `pairSums_card_le`, `naivePairsSorted_*` | **M1 DONE** | M2 gated |
+| `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement) | **M0 DONE** | M1+ gated |
 | `SAIS` | suffix arrays, cost model | `…` | **QUEUED** | — |
 
 ## Decisions (and why)
@@ -52,6 +52,29 @@ other models"** — every open lane is about a model where the answer changes.
 * `M2` — the general theorem.
 * `M3` — the result that would be new to the literature (gated; may not land).
 
+## What each lane actually landed (verified, not claimed)
+
+* **FordJohnson** — `insertCount` (binary insertion, `≤ ⌈log₂(k+1)⌉` comparisons),
+  `fjSort` (merge-insertion) with `fjSort_perm`, `fjSort_sorted`,
+  `fjSort_count_le : (fjSort l).1 ≤ fjCount l.length`. The lane worker hit the
+  30-minute cap with one arithmetic goal left open; the integrator closed it
+  (unfold `loserCost`, split on the unpaired element, align the recursive
+  hypothesis). `fjCount`'s closed form and the optimality table are M2/M3.
+* **SN** — `exists_correct_tree` (a compare-all-pairs tree, depth `n²`),
+  `S`, `S_spec`, `S_le_iff`, `S_lower` (`⌈log₂ n!⌉ ≤ S n`), and
+  `S 0 = 0, S 1 = 0, S 2 = 1, S 3 = 3`. `S_eq_clog` (n ≤ 11) and `S 12 = 30`
+  are **not** proved; the contract marks them as targets.
+* **XY** — `pairSums`, `pairSums_card_le`, `naivePairsSorted_*`, and the counted
+  merge-sort run `naivePairsMsort_count`. Review caught a false claim in the
+  prose (`Ω(n² log n)` for the sums problem); fixed — the M0 theorem is the
+  generic `N`-item bound re-indexed, and Fredman's `O(n²)` scheme is exactly why
+  it does not apply to sums.
+* **BenOr** — `ADT`, `height`, `numCells`, `run`, `decides`, `degreeLe`,
+  `ADT.card_cells_le`, plus the *statements* `BenOrBound`,
+  `ElementDistinctHeightBound`, `elementDistinctComponents`. Review found no
+  witness that `decidesReal (distinctSet n)` is satisfiable (vacuity risk on the
+  unproved statements); the witness lemma is the next task.
+
 ## Blockers and dependencies
 
 * `SN` M2 (optimal trees for `n = 6..11`) **depends on** `FordJohnson` M1: the
@@ -68,5 +91,6 @@ other models"** — every open lane is about a model where the answer changes.
 
 | Date | Change |
 | --- | --- |
+| 2026-11-11 | Lanes ran: FordJohnson/SN/XY to M1, BenOr to M0. Review caught one false prose claim (XY) and one vacuity gap (BenOr); both recorded. |
 | 2026-11-09 | Repo restructured (`Core`/`Comparison`/`Instances`/`Projects`); `Core.Branching` landed; four lanes opened. |
 | 2026-11-09 | Initial development: comparison model, Ω(n log n) (worst/average/any value type), radix, counted merge sort. |

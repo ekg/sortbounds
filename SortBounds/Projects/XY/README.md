@@ -18,8 +18,7 @@ namespace SortBounds.Projects.XY
 /-- The multiset of pairwise sums. -/
 def pairSums (X Y : Finset ℕ) : Multiset ℕ
 
-/-- Number of *distinct* orderings of `n²` sums is at most `2^c` for a
-`c`-comparison decision procedure: the `b = 2` instance of `Core.Branching`. -/
+/-- Distinct pairwise sums: at most `X.card * Y.card` (collapsing equal sums). -/
 theorem pairSums_card_le (X Y : Finset ℕ) :
     (pairSums X Y).toFinset.card ≤ X.card * Y.card
 
@@ -34,6 +33,11 @@ theorem naivePairsSorted_count (X Y) :
 
 end SortBounds.Projects.XY
 ```
+
+Note (added after review): the M0 counting corollary must be stated as *"the
+generic `N`-item bound at `N = X.card * Y.card`"*, never as an `Ω(n² log n)`
+bound on the sums problem — Fredman's `O(n²)` scheme is precisely the reason the
+generic bound does not apply there.
 
 **M2 is a research gate**, do not start it: `def fredmanCompares (n) : ℕ` and the
 statement of Fredman's `O(n²)` comparison scheme — write it as a documented
@@ -61,4 +65,27 @@ TOPP #11 (open). No formalization found.
 
 ## Log
 
-* (empty)
+* 2026-11-11 — **M0 landed.** `PairSums.lean`: `pairSums`, `pairSums_mem`,
+  `pairSums_card` (`= X.card * Y.card` entries), the contract's `pairSums_card_le`
+  (distinct sums `≤ X.card * Y.card`), the `b = 2` bits-per-probe corollary
+  `transcripts_card_le_pow_two`, and the output-size observation
+  `factorial_mul_card_le_two_pow_depth` / `log2_factorial_mul_card_le_depth`
+  (the generic `N = n·m` bound: a tree that sorts *every* `N`-element input with
+  distinct values has depth `≥ log₂((n·m)!)`; **not** a bound on the sums
+  problem — corrected after review, Fredman 1976 is the reason).
+* 2026-11-11 — **M1 landed.** `Naive.lean`: `naivePairsSorted` with
+  `naivePairsSorted_perm`, `naivePairsSorted_sorted`, `naivePairsSorted_count`,
+  plus the same algorithm run through `Instances.MergeSort.msortCount`
+  (`naivePairsMsort`, `_perm`, `_sorted`, `_count`), which supplies the genuine
+  `count ≤ N * (⌈log₂ N⌉ + 1)` bound with `N = X.card * Y.card`.
+* All six contract signatures are proved verbatim; no `sorry`; `#print axioms`
+  is checked in `scripts/axioms.lean` by the integrator.
+* Reviewed: `transcripts_card_le_pow_two` is a literal alias of
+  `Core.Branching.card_le_pow_of_prefixFree` at `b = 2` and
+  `naivePairsSorted_count` is pure `clog` arithmetic; both are honest re-exports,
+  the substantive count is `naivePairsMsort_count`.
+* The contract's `naivePairsSorted_count` is the trivial `N ≤ N · ⌈log₂(N+1)⌉`
+  (kept as specified); the informative count is `naivePairsMsort_count`.  The two
+  `M1` definitions are `noncomputable` because enumerating a `Finset` goes through
+  `Multiset.toList`, which chooses a representative.
+* **M2 not started** (gated by this README: statement-only, research level).

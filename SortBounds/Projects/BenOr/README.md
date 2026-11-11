@@ -130,6 +130,42 @@ BenOrBound : Prop := …` with no proof is the correct shape for the unproved pa
 Ben-Or 1983 (STOC, topological method); Milnor–Thom component bounds. No
 formalization found.
 
+## M1 target: `n!` connected components of the distinctness set (opened 2026-11-11)
+
+Ben-Or's bound reads off the number of connected components of the set being decided;
+for element distinctness that number is `n!`, which is *why* the bound gives `Ω(n log n)`
+there even though an algebraic test has three outcomes rather than two.  The model and
+the statements are already in this lane; this is the missing mathematical ingredient, and
+it is provable without any algebraic geometry:
+
+```lean
+/-- The **sector** of a permutation: the points whose increasing order is `σ`. -/
+def sector [LinearOrder α] (σ : Equiv.Perm (Fin n)) : Set (Fin n → α)
+  := {x | ∀ k l : Fin n, k < l → x (σ k) < x (σ l)}
+
+theorem sector_convex (σ) : Convex ℝ (sector σ)          -- an intersection of open half-spaces
+theorem sector_open (σ) : IsOpen (sector σ)
+theorem sectors_disjoint {σ τ} (h : σ ≠ τ) : Disjoint (sector σ) (sector τ)
+theorem distinctSet_eq_iUnion : distinctSet n = ⋃ σ, sector σ
+
+/-- **The distinctness set has exactly `n!` connected components.** -/
+theorem numComponents_distinctSet (n : ℕ) :
+    Nat.card (ConnectedComponents ↥(distinctSet n)) = Nat.factorial n
+```
+
+**Proof route (no paths needed).** Each `sector σ` is open (a finite intersection of
+half-spaces `{x | x i < x j}`), convex (same), and the sectors are pairwise disjoint with
+union the distinctness set.  Inside the subspace `↥(distinctSet n)`, each sector is
+therefore *clopen*: open by `sector_open`, and closed because its complement is the
+(finite) union of the other open sectors.  A clopen connected set is a connected
+component, and `sector σ` is connected because it is convex.  So the components are in
+bijection with `Equiv.Perm (Fin n)`, whose cardinality is `n!`.
+
+Watch out for: `n = 0, 1` (one permutation, one component, `distinctSet` is everything);
+the ambient type — `distinctSet` is over `Fin n → ℝ`, so state the topology lemmas there
+(or generally over a `LinearOrder`+`Topology`); and `Nat.card` of
+`ConnectedComponents` needs the subtype's topology, not the ambient one.
+
 ## Log
 
 * 2026-11-11 — **M0 done** (`Basic.lean`): `ADT`, `ADT.height`, `ADT.numCells`,

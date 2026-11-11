@@ -175,6 +175,12 @@ other models"** — every open lane is about a model where the answer changes.
    and all four contract signatures are unchanged.
    `S_pin` now pins `S n` to within one for every `n ≤ 22`, and `S_eq_of_fjCountJ_eq`
    is the transfer principle behind `S_eq_clog`.
+8a. **Tree-side tightness** — `fjCountJ_attains` shows the *idealised list algorithm* is
+   tight; the tree `fjTree` should be too: `∃ x, Function.Injective x ∧ cost (fjTree n) x =
+   fjCountJ n`.  Starting lemma (reviewer's Q6): `binIns_cost_eq`, the `Tree`-side mirror of
+   `Attain.insertCount_eq_clog_of_forall_le` — when the true rank sits at the window's edge,
+   one search descends a full spine, so a batch costs `|batch| · ⌈log₂(jacLo+jacHi)⌉`.
+   *Running as a lane.*
 8b. **FJA decision tree (original note)** (`S n ≤ fjCountJ n`): build the tree of merge-insertion by
    sequencing binary searches (same-`n` `subst` + `insertTree` + FJA's Jacobsthal batch
    windows).  *Blocked on* the `SortTree` lane (`insertTree`), then a 6–8 h lane; landing it

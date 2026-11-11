@@ -41,6 +41,7 @@ import SortBounds.Projects.SAIS.Chain
 import SortBounds.Projects.SAIS.Verify
 import SortBounds.Projects.SAIS.Counted
 import SortBounds.Projects.SAIS.Kasai
+import SortBounds.Projects.SAIS.Compose
 import SortBounds.Projects.SortTree.Main
 import SortBounds.Projects.FjTree.Main
 import SortBounds.Projects.FjTree.Correct

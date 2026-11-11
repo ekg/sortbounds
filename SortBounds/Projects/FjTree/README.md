@@ -171,13 +171,15 @@ Both were invisible to `fjTree_depth_le`, which only counts comparisons.
 Nothing for the contract.  Natural continuations, none of them started here:
 
 * `S_eq_clog` cannot be extended past `n = 11` on the strength of this tree: `fjCountJ` is
-  not even equal to `⌈log₂ n!⌉` for `12 ≤ n ≤ 19` or `n = 22`
-  (`Optimal.fjCountJ_not_attained`: `fjCountJ 12 = 30 > 29 = ⌈log₂ 12!⌉`,
-  `fjCountJ 22 = 71 > 70`), while the literature's
-  exact values (Peczarski) are `S 12 = 30`, `S 22 = 71`.  What is *not* machine-checked, and
-  would be the natural next target, is the lower-bound half there:
-  `S n ≥ ⌈log₂ n!⌉ + 1` for `12 ≤ n ≤ 19` and `n = 22` — a counting argument on the number
-  of *leaves* of depth `⌈log₂ n!⌉` trees, not anything about merge-insertion.
+  not equal to `⌈log₂ n!⌉` at `n = 12` and `n = 22` (both decided by
+  `Optimal.fjCountJ_not_attained`: `30 > 29` and `71 > 70`), while the literature's exact
+  values (Peczarski) are `S 12 = 30`, `S 22 = 71`.  `Optimal.S_gap_le_one` checks that the
+  gap is at most one for every `n ≤ 22`, and `S_pin` records the resulting pin.
+* The missing lower-bound half there is **not** reachable by counting, and this document
+  previously suggested otherwise — wrongly.  `12! = 479001600 < 2^29`, and Kraft realizes
+  any `L ≤ 2^d` as a full binary tree of depth `≤ d`, so no argument about the number of
+  leaves can give `S 12 ≥ 30`.  The known proofs are pruned searches over comparison trees
+  (Wells 1971 for `n = 12`; Peczarski 2004 up to `n = 22`), i.e. research-level in Lean.
 * The four contract theorems are proved; `S 0 … 3` (`S 0 = S 1 = 0`, `S 2 = 1`, `S 3 = 3`)
   are the SN lane's, and `S n ≤ fjCountJ n` from `S_le_fjCountJ` also holds there (trivially:
   `fjCountJ n = 0` for `n < 2`).

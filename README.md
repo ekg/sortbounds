@@ -38,10 +38,13 @@ in the main results (see [`#print axioms`](#axioms)).
 | `Instances.sortsAll_of_sorts_zeroOne` | the 0-1 principle, stated over `Fin n → Fin 2` so it is **decidable** |
 | `Instances.netTree_correct` | a verified network yields a correct `Tree n` of depth = #comparators |
 | `Instances.radixSort_sorted` / `radixSort_perm` / `radixSort_keys_congr` | radix sort is correct, and its output depends only on the key vectors — hence zero element comparisons |
+| **exact comparison counts** | |
+| **`Projects.FjTree.S_eq_clog`** | **`S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`** — merge-insertion verified optimal; `S_eq_clog_large` the same for `n = 20, 21`; `S_pin` pins `S n` to within one for every `n ≤ 22` |
+| `Projects.FordJohnson.fjCountJ_table` | `F(4..11) = 5,7,10,13,16,19,22,26`, i.e. `⌈log₂ n!⌉` at each; `fjCountJ_attains` says the count is attained by an explicit input |
+| `Projects.SN.S_four` … `S_seven` | `S 4 = 5, S 5 = 7, S 6 = 10, S 7 = 13` by explicit kernel-checked trees — an independent route to the same values; `four_needs_five_comparisons` etc. give the comparison-count reading |
+| `Projects.FjTree.fjCountJ_not_attained` | where the counting bound stops being tight: `fjCountJ 12 = 30 > 29 = ⌈log₂ 12!⌉`, `fjCountJ 22 = 71 > 70` |
 | **open lanes (what is *not* proved)** | |
-| `Projects.FordJohnson.fjCountJ_table` | `F(4..11) = 5,7,10,13,16,19,22,26` — Ford–Johnson's count reaches `⌈log₂ n!⌉`; **not** that `S n` equals it, and **not** attainment |
-| **`Projects.FjTree.S_eq_clog`** | **`S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`** — merge-insertion verified optimal, and `S_eq_clog_large` for `n = 20, 21`; two independent routes (`SN`'s explicit trees for `n ≤ 7`, this one) agree |
-| `Projects.SN.S_four` / `S_five` | `S 4 = 5`, `S 5 = 7` (least depth; `four_needs_five_comparisons` / `five_needs_seven_comparisons` give the comparison-count reading) — `n ≥ 6` open |
+| `Projects.SN.S_twelve` (`S 12 = 30`) | open, and **not reachable by counting**: `12! < 2^29`, so any `L ≤ 2^d` is a tree of depth `≤ d` and leaf counting gives only `⌈log₂ 12!⌉ = 29`.  The known proofs are pruned searches (Wells 1971; Peczarski 2004) |
 | `Projects.BenOr.exists_decidesReal_distinct` | an algebraic decision tree of degree `n(n-1)` decides element distinctness — Ben-Or's *bound* is stated, not proved |
 | `Projects.SAIS.cmpFrom_lcp_advance` | comparing two suffixes can start after a known LCP, and the `aⁿ` contrast is cubic-vs-quadratic — the linear-time algorithms are not formalised |
 | `Projects.XY.pairSums` | the `X+Y` problem is modelled; the generic `N`-item bound is *not* a bound on it (Fredman's `O(n²)` scheme is why) |

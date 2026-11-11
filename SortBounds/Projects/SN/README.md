@@ -229,8 +229,8 @@ machine-checked `S(n)` table found.
     oriented to make `(permOfList l …).symm k = l.get k` the definitional unfolding
     (`permOfList_symm_apply` is `rfl`), leaving only the leaf equality to pay for
     `p.toFun`.
-  * Timings (same machine, whole file, `lake env lean <file>`): `Seven.lean` 3 m 20 s →
-    2 m 13 s (`tree7_correct` alone ≈ 75 s), `Six.lean` 25 s → 23 s.  What went away is
+  * Timings (same machine, whole file, `lake env lean <file>`, final sources):
+    `Seven.lean` 3 m 20 s → 2 m 02 s, `Six.lean` 25 s → 23 s.  What went away is
     the per-`n` `n ^ n` filter (`7 ^ 7 = 823543` resp. `6 ^ 6 = 46656` candidate
     functions, each with a bijectivity decision); what remains is the `n!` tree walks,
     which is what the certificate *says*.  So at fixed `n` it is a constant-factor win

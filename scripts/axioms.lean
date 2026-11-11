@@ -80,6 +80,9 @@ open SortBounds
 #print axioms SortBounds.Projects.FjTree.S_eq_clog
 #print axioms SortBounds.Projects.FjTree.S_eq_clog_large
 #print axioms SortBounds.Projects.FjTree.fjCountJ_not_attained
+#print axioms SortBounds.Projects.FjTree.S_pin
+#print axioms SortBounds.Projects.FjTree.S_eq_of_fjCountJ_eq
+#print axioms SortBounds.Projects.SN.correct_of_allPerms
 #print axioms SortBounds.Projects.XY.pairSums_card_le
 #print axioms SortBounds.Projects.XY.naivePairsSorted_perm
 #print axioms SortBounds.Projects.XY.naivePairsSorted_count

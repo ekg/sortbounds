@@ -157,16 +157,24 @@ other models"** — every open lane is about a model where the answer changes.
    `x n` among the prefix order `σ`, leaves `insertPerm σ j` (`Fin.succAbove`/`decomposeFin'`
    territory), then `sortTree n` by iterating `liftTree`, giving `S n ≤ n·(⌈log₂ n⌉+1)` and
    hence `Θ(n log n)` **inside one model**. M0 (substitution, depth, correctness transfer) landed.
-8. ~~**FJA decision tree**~~ **DONE**: `fjTree_correct` (via `insSeqAt`, the `q`-slot
-   generalisation of `insSeq_sorts`), hence `S_le_fjCountJ : S n ≤ fjCountJ n` and
+8. ~~**FJA decision tree**~~ **DONE**: `fjTree_correct` (by the `Invar`/`invar_step`
+   induction over `insBatch`, `Correct.lean` — *not* via `insSeqAt`, which was landed on
+   the way and is not consumed by the final proof), hence `S_le_fjCountJ : S n ≤ fjCountJ n` and
    **`S_eq_clog : S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`**, plus `S_eq_clog_large`
    (`n = 20, 21`).  Merge-insertion is verified optimal at those sizes.
    Note `fjCountJ_not_attained`: at `n = 12` the count is 30 while `⌈log₂ 12!⌉ = 29`,
    and at `n = 22` it is 71 vs 70 — so counting alone cannot give `S 12`.
-   **Two defects were found only by proving correctness** (the depth bound had been
-   true of a wrong tree): the batch chain length was indexed backwards
-   (`m + jacLo + j` with `j` counting *remaining* insertions), and the item slot was
-   fixed at the chain tip.  Both fixed in `Main.lean`/`Basic.lean`.
+   **Two defects were found only by proving correctness** — the depth bound had been
+   true of a tree that sorted nothing (see the lane README's "Two defects"):
+   (1) `insBatch`'s chain length was indexed by *remaining* insertions
+   (`m + jacLo + j`), so a batch's last item was searched in its shortest chain;
+   (2) `pairAux` put the **smaller** element of each pair in the chain, and again the
+   depth bound could not see it — at `n = 4` the tree inserted the value `2` at rank `0`.
+   Both fixed (`chainLen` indexed by position; the comparison branch flipped, with
+   `pairAux_decided` making the pairing comparison the rank bound).  Depth, `fjCountJ`
+   and all four contract signatures are unchanged.
+   `S_pin` now pins `S n` to within one for every `n ≤ 22`, and `S_eq_of_fjCountJ_eq`
+   is the transfer principle behind `S_eq_clog`.
 8b. **FJA decision tree (original note)** (`S n ≤ fjCountJ n`): build the tree of merge-insertion by
    sequencing binary searches (same-`n` `subst` + `insertTree` + FJA's Jacobsthal batch
    windows).  *Blocked on* the `SortTree` lane (`insertTree`), then a 6–8 h lane; landing it

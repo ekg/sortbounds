@@ -51,11 +51,35 @@ theorem S_eq_clog_large :
   exact ⟨le_antisymm hub20 (SortBounds.Projects.SN.S_lower 20),
     le_antisymm hub21 (SortBounds.Projects.SN.S_lower 21)⟩
 
-/-- **The boundary of the lane's claim**: from `n = 12` on, Ford–Johnson's count exceeds
-`⌈log₂ n!⌉` (and at `n = 22` again), so `S_eq_clog` cannot be extended with this tree. -/
+/-- **Where the counting bound stops being tight**: at `n = 12` and `n = 22` Ford–Johnson's
+count exceeds `⌈log₂ n!⌉`, so `S_eq_clog` cannot be extended there with this tree.  (It does
+*not* exceed at `n = 20, 21`, which is `S_eq_clog_large`; see `S_gap_le_one` for the full
+range `n ≤ 22`.) -/
 theorem fjCountJ_not_attained :
     fjCountJ 12 = 30 ∧ Nat.clog 2 (Nat.factorial 12) = 29 ∧
       fjCountJ 22 = 71 ∧ Nat.clog 2 (Nat.factorial 22) = 70 := by
   refine ⟨?_, ?_, ?_, ?_⟩ <;> decide
+
+/-- **The gap is at most one up to `n = 22`**: Ford–Johnson's count is within one
+comparison of the information-theoretic bound on that whole range (it meets it for
+`n ≤ 11`, `20`, `21` and misses it by exactly one for `12 ≤ n ≤ 19`, `22`). -/
+theorem S_gap_le_one (n : ℕ) (hn : n ≤ 22) :
+    fjCountJ n ≤ Nat.clog 2 (Nat.factorial n) + 1 := by
+  interval_cases n <;> decide
+
+/-- **`S n` pinned to within one, for every `n ≤ 22`.**  This is the sharpest statement
+that counting alone can reach: `12! < 2 ^ 29`, and Kraft realizes any `L ≤ 2 ^ d` as a
+full binary tree of depth `≤ d`, so no leaf-counting argument can separate `S 12` from
+`29`.  The exact value (`S 12 = 30`, Wells 1971) needs a pruned search. -/
+theorem S_pin (n : ℕ) (hn : n ≤ 22) :
+    Nat.clog 2 (Nat.factorial n) ≤ SN.S n ∧ SN.S n ≤ Nat.clog 2 (Nat.factorial n) + 1 :=
+  ⟨SN.S_lower n, le_trans (S_le_fjCountJ n) (S_gap_le_one n hn)⟩
+
+/-- **Transfer principle.**  Whoever shows that Ford–Johnson's count meets the bound at a
+given `n` gets `S n = ⌈log₂ n!⌉` there: this is how `S_eq_clog` and `S_eq_clog_large` are
+obtained, and it applies to any future size. -/
+theorem S_eq_of_fjCountJ_eq (n : ℕ) (h : fjCountJ n = Nat.clog 2 (Nat.factorial n)) :
+    SN.S n = Nat.clog 2 (Nat.factorial n) :=
+  le_antisymm (h ▸ S_le_fjCountJ n) (SN.S_lower n)
 
 end SortBounds.Projects.FjTree

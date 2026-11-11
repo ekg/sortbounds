@@ -113,7 +113,7 @@ theorem winWindow_le_itemSlot (m M k : ℕ) (hM : M ≤ m + 1) (hcnt : 0 < cntB 
   omega
 
 /-- Insert the items of batch `k` (there are `jacHi M k - jacLo M k` of them, the highest
-rank first), starting at position `j`, then continue with `next`.  Every item of a batch
+rank first), starting at position `cntB - 1 - j` (`j` counts insertions still to come), then continue with `next`.  Every item of a batch
 is searched for in the same window `[0, jacLo + jacHi - 1)`, and the pending item of rank
 `t` sits in slot `m + t - 1`, so the item slot `m + jacHi - 1` is constant within the
 batch while the chain grows. -/

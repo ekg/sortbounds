@@ -10,8 +10,8 @@ same on `α`-valued inputs as on the corresponding `ℕ`-valued ones.  Hence the
 in increasing order — `ℚ`, `ℝ`, `ℤ`, lexicographically ordered strings, or any
 type with at least `n` elements (`exists_input_cost_ge_of_finset`).
 -/
-import SortBounds.WorstCase
-import SortBounds.Stirling
+import SortBounds.Comparison.WorstCase
+import SortBounds.Comparison.Stirling
 
 namespace SortBounds
 

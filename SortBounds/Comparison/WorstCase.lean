@@ -6,7 +6,7 @@ least `log₂(n!)` comparisons.  This is stronger than the depth bound of
 `Tree.lean` (the depth of a decision tree may be inflated by branches no input
 can follow); here the bound is on `max over inputs of cost`.
 -/
-import SortBounds.Aggregate
+import SortBounds.Comparison.Aggregate
 
 namespace SortBounds
 

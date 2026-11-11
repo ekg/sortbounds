@@ -12,7 +12,7 @@ interesting for a lower-bound discussion:
 * radix sort is *comparison free*: it takes no comparison on `α` at all, and the output depends
   only on the key vectors (cf. `radixSort_ignores_comparison`, `radixSort_keys_congr`);
 * a cost model with `d` passes of `n + b` elementary operations and zero comparisons, which is why
-  the `Ω(n log n)` comparison lower bound of `SortBounds.Tree` does not apply to it.
+  the `Ω(n log n)` comparison lower bound of `SortBounds.Comparison.Tree` does not apply to it.
 -/
 import Mathlib
 

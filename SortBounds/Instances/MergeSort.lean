@@ -205,7 +205,7 @@ theorem msortCount_counts_le (le : α → α → Bool) (l : List α) :
 
 /-- **The comparison sort `msortCount` costs `O(n log n)` comparisons.**  On a list of
 length `n` it performs at most `2 * n * (⌈log₂ n⌉ + 1)` comparisons, an explicit bound of
-order `n log n` matching the information-theoretic lower bound of `SortBounds.Tree`. -/
+order `n log n` matching the information-theoretic lower bound of `SortBounds.Comparison.Tree`. -/
 theorem msortCount_le [LinearOrder α] (l : List α) :
     (msortCount (· ≤ ·) l).1 ≤ 2 * l.length * (Nat.clog 2 l.length + 1) := by
   refine (msortCount_counts_le _ l).trans ?_

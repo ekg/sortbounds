@@ -13,7 +13,7 @@ input set by the answer at the root).  Consequences (`WorstCase.lean`,
 *expected* number of comparisons over a uniformly random ordering is at least
 `log₂(n!)`.
 -/
-import SortBounds.Tree
+import SortBounds.Comparison.Tree
 
 namespace SortBounds
 

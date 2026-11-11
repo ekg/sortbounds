@@ -8,7 +8,7 @@ Sanity checks that the model is not vacuous.
 * `n = 3`: `6 > 2^2`, so no comparison tree of depth 2 sorts three elements
   (`⌈log₂ 3!⌉ = 3`).
 -/
-import SortBounds.WorstCase
+import SortBounds.Comparison.WorstCase
 
 namespace SortBounds
 

@@ -7,7 +7,7 @@ nodes ask "is `x i < x j`?" and whose leaves are candidate output
 permutations.  Everything below is therefore model-independent: no formal
 semantics of a programming language is needed, and no step counting.
 -/
-import SortBounds.Basic
+import SortBounds.Comparison.Basic
 
 namespace SortBounds
 

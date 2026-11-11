@@ -167,24 +167,29 @@ elementary counting argument and transfers them to arbitrary value types,
 comparison-freeness and cost ledger side by side with the lower bound, so the
 "why doesn't radix sort break the bound" question is answered by the code.
 
-## Files
+## Layout
+
+The comparison-model result is **frozen**; work now happens in research lanes.
+See [`docs/PROGRESS.md`](docs/PROGRESS.md) for the live dashboard and
+[`docs/STRUCTURE.md`](docs/STRUCTURE.md) for the layout rules.
 
 ```
-SortBounds/Basic.lean       sorting permutations, uniqueness, canonical inputs
-SortBounds/Tree.lean        decision trees, run/cost/depth/leaves, n! ≤ 2^depth
-SortBounds/Aggregate.lean   2^c and (1/2)^cost counting lemmas
-SortBounds/WorstCase.lean   worst case over actual inputs, log₂(n!) bound
-SortBounds/General.lean     the same bound for any value type (via comparison patterns)
-SortBounds/Stirling.lean    (n/2)^(n/2) ≤ n!, log₂(n!) ≥ n/4·log₂ n
-SortBounds/LowerBound.lean  headline Ω(n log n) theorems
-SortBounds/Average.lean     expected comparisons over random ordering
-SortBounds/Examples.lean    concrete trees: n = 2 sharp, n = 3 needs ≥ 3
-SortBounds/Radix.lean       counting sort, radix sort, no comparisons, cost
-SortBounds/UpperBound.lean  matching upper bound: a counted O(n log n) sort
+SortBounds/Core/Branching.lean      bits per probe: #outcomes ≤ b ^ #steps (Mathlib-only)
+SortBounds/Comparison/              the comparison model and its Ω(n log n)
+  Basic Tree Aggregate WorstCase Stirling LowerBound Average General Examples
+SortBounds/Instances/               models where the bound changes
+  Radix.lean MergeSort.lean
+SortBounds/Projects/                research lanes, one directory each
+  FordJohnson/  verified merge-insertion + exact comparison count
+  SN/           certified minimum comparison counts S(n)
+  XY/           sorting X+Y (Fredman/Berlekamp)
+  BenOr/        algebraic decision trees
+  SAIS/         suffix arrays: cost model (queued)
 ```
 
 See [`docs/PRIOR-ART.md`](docs/PRIOR-ART.md) for the Isabelle, Coq and Lean 4
-prior art with exact theorem statements.
+prior art with exact theorem statements — including what is *already done* and
+therefore not worth redoing.
 
 ## Build
 

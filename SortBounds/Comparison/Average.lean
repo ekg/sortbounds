@@ -17,7 +17,7 @@ The analytic content is a single line: `log y ≤ y - 1` for `y > 0`, applied to
 `y = n! · (1/2) ^ (c p)` and summed over the `n!` inputs.  This gives
 `n! · log(n!) - log 2 · ∑ c p ≤ 0`, i.e. `∑ c p ≥ n! · log₂(n!)`.
 -/
-import SortBounds.Aggregate
+import SortBounds.Comparison.Aggregate
 
 namespace SortBounds
 

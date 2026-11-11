@@ -7,8 +7,8 @@ The headline results: any correct comparison-based sorting algorithm needs
 input" form are given, plus the elementary `n/4 · log₂ n` corollary obtained
 from `n! ≥ (n/2)^(n/2)`.
 -/
-import SortBounds.WorstCase
-import SortBounds.Stirling
+import SortBounds.Comparison.WorstCase
+import SortBounds.Comparison.Stirling
 
 namespace SortBounds
 

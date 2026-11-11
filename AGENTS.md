@@ -56,6 +56,21 @@ The kernel checks proofs, not claims. For every result, ask:
 4. **Is it already done elsewhere?** Check `docs/PRIOR-ART.md` before starting a
    lane; two ideas already died that way (0-1 principle, verified SA-IS).
 
+## Traps that have actually bitten
+
+* **Precedence at `Bool`/`Prop` boundaries.** In Lean `=` binds *tighter* than `&&`, so
+  `(f x).1 = b && rest` parses as `(f x).1 = b) && rest` — Lean silently `decide`s the
+  Prop and you get a *different, weaker statement* that is still provable. Always
+  parenthesise: `(f x).1 = (b && (l.all q))`. (Cost me one debugging cycle in
+  `SAIS/Counted.lean`.)
+* **A statement can be true about the wrong object**: `fjTree_depth_le` held for a tree
+  that sorted nothing (`Tree.leaf 1` satisfies any depth bound). Prove correctness before
+  believing a cost bound.
+* **Contracts written by the supervisor are the weakest link.** Three of them were false:
+  the AFP "reachability" claim, a leaf-counting route to `S 12 ≥ 30`, and the LCP
+  min-property over text positions. Each was refuted by a child or reviewer, none by the
+  kernel.
+
 ## Where things live
 
 `docs/PROGRESS.md` (dashboard, single editor) · `docs/STRUCTURE.md` (layout and

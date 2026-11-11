@@ -32,6 +32,8 @@ slot of the arrangement, so "the item is below its window" is derived, not assum
 import SortBounds.Projects.FjTree.Correct
 import SortBounds.Projects.FordJohnson.Attain
 
+set_option linter.unusedSimpArgs false
+
 namespace SortBounds.Projects.FjTree
 
 open SortBounds
@@ -1039,7 +1041,6 @@ theorem arranged_transport {m M : ℕ} (hm : 2 * m ≤ n) (hMn : m + M = n) (hM 
         rw [hv, hcl]; omega
       rw [slotVal_of_pending h1 h2, hcl, tailRank_zero]
       congr 1
-      simp only [Fin.val_mk]
       omega
 
 /-! ### The count is attained -/
@@ -1077,6 +1078,13 @@ theorem fjTreeFuel_cost_attn : ∀ (fuel n : ℕ), n ≤ fuel →
       omega
     rw [fjTreeFuel, cost_substTree, cost_pairTree, run_pairTree_one (k + 2) _ hpairs]
     -- the stage: the winners are sorted, transported, and the losers inserted
+    have hsorts : Sorts (attnFun ((k + 2) / 2))
+        (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) :=
+      (fjTreeFuel_correct fuel ((k + 2) / 2) (by omega)) _ (attnFun_injective _)
+    have hτval : ∀ o : Fin ((k + 2) / 2),
+        attnFun ((k + 2) / 2) ((run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) o)
+          = o.val :=
+      eq_val_of_strictMono hsorts (fun i => attnFun_lt _ ((run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) i))
     have hwin : ∀ o : Fin ((k + 2) / 2),
         attnFun (k + 2) ⟨((run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) o).val,
           by have := (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2)) o).isLt; omega⟩
@@ -1087,11 +1095,7 @@ theorem fjTreeFuel_cost_attn : ∀ (fuel n : ℕ), n ≤ fuel →
       rw [attnFun_winner (i := (⟨((run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) o).val,
         by omega⟩ : Fin (k + 2))) hlt]
       congr 1
-      have hsorts : Sorts (attnFun ((k + 2) / 2))
-          (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) :=
-        (fjTreeFuel_correct fuel ((k + 2) / 2) (by omega)) _ (attnFun_injective _)
-      have hb : ∀ i, attnFun ((k + 2) / 2) i < (k + 2) / 2 := attnFun_lt _
-      exact eq_val_of_strictMono hsorts hb o
+      exact hτval o
     have hitem : ∀ o : Fin ((k + 2) / 2),
         attnFun (k + 2) ⟨(k + 2) / 2 + ((run (fjTreeFuel fuel ((k + 2) / 2))
             (attnFun ((k + 2) / 2))) o).val,
@@ -1104,7 +1108,12 @@ theorem fjTreeFuel_cost_attn : ∀ (fuel n : ℕ), n ≤ fuel →
         (attnFun ((k + 2) / 2))) o).val, by omega⟩ : Fin (k + 2))) (by simp only [Fin.val_mk]; omega)
         (by simp only [Fin.val_mk]; omega)]
       congr 1
-      exact hwin o
+      have hidx : (⟨(k + 2) / 2 + ((run (fjTreeFuel fuel ((k + 2) / 2))
+          (attnFun ((k + 2) / 2))) o).val - (k + 2) / 2, by omega⟩ : Fin ((k + 2) / 2))
+          = (run (fjTreeFuel fuel ((k + 2) / 2)) (attnFun ((k + 2) / 2))) o :=
+        Fin.ext (by simp only [Fin.val_mk]; omega)
+      rw [hidx]
+      exact hτval o
     have hlast : ∀ (h : 2 * ((k + 2) / 2) < k + 2),
         attnFun (k + 2) ⟨2 * ((k + 2) / 2), h⟩ = attainVal ((k + 2) - (k + 2) / 2) 0 ((k + 2) / 2) := by
       intro h
@@ -1138,5 +1147,27 @@ theorem fjTreeFuel_cost_attn : ∀ (fuel n : ℕ), n ≤ fuel →
       rw [hfun, run_add_const]
     rw [fjStage, cost_substTree, himg, hrunimg,
       insPhase_cost hm1 (by omega) hMn hMle hM1 (attnFun_injective (k + 2)) harr]
-    rw [hrec, fjCountJ_le_recurrence (k + 2) (by omega),
+    rw [fjCountJ_le_recurrence (k + 2) (by omega),
       show (k + 2 + 1) / 2 = (k + 2) - (k + 2) / 2 from (sub_div_eq (k + 2)).symm]
+    omega
+
+/-- **The depth bound of `fjTree` is attained.**  There is an input on which the tree of
+merge-insertion makes exactly `fjCountJ n` comparisons — every comparison of the analysis
+happens: `n/2` pairings, the winner tree's `fjCountJ (n/2)`, and `jacInsertCost ⌈n/2⌉` for the
+insertion phase, where each of the `jacHi - jacLo` searches of a batch descends its deepest
+branch.  So `fjCountJ n` is the exact cost of `fjTree n` on a worst-case input, the tree-side
+analogue of `FordJohnson.fjCountJ_attains`. -/
+theorem fjTree_cost_attains (n : ℕ) :
+    ∃ x : Fin n → ℕ, Function.Injective x ∧ cost (fjTree n) x = fjCountJ n :=
+  ⟨attnFun n, attnFun_injective n, fjTreeFuel_cost_attn n n le_rfl⟩
+
+/-- **The depth bound is exact, not merely attained.**  `cost ≤ depth ≤ fjCountJ` and some
+input costs `fjCountJ n`, so the depth of `fjTree n` *is* `fjCountJ n`: no leaf of the tree is
+deeper than the count and at least one leaf is exactly that deep. -/
+theorem fjTree_depth_eq (n : ℕ) : depth (fjTree n) = fjCountJ n := by
+  have h1 := fjTree_depth_le n
+  have h2 := cost_le_depth (fjTree n) (attnFun n)
+  have h3 : cost (fjTree n) (attnFun n) = fjCountJ n := fjTreeFuel_cost_attn n n le_rfl
+  omega
+
+end SortBounds.Projects.FjTree

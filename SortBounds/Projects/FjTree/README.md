@@ -146,6 +146,21 @@ sizes.
   13, 26`, the values of `SN.S_four/S_five/S_six/S_seven`, and `S 21 = 66` is Peczarski's
   exact value.
 
+* **2026-02** `Attain.lean` — **the count is attained on the tree side**:
+  `fjTree_cost_attains (n) : ∃ x : Fin n → ℕ, Function.Injective x ∧ cost (fjTree n) x = fjCountJ n`,
+  the analogue of `FordJohnson.fjCountJ_attains`, and its corollary
+  `fjTree_depth_eq (n) : depth (fjTree n) = fjCountJ n` — the depth bound of `Main.fjTree_depth_le`
+  is not merely met by some tree of that depth, it is exactly the depth of *this* tree.
+  Machinery: `binIns_cost` (a search whose item is below its window's bottom `lo` costs exactly
+  `⌈log₂ (hi-lo+1)⌉`, since every comparison takes the deepest, left branch), the arrangement
+  `slotVal`/`Arranged` (the value of *every* slot through the insertion phase, which turns "the
+  item is below its whole window" into a computation: `rankAt_zero_of_arranged`), `insPhase_cost`
+  (`insPhase` costs exactly `jacInsertCost M`), and the input family `attnFun` (winners = a scaled
+  attaining input of size `n/2`, partner of the winner at position `p` = `attainVal M 0 (value p)`,
+  so values decrease along the Jacobsthal order).  Sanity checks: `depth (fjTree n) = 7, 16, 26` for
+  `n = 5, 8, 11`, the literature's `F(n)`, and `fjTree` sorts `attnFun n` (`fjTree_correct`), so the
+  attaining input is a genuine input.
+
 ### Two defects found while proving `fjTree_correct` (both fixed here)
 
 Both were invisible to `fjTree_depth_le`, which only counts comparisons.

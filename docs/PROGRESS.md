@@ -28,7 +28,7 @@ other models"** — every open lane is about a model where the answer changes.
 | `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement), `exists_decidesReal_distinct` | **M0 DONE** (semantics now witnessed) | M1+ gated |
 | `FjTree` | FJA's decision tree | **`S_eq_clog`**: `S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`, `S_eq_clog_large` for `20, 21` | **DONE** | — |
 | `SortTree` | `Θ` inside one model | **`S_sandwich`**: `⌈log₂ n!⌉ ≤ S n ≤ n(⌈log₂ n⌉+1)` | **DONE** | — |
-| `SAIS` | suffix arrays, cost model | `inf'_lcpAt_le_lcp` (text-order skip), `lcp_suffix_eq_inf'_of_increasing` (the real min property, along a sorted chain), `verify_linear_time` (`n-1` inspections to verify a suffix array) | **M1 DONE** | sorting in `O(n log n)` inspections not formalised |
+| `SAIS` | suffix arrays, cost model | `checkSaCounted_cost` (an *executable* checker whose counter is the model's sum) | `inf'_lcpAt_le_lcp` (text-order skip), `lcp_suffix_eq_inf'_of_increasing` (the real min property, along a sorted chain), `verify_linear_time` (`n-1` inspections to verify a suffix array) | **M1 DONE** | sorting in `O(n log n)` inspections not formalised |
 
 ## Decisions (and why)
 
@@ -183,7 +183,13 @@ other models"** — every open lane is about a model where the answer changes.
    and all four contract signatures are unchanged.
    `S_pin` now pins `S n` to within one for every `n ≤ 22`, and `S_eq_of_fjCountJ_eq`
    is the transfer principle behind `S_eq_clog`.
-8a. **Tree-side tightness** — `fjCountJ_attains` shows the *idealised list algorithm* is
+8a. ~~**Tree-side tightness**~~ **DONE**: `fjTree_cost_attains` (an explicit input
+   makes the tree pay exactly `fjCountJ n`) and `fjTree_depth_eq`
+   (`depth (fjTree n) = fjCountJ n`) — so the depth bound is *exact*, not merely
+   attained.  The lane also corrected my brief: the deep spine is the `rank = lo` one,
+   not `rank = hi` as the review suggested (`binIns` descends left on "below the
+   midpoint", and the left window is the larger one).
+8b. **Tree-side tightness (original note)** — `fjCountJ_attains` shows the *idealised list algorithm* is
    tight; the tree `fjTree` should be too: `∃ x, Function.Injective x ∧ cost (fjTree n) x =
    fjCountJ n`.  Starting lemma (reviewer's Q6): `binIns_cost_eq`, the `Tree`-side mirror of
    `Attain.insertCount_eq_clog_of_forall_le` — when the true rank sits at the window's edge,

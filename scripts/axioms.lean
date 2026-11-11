@@ -83,6 +83,10 @@ open SortBounds
 #print axioms SortBounds.Projects.FjTree.S_pin
 #print axioms SortBounds.Projects.FjTree.S_twelve_le
 #print axioms SortBounds.Projects.FjTree.S_twenty_two_le
+#print axioms SortBounds.Projects.FjTree.fjTree_cost_attains
+#print axioms SortBounds.Projects.FjTree.fjTree_depth_eq
+#print axioms SortBounds.Projects.SAIS.checkSaCounted_cost
+#print axioms SortBounds.Projects.SAIS.checkSaCounted_accepts
 #print axioms SortBounds.Projects.FjTree.S_eq_of_fjCountJ_eq
 #print axioms SortBounds.Projects.SN.correct_of_allPerms
 #print axioms SortBounds.Projects.XY.pairSums_card_le

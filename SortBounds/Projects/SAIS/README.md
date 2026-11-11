@@ -29,9 +29,13 @@ theorem lcp_guided_cost (s : List α) : …
 end SortBounds.Projects.SAIS
 ```
 
-**Unblocked:** `XY` M1 landed (`docs/PROGRESS.md`); the weighted cost model is
-in place. M1 here needs the LCP-array construction (where the `k` values come
-from), which is the open piece.
+**M2 landed** (Kasai).  The LCP array is *not* free any more: `kasai` builds it in
+`≤ 2n` character comparisons (`kasai_cost_le`) and `Compose.checkOn_computed_cost` verifies
+a candidate against that computed array in exactly `n − 1` inspections.  Two counters in
+two conventions — a scan that runs off the end is charged 0 by `pairScan` and 1 by
+`inspectCount` — so the two figures are reported separately, never summed into a single
+`3n`.  What remains free in the accounting: the string, and the candidate suffix array
+itself (SA-IS/DC3, i.e. radix on ranks).
 
 ## Prior art
 
@@ -116,12 +120,17 @@ and its suffix array.  Output: `lcp[k] = lcp (suffix (sa k)) (suffix (sa (k+1)))
 (up to `n-2`) together with the number of inspected character pairs. -/
 def kasai (s : List α) (sa : List ℕ) : List ℕ × ℕ
 
-/-- The array is correct: entry `k` really is that LCP. -/
-theorem kasai_lcp_correct (s : List α) (sa : List ℕ) (hsa : IsSaCandidate s sa) :
+/-- The array is correct: entry `k` really is that LCP.  **`Verified s sa` is required** —
+carrying `h` from one text position to the next is an ordering fact, not a permutation
+fact; without it the statement is false (two kernel-checked counterexamples are in the
+lane's Log). -/
+theorem kasai_lcp_correct (s : List α) (sa : List ℕ) (hsa : IsSaCandidate s sa)
+    (hsorted : Verified s sa) :
     ∀ k < sa.length - 1, (kasai s sa).1.getD k 0 = lcp (suffix s (sa.getD k 0)) (suffix s (sa.getD (k+1) 0))
 
 /-- **And it is linear**: at most `2 * s.length` inspected pairs, not `Θ(n²)`. -/
-theorem kasai_cost_le (s : List α) (sa : List ℕ) : (kasai s sa).2 ≤ 2 * s.length
+theorem kasai_cost_le (s : List α) (sa : List ℕ) (hsa : IsSaCandidate s sa)
+    (hsorted : Verified s sa) : (kasai s sa).2 ≤ 2 * s.length
 ```
 
 Order: M2a `saRank` + `kasai` as a computable function (a `while` loop with an

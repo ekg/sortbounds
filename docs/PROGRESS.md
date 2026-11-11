@@ -28,7 +28,7 @@ other models"** — every open lane is about a model where the answer changes.
 | `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement), `exists_decidesReal_distinct` | **M0 DONE** (semantics now witnessed) | M1+ gated |
 | `FjTree` | FJA's decision tree | **`S_eq_clog`**: `S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`, `S_eq_clog_large` for `20, 21` | **DONE** | — |
 | `SortTree` | `Θ` inside one model | **`S_sandwich`**: `⌈log₂ n!⌉ ≤ S n ≤ n(⌈log₂ n⌉+1)` | **DONE** | — |
-| `SAIS` | suffix arrays, cost model | `kasai_cost_le` (`≤ 2n` to build the LCP array), `kasai_verify_linear` (**`≤ 3n` to build and verify**), `checkSaCounted_cost` (executable counter) | `inf'_lcpAt_le_lcp` (text-order skip), `lcp_suffix_eq_inf'_of_increasing` (the real min property, along a sorted chain), `verify_linear_time` (`n-1` inspections to verify a suffix array) | **M1 DONE** | sorting in `O(n log n)` inspections not formalised |
+| `SAIS` | suffix arrays, cost model | `kasai_cost_le` (`≤ 2n`, build the LCP array), `checkOn_computed_cost` (`n − 1`, verify against the *computed* array) | `inf'_lcpAt_le_lcp` (text-order skip), `lcp_suffix_eq_inf'_of_increasing` (the real min property, along a sorted chain), `verify_linear_time` (`n-1` inspections to verify a suffix array) | **M1 DONE** | sorting in `O(n log n)` inspections not formalised |
 
 ## Decisions (and why)
 
@@ -113,8 +113,12 @@ other models"** — every open lane is about a model where the answer changes.
 
 ## SAIS, complete (M0–M2)
 
-`≤ 3n` character inspections to build the LCP array (Kasai, `≤ 2n`) and verify a
-suffix array (`n − 1`), versus `Θ(n²)` for naive comparison (proved on `aⁿ`).  What is
+`≤ 2n` character comparisons to build the LCP array (Kasai) and `n − 1` inspections to
+verify a candidate against *that computed array* — versus `Θ(n²)` naive.  **The two are
+not added into a single `3n`**: `pairScan` charges 0 for a scan that runs off the end
+while `inspectCount` charges 1, so they are counters in different conventions; the unified
+figure would be `≤ 4n − 1` and is not formalised (review finding, recorded rather than
+papered over).  What is
 *not* formalised: producing the candidate suffix array itself — SA-IS/DC3 sort integer
 ranks with radix/counting sort, i.e. they take the door `Instances.Radix` describes.
 The evidence chain: `kasai_lcp_correct` (the array is right, given `Verified s sa`),

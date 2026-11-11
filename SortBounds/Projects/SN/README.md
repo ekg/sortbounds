@@ -1,6 +1,10 @@
 # Lane: SN — certified exact minimum comparison counts `S(n)`
 
-**Question.** `S(n)` = fewest comparisons that suffice to sort `n` elements.
+**Question.** `S(n)` = fewest comparisons that suffice to sort `n` elements. In the code
+`S n` is the least **depth** of a correct decision tree; the least worst-case *cost* is
+a different (a priori smaller) quantity. For `n = 4, 5` both readings are settled here:
+`four_needs_five_comparisons` / `five_needs_seven_comparisons` rule out trees whose
+every input costs less, so "fewest comparisons that suffice" is 5 resp. 7 too.
 Known exactly for `n ≤ 22`; `S(n) = ⌈log₂ n!⌉` for `n ≤ 11`, and the first gap is
 `S(12) = 30 > ⌈log₂ 12!⌉ = 29`. The table is computer-assisted folklore with no
 machine-checked verification of the *lower* bounds.
@@ -57,8 +61,9 @@ canonical-input correctness reduction), `Four.lean` (`S 4 = 5`), `Five.lean`
 * **M0** `exists_correct_tree` + `S` + `S_spec`/`S_le_iff` + `S_lower`.
   (`S_lower` is `factorial_le_two_pow_depth` plus `Nat.le_clog`; `S n` is
   `Nat.find` over `∃ t, Correct t ∧ depth t ≤ d`.)
-* **M1** `S 0, S 1, S 2, S 3` (reuse `tree2` for `n = 2` and the depth-2
-  impossibility argument for `n = 3`; `SortBounds/Comparison/Examples.lean`).
+* **M1** `S 0, S 1, S 2, S 3`: `S 0 = S 1 = 0`, `S 2 = 1` (an explicit one-comparison
+tree, cf. `Comparison/Examples.lean`), `S 3 = 3` by counting (`S_lower 3` plus
+`Nat.clog 2 6 = 3`) — as the Log records.
 * **M2** `S n = ⌈log₂ n!⌉` for `n ≤ 8` by explicit trees built by a *generator*
   (if lane `FordJohnson` has landed, its algorithm gives 10/13/16 for
   `n = 6/7/8`); then `n ≤ 11`.

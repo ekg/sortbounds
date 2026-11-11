@@ -73,4 +73,24 @@ machine-checked found.
   arithmetic goal unsolved; the integrator finished it (unfold `loserCost`,
   `rw [hm] at hrec ⊢` to align the recursive call on the winners, then split on
   the unpaired element and `omega`).
-* M2 (`fjCount` closed form) and M3 (optimality for `n ≤ 11`, `20`, `21`): open.
+* 2026-11-12 — **M2 landed, first half** (`Count.lean`): the `O(n log n)` claim is now
+  machine-checked for the M1 recurrence — `insertAllCost_le`
+  (`insertAllCost k n ≤ n ⌈log₂ (k+n)⌉`), `loserCost_le`/`loserCost_le_succ`, and
+  **`fjCount_le : fjCount n ≤ n (⌈log₂ n⌉ + 1)`**.
+* 2026-11-12 — **M2 landed, second half** (`Jacobsthal.lean`): the Jacobsthal numbers
+  (`jac`, `jacPred`, `jac k + jac (k+1) = 2^(k+2)`), the insertion cost `jacInsertCost`
+  (batch `k` = `jacPred k+1 … min M (jac k)` items, each searched in `jacLo + jacHi` slots),
+  the literature recurrence **`fjCountJ_le_recurrence`**
+  (`fjCountJ n = n/2 + fjCountJ (n/2) + jacInsertCost ⌈n/2⌉`) and the closed form
+  **`fjCountJ_eq_sum`** (`F(n) = Σ_{k≤n} ⌈log₂ ⌈3k/4⌉⌉`, kernel-checked for `n ≤ 22`).
+* 2026-11-12 — **M3 landed** (`JacobsthalInsertion.lean`): the Jacobsthal-order algorithm
+  `fjSortJ` (`sortedPairs`/`insertItems` bookkeeping, bounded insertion `insertWindow` into
+  the prefix below the partner, batch walk `insertJacobsthal`) with
+  **`fjSortJ_perm`**, **`fjSortJ_sorted`** and
+  **`fjSortJ_count_le : (fjSortJ l).1 ≤ fjCountJ l.length`**, plus the table
+  **`fjCountJ_table`** (`F 4 … F 11 = 5, 7, 10, 13, 16, 19, 22, 26`) and
+  `fjCountJ_eq_clog_factorial` (`fjCountJ n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`) and
+  `fjCountJ_eq_clog_factorial_large` (`n = 20, 21`).  Caveats in the file's docstring: the
+  count is an upper bound on comparisons (attainment by an adversarial input is not proved),
+  and `sortPairs` reorders the loser array for free (the loser array rides along with the
+  winners' recursive sort in the real algorithm).

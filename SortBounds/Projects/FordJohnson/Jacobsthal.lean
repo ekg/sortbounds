@@ -209,7 +209,10 @@ theorem fjCountJ_eq_sum (n : ℕ) (hn : n ≤ 22) :
   interval_cases n <;> decide
 
 /-- **Merge-insertion is optimal up to eleven elements**: for `4 ≤ n ≤ 11` its count equals
-the information-theoretic lower bound `⌈log₂ n!⌉`, which no comparison sort can beat. -/
+the information-theoretic lower bound `⌈log₂ n!⌉`.  That bound is the comparison lower bound
+of this repository (`SortBounds.Comparison.WorstCase.factorial_le_two_pow_worstCase`:
+`n! ≤ 2 ^ worstCase t`, so `⌈log₂ n!⌉ ≤ worstCase`), hence no comparison sort beats
+`fjCountJ` on those sizes and `fjCountJ n` *is* `S(n)` there. -/
 theorem fjCountJ_eq_clog_factorial (n : ℕ) (h4 : 4 ≤ n) (h11 : n ≤ 11) :
     fjCountJ n = Nat.clog 2 (Nat.factorial n) := by
   interval_cases n <;> decide

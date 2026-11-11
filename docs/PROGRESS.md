@@ -65,7 +65,10 @@ other models"** — every open lane is about a model where the answer changes.
   `S 0 = 0, S 1 = 0, S 2 = 1, S 3 = 3`, and now **`S 4 = 5`, `S 5 = 7`**
   (`Four.lean`, `Five.lean`: upper bounds from explicit 5- and 7-comparison
   trees, lower bounds from `S_lower` since `⌈log₂ 4!⌉ = 5`, `⌈log₂ 5!⌉ = 7`).
-  So `S(n) = ⌈log₂ n!⌉` is machine-checked for `n ≤ 5`. `S_eq_clog` (n ≤ 11) and
+  So `S(n) = ⌈log₂ n!⌉` is machine-checked for `n ≤ 5`, **in both readings**:
+  `four_needs_five_comparisons` / `five_needs_seven_comparisons` rule out any tree
+  whose every input costs `≤ 4` resp. `≤ 6`, so "fewest comparisons that suffice"
+  (least worst-case *cost*) is also 5 / 7, not just the least *depth*. `S_eq_clog` (n ≤ 11) and
   `S 12 = 30` are **not** proved; the contract marks them as targets.
 * **XY** — `pairSums`, `pairSums_card_le`, `naivePairsSorted_*`, and the counted
   merge-sort run `naivePairsMsort_count`. Review caught a false claim in the

@@ -18,7 +18,7 @@ matters is checked in the kernel:
 
 * `tree5_depth`: the depth is `7`;
 * `tree5_numLeaves`: the tree has `120` leaves, as many as there are orderings;
-* `tree5_correct`: it sorts every input — `correct_of_forall_run_xOfPerm` reduces
+* `tree5_correct`: it sorts every `ℕ`-valued input with pairwise distinct values — `correct_of_forall_run_xOfPerm` reduces
   this to the `5! = 120` canonical inputs, and `decide` checks those.
 
 Every internal node is annotated with the number of orderings consistent with the
@@ -32,6 +32,7 @@ which maps `0 ↦ 1 ↦ 2 ↦ 0`; the identity is written `1`.
 -/
 import SortBounds.Projects.SN.Verify
 import SortBounds.Projects.SN.Basic
+import SortBounds.Comparison.LowerBound
 
 namespace SortBounds.Projects.SN
 
@@ -307,5 +308,26 @@ theorem S_five : S 5 = 7 := by
     have h := S_lower 5
     have h120 : Nat.clog 2 (Nat.factorial 5) = 7 := by decide
     omega
+
+/-- **Seven comparisons are necessary in the *comparison-count* reading too**:
+no correct tree keeps every input at `≤ 6` comparisons. -/
+theorem five_needs_seven_comparisons :
+    ¬ ∃ t : Tree 5, Correct (α := ℕ) t ∧
+      ∀ x : Fin 5 → ℕ, Function.Injective x → cost t x ≤ 6 := by
+  rintro ⟨t, ht, hcost⟩
+  have hwc : worstCase t ≤ 6 := by
+    apply Finset.sup_le
+    intro p _
+    exact hcost (xOfPerm p) (xOfPerm_injective p)
+  have hlb := logb_factorial_le_worstCase ht
+  have h120 : (6 : ℝ) < Real.logb 2 (Nat.factorial 5) := by
+    have hfac : ((Nat.factorial 5 : ℕ) : ℝ) = 120 := by norm_num [Nat.factorial]
+    rw [hfac]
+    have hpow : (2 : ℝ) ^ 6 < 120 := by norm_num
+    calc (6 : ℝ) = Real.logb 2 ((2 : ℝ) ^ 6) := by
+          rw [Real.logb_pow, Real.logb_self_eq_one (by norm_num)]; norm_num
+      _ < Real.logb 2 (120 : ℝ) := Real.logb_lt_logb (b := 2) (by norm_num : (1 : ℝ) < 2) (by positivity) hpow
+  have : (worstCase t : ℝ) ≤ 6 := by exact_mod_cast hwc
+  linarith
 
 end SortBounds.Projects.SN

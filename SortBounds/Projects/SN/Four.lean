@@ -19,6 +19,7 @@ quantifies over injective inputs only.
 -/
 import SortBounds.Projects.SN.Verify
 import SortBounds.Projects.SN.Basic
+import SortBounds.Comparison.LowerBound
 
 namespace SortBounds.Projects.SN
 
@@ -40,7 +41,9 @@ theorem tree4_depth : depth tree4 = 5 := by
 theorem tree4_numLeaves : numLeaves tree4 = 32 := by decide
 
 /-- The network sorts: on all `4! = 24` canonical inputs the tree outputs the
-sorting permutation, hence on every input with distinct values. -/
+sorting permutation, hence on every `ℕ`-valued input with pairwise distinct
+values (`Correct` quantifies over injective inputs only; other value types
+transfer via `Comparison.General.correct_of_orderEmb`). -/
 theorem tree4_correct : Correct (α := ℕ) tree4 :=
   correct_of_forall_run_xOfPerm (by decide)
 
@@ -55,5 +58,28 @@ theorem S_four : S 4 = 5 := by
     have h := S_lower 4
     have h24 : Nat.clog 2 (Nat.factorial 4) = 5 := by decide
     omega
+
+/-- **Five comparisons are necessary in the *comparison-count* reading too**, not
+just the depth reading: no correct tree keeps every input at `≤ 4` comparisons.
+(`S 4 = 5` bounds the least depth; this bounds the least worst-case `cost`, which
+is the quantity "fewest comparisons that suffice" refers to.) -/
+theorem four_needs_five_comparisons :
+    ¬ ∃ t : Tree 4, Correct (α := ℕ) t ∧
+      ∀ x : Fin 4 → ℕ, Function.Injective x → cost t x ≤ 4 := by
+  rintro ⟨t, ht, hcost⟩
+  have hwc : worstCase t ≤ 4 := by
+    apply Finset.sup_le
+    intro p _
+    exact hcost (xOfPerm p) (xOfPerm_injective p)
+  have hlb := logb_factorial_le_worstCase ht
+  have h24 : (4 : ℝ) < Real.logb 2 (Nat.factorial 4) := by
+    have hfac : ((Nat.factorial 4 : ℕ) : ℝ) = 24 := by norm_num [Nat.factorial]
+    rw [hfac]
+    have hpow : (2 : ℝ) ^ 4 < 24 := by norm_num
+    calc (4 : ℝ) = Real.logb 2 ((2 : ℝ) ^ 4) := by
+          rw [Real.logb_pow, Real.logb_self_eq_one (by norm_num)]; norm_num
+      _ < Real.logb 2 (24 : ℝ) := Real.logb_lt_logb (b := 2) (by norm_num : (1 : ℝ) < 2) (by positivity) hpow
+  have : (worstCase t : ℝ) ≤ 4 := by exact_mod_cast hwc
+  linarith
 
 end SortBounds.Projects.SN

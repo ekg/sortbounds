@@ -87,6 +87,9 @@ open SortBounds
 #print axioms SortBounds.Projects.FjTree.fjTree_depth_eq
 #print axioms SortBounds.Projects.SAIS.checkSaCounted_cost
 #print axioms SortBounds.Projects.SAIS.checkSaCounted_accepts
+#print axioms SortBounds.Projects.SAIS.kasai_lcp_correct
+#print axioms SortBounds.Projects.SAIS.kasai_cost_le
+#print axioms SortBounds.Projects.SAIS.kasai_verify_linear
 #print axioms SortBounds.Projects.FjTree.S_eq_of_fjCountJ_eq
 #print axioms SortBounds.Projects.SN.correct_of_allPerms
 #print axioms SortBounds.Projects.XY.pairSums_card_le

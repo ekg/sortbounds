@@ -28,7 +28,7 @@ other models"** — every open lane is about a model where the answer changes.
 | `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement), `exists_decidesReal_distinct` | **M0 DONE** (semantics now witnessed) | M1+ gated |
 | `FjTree` | FJA's decision tree | **`S_eq_clog`**: `S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`, `S_eq_clog_large` for `20, 21` | **DONE** | — |
 | `SortTree` | `Θ` inside one model | **`S_sandwich`**: `⌈log₂ n!⌉ ≤ S n ≤ n(⌈log₂ n⌉+1)` | **DONE** | — |
-| `SAIS` | suffix arrays, cost model | `cmpFrom` soundness, `inspectCount_replicate`, `three_mul_naiveInspectSum` (cubic vs quadratic) | **M0 DONE** | M1 needs LCP-array construction |
+| `SAIS` | suffix arrays, cost model | `inf'_lcpAt_le_lcp` (text-order skip), `lcp_suffix_eq_inf'_of_increasing` (the real min property, along a sorted chain), `verify_linear_time` (`n-1` inspections to verify a suffix array) | **M1 DONE** | sorting in `O(n log n)` inspections not formalised |
 
 ## Decisions (and why)
 
@@ -130,8 +130,16 @@ other models"** — every open lane is about a model where the answer changes.
 2. `FordJohnson` M2/M3: `fjCount n ≤ n·(⌈log₂ n⌉+1)` for the existing recurrence, then the real
    Jacobsthal-order count with the table `F(4..11) = 5,7,10,13,16,19,22,26`. *Running.*
 3. `SN` M2: `S 4 = 5`, `S 5 = 7` by explicit optimal trees. *Running.*
-4. `SAIS` M0: `cmpFrom` soundness under a known LCP, plus the quadratic-vs-linear character
-   contrast on `aⁿ`. *Running.*
+4. ~~`SAIS` M1~~ **DONE**, after correcting a false contract of mine: the LCP array's
+   "min property" is **not** true over text positions — on `"aba"` the min of `lcpAt` over
+   `[0,2)` is `0` while `lcp (suffix 0) (suffix 2) = 1` — it holds along a *lexicographically
+   increasing* chain (suffix-array order), and needs `i < j`.  What is proved instead:
+   text order gives a sound *lower bound* (`inf'_lcpAt_le_lcp`), which is exactly what
+   licenses the skip in `cmpFrom` (`inspectCount = 1 + (lcp - inf)`); along the sorted chain
+   the min property is equality, so a comparison inspects exactly one position and a suffix
+   array is **verifiable in exactly `sa.length - 1` inspections** (`verify_linear_time`),
+   versus `Θ(n²)` for naive comparison.  `compare_lt_iff_saRank_lt` says a verified candidate
+   *is* the suffix array.
 5. ~~`Core` leads with Mathlib~~ **DONE**: `card_le_pow_of_prefixFree` is now a
    corollary of Mathlib's Kraft inequality
    (`InformationTheory.IsPrefixFree.finsetSum_one_div_card_pow_length_le_one`),

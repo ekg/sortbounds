@@ -1,6 +1,7 @@
 # Lane: SAIS — suffix arrays, and a cost model that LCP actually improves
 
-**Status: M0 LANDED; M1 (`lcp_guided_cost`) not started.** Correctness is solved elsewhere (Isabelle AFP `SuffixArray`,
+**Status: M0 LANDED; M1a–M1c LANDED with one corrected target (see the note under
+`M1 target` and the Log); `lcp_guided_cost` still open.** Correctness is solved elsewhere (Isabelle AFP `SuffixArray`,
 2024; JAR 2025), so the only unclaimed and interesting target is the **cost
 model**.
 
@@ -66,6 +67,33 @@ naive comparison (already proved for `aⁿ`: `naiveInspectSum` is cubic). -/
 theorem sorted_check_linear (sa : List ℕ) : …
 ```
 
+> **Correction (M1a, M1b as written above are false).**  The minimum of `lcpAt` over the
+> *text* interval `[i, j)` is only a **lower bound** for `lcp (suffix s i) (suffix s j)`:
+> on `"aba"` the minimum over `[0, 2)` is `0` while the LCP is `1` (`Array.lean`,
+> `inf'_lcpAt_aba`, `exists_inf'_lcpAt_ne_lcp`).  The min property is about
+> *lexicographically* neighbouring suffixes, i.e. about a suffix array.  Proved instead, in
+> `Array.lean` / `Chain.lean` / `Verify.lean`:
+>
+> * text order, soundness: `inf'_lcpAt_le_lcp`, `cmpFrom_inf'_lcpAt`,
+>   `inspectCount_inf'_lcpAt` (`= 1 + (lcp - inf)`) and
+>   `inspectCount_inf'_lcpAt_eq_one_iff` (one inspection **iff** the bound is tight);
+> * text order, verbatim M1a/M1b **with the missing hypothesis** that the interval's suffixes
+>   increase: `lcp_eq_inf'_lcpAt_of_increasing`, `inspectCount_inf'_lcpAt_of_increasing`;
+> * suffix-array order, the real min property: `lcp_eq_inf'_of_chain`,
+>   `lcp_suffix_eq_inf'_of_increasing` (M1a), `inspectCount_inf'_of_increasing` (M1b:
+>   `= 1`), `cmpFrom_inf'_of_increasing`.
+>
+> **The contrast is the content**: in *text* order you get only `inf' ≤ lcp`
+> (`inf'_lcpAt_le_lcp`) — enough to license the skip in `cmpFrom`, and the comparison then
+> costs `1 + (lcp - inf)`, *not* `1` — whereas along the *suffix array* (a lexicographically
+> increasing chain) you get `inf' = lcp` (`lcp_eq_inf'_of_chain`), which is what makes each
+> comparison of the check cost exactly one inspection.  Reading the inequality as an equality
+> is precisely the error being corrected here.
+>
+> Also, `i ≤ j` must be `i < j`: `Ico i i` is empty and has no `inf'`, and the `i = j` case
+> reads `lcp (suffix s i) (suffix s i) = (suffix s i).length` (`Array.lean`,
+> `lcp_suffix_self`).
+
 Order: M1a `lcpAt` + the min property (the real lemma); M1b
 `inspectCount_of_inf_lcpAt`; M1c the linear-verification corollary if time allows.
 Out of scope: SA-IS itself (Isabelle has its correctness); Kasai's O(n)
@@ -99,3 +127,45 @@ construction of the array (state it, do not prove it).
   as sketched, and `inspectCount s k i j` is its suffix-level instance.
 * Not attempted (M1): `lcp_guided_cost`, i.e. the `O(n log n)` total for sorting; it
   needs a suffix-sorting algorithm plus the LCP-array construction.
+* **M1a landed** (`Array.lean`, `Chain.lean`) — with the correction recorded above.  The real
+  lemma is the three-list lemma `lcp_eq_min_lcp_of_compare_lt`
+  (`a < b < c` lexicographically ⟹ `lcp a c = min (lcp a b) (lcp b c)`), which gives the min
+  property along a sorted chain `lcp_eq_inf'_of_chain`
+  (`lcp (f i) (f j) = (Ico i j).inf' fun k => lcp (f k) (f (k + 1))` for `i < j` and `f`
+  strictly increasing on `[i, j)`), via `compare_lt_of_chain` and `min_inf'_Ico_succ`.
+  Text order: `inf'_lcpAt_le_lcp` (sound lower bound, by the sliding-window chain
+  `take_drop_chain`), `cmpFrom_inf'_lcpAt`, `inspectCount_inf'_lcpAt`,
+  `inspectCount_inf'_lcpAt_eq_one_iff`, the repaired M1a/M1b
+  (`lcp_eq_inf'_lcpAt_of_increasing`, `inspectCount_inf'_lcpAt_of_increasing`), and the
+  refutation `inf'_lcpAt_aba` / `inf'_lcpAt_ne_lcp` / `exists_inf'_lcpAt_ne_lcp` (with
+  `lcp_self`, `lcp_suffix_self` for the `i = j` case).  Non-vacuity:
+  `aab_text_min_property` (text order, `"aab"`, interval `[0, 2)`) and
+  `banana_min_property` (rank order, `"banana"`, suffix array `[5,3,1,0,4,2]`, ranks `[1, 4)`).
+* **M1b landed**: `inspectCount_inf'_of_increasing` — for ranks `i < j` of a strictly increasing
+  enumeration `π`, the interval minimum of the neighbouring LCPs *is* the true LCP, so the
+  guided comparison inspects exactly one position (`= 1`), and `cmpFrom_inf'_of_increasing`
+  says it is also the correct comparison.
+* **M1c landed** (`Verify.lean`): `saLcp`, `verifyStep`, `Verified`, `IsSaCandidate`, with
+  `verifyStep_eq` / `inspectCount_verifyStep` (each step is correct and inspects one position),
+  `sum_inspectCount_verify` (**`sa.length - 1` inspections in total**),
+  `checkSa` (the check as a `List.all` program) and `checkSa_eq_true_iff`,
+  `verified_chain` / `compare_lt_of_verify` (a passed check orders every pair of ranks),
+  `lcp_eq_inf'_saLcp` (the min property with the array written out),
+  `cmpFrom_of_verified` / `inspectCount_of_verified` (afterwards **any** pair costs one
+  inspection and gives the true answer), `verify_linear_time`, and the sharper statement that a
+  verified candidate **is** the suffix array: `saRank` (`= idxOf`), `mem_of_candidate`,
+  `saRank_lt`, `getD_saRank`, and `compare_lt_iff_saRank_lt`
+  (`compare (suffix i) (suffix j) = lt ↔ saRank sa i < saRank sa j`, for a verified
+  `IsSaCandidate`).  Then the contrast **on the same `n - 1` pairs**: for `aⁿ` the suffix
+  array is `replicateSa n = [n-1, …, 0]` (`replicate_verified`, `replicateSa_candidate`,
+  `compare_replicate`), the guided check costs `n - 1`
+  (`sum_inspectCount_verify_replicate`) against `(n-1)(n+2)/2` naive
+  (`naive_verify_replicate`), i.e. `2 · naive = (n + 2) · guided`
+  (`verify_contrast_replicate`), verified on `a⁴` by `contrast_replicate_four` (`3` vs `9`).
+  Instances: `banana_verified`, `banana_inspect_one`.
+* Assumed, not proved: the LCP array is **free** (Kasai's linear-time construction is out of
+  scope, as is SA-IS correctness).  `lcp_guided_cost` — the total for a whole sorting
+  algorithm — is still not attempted.
+* Contract corrected by the integrator in `docs/PROGRESS.md`: the min property is about
+  lexicographically adjacent suffixes, not text-adjacent ones (see the note under `M1 target`);
+  the corrected statements are the ones listed in the Log entries above.

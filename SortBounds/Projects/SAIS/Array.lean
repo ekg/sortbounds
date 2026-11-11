@@ -22,6 +22,10 @@ what it is *not* good for.
   property is a statement about *lexicographically* neighbouring suffixes, i.e. about a
   suffix array, and it is proved in `Chain.lean`.
 
+* `lcp_self` / `lcp_suffix_self` — the `i = j` case of the min property: `lcp` of a suffix
+  with itself is its length, so there is no interval minimum to state (`Ico i i = ∅` has no
+  `inf'`).
+
 One convention, inherited from `LCP.lean`: suffixes are indexed by plain naturals and
 `suffix s i = s.drop i` is total, so `lcpAt s i` is defined for every `i`, and `lcpAt s i = 0`
 once `i ≥ s.length`.
@@ -53,11 +57,30 @@ section LcpAt
 variable [DecidableEq α]
 
 /-- `lcpAt s i` is the LCP of the neighbouring suffixes `i` and `i + 1`, i.e. the `i`-th
-entry of the LCP array of `s` read in *text* order. -/
+entry of the LCP array of `s` read in *text* order.
+
+This array supports only the *inequality* `inf'_lcpAt_le_lcp` (a sound lower bound for the LCP
+of any two later suffixes); the **equality** form of the min property is false in text order —
+see `inf'_lcpAt_ne_lcp` right below — and holds only along a lexicographically increasing chain
+(`Chain.lean`, `lcp_eq_inf'_of_chain`). -/
 def lcpAt (s : List α) (i : ℕ) : ℕ := lcp (suffix s i) (suffix s (i + 1))
 
 theorem lcpAt_def (s : List α) (i : ℕ) :
     lcpAt s i = lcp (suffix s i) (suffix s (i + 1)) := rfl
+
+/-- The LCP of a list with itself is its whole length.  This is what the degenerate case
+`i = j` of the min property would have to say: `lcp (suffix s i) (suffix s i)` is the length of
+the suffix, not any minimum over the empty interval `Ico i i`. -/
+theorem lcp_self (a : List α) : lcp a a = a.length := by
+  induction a with
+  | nil => rfl
+  | cons x xs ih =>
+    rw [lcp_cons_cons, ite_eq_left rfl, ih, List.length_cons]
+
+/-- The `i = j` case, in the shape it actually has. -/
+theorem lcp_suffix_self (s : List α) (i : ℕ) :
+    lcp (suffix s i) (suffix s i) = (suffix s i).length :=
+  lcp_self _
 
 /-- The entry is a prefix of both suffixes it compares. -/
 theorem lcpAt_le_left (s : List α) (i : ℕ) : lcpAt s i ≤ (suffix s i).length :=

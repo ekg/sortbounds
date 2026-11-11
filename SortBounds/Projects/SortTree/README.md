@@ -82,4 +82,49 @@ correctness only. `S n` values: Knuth TAOCP §5.3.1.
 
 ## Log
 
-* (empty)
+* **2025 — M0, M1, M2, M3 landed.** Everything is in one file,
+  `SortBounds/Projects/SortTree/Main.lean`, so that the lane validates with the
+  single command `lake env lean SortBounds/Projects/SortTree/Main.lean` (it
+  imports `Comparison/Bridge.lean` and `Projects/SN/Basic.lean`, both of which are
+  built).  No `sorry`, no `axiom`, no `native_decide`; the only axioms used are
+  `propext`, `Classical.choice`, `Quot.sound` (from `Equiv.ofBijective`).
+
+  Contract signatures, verbatim:
+
+  * `insertPerm {n} (σ : Equiv.Perm (Fin n)) (j : Fin (n+1)) : Equiv.Perm (Fin (n+1))`
+  * `rankOf {n} (x : Fin (n+1) → ℕ) (σ : Equiv.Perm (Fin n)) : Fin (n+1)`
+  * `insertPerm_sorts {n} {σ} {x} (hx) (hmono) : Sorts x (insertPerm σ (rankOf x σ))`
+  * `insertTree {n} (σ : Equiv.Perm (Fin n)) : Tree (n+1)`
+  * `insertTree_depth_le (σ) : depth (insertTree σ) ≤ Nat.clog 2 (n+1) + 1`
+  * `insertTree_correct (σ) {x} (hx) (hmono) : Sorts x (run (insertTree σ) x)`
+  * `sortTree : (n : ℕ) → Tree n`
+  * `sortTree_correct (n) : Correct (α := ℕ) (sortTree n)`
+  * `sortTree_depth_le (n) : depth (sortTree n) ≤ n * (Nat.clog 2 n + 1)`
+
+  Extras beyond the contract ladder: `insertSearch_depth_le` (the *tight*
+  intermediate bound `depth (insertSearch σ lo hi) ≤ ⌈log₂ (hi−lo+1)⌉`),
+  `sortTree_cost_le` (the same bound for the comparisons actually performed,
+  `cost (sortTree n) x ≤ n·(⌈log₂ n⌉+1)`), `exists_correct_tree_depth` (the
+  witness form of M3), `S_le` (`SN.S n ≤ n·(⌈log₂ n⌉+1)`) and `S_sandwich`
+  (`⌈log₂ n!⌉ ≤ S n ≤ n·(⌈log₂ n⌉+1)`), plus `insertTree_correct_id` as a
+  non-vacuity witness for the `hx`/`hmono` hypotheses.
+
+  Implementation notes (for the reviewer): the `n = 0` edge case forces the slot
+  map to be partially defined — there is no total map `Fin 1 → Fin 0` — hence
+  `slotIdx` carries the side condition `t ≠ j`; `slotVal` is the total `ℕ`-valued
+  version.  `insertSearch` is a well-founded recursion on `hi.val - lo.val`, whose
+  equation lemmas are `insertSearch_eq_node`/`insertSearch_eq_leaf`.  `rankOf`
+  takes `σ` because the contract says so; it does not use it (the rank of the new
+  element does not depend on the presentation order of the prefix), which is
+  documented at the definition.
+
+  Still open: the constant.  `n·(⌈log₂ n⌉+1)` is a coarse upper bound and is not
+  claimed optimal — at `n = 3` the bound reads `9` while `S 3 = 3`
+  (`Projects/SN/Small.lean`); the construction's actual depth at small `n` is not
+  evaluated here (its leaf labels are noncomputable).
+
+  Integrator TODO: `SortBounds/Projects/SortTree/Main.lean` is not yet reachable
+  from the umbrella `SortBounds.lean` (that file is outside this lane), and the
+  file imports `SortBounds.Projects.SN.Basic` for the `S`-statement — so if
+  `SN`'s `S`, `S_le_iff` or `S_lower` are renamed, M3 breaks (M0–M2 only need
+  `Comparison/Bridge.lean`).

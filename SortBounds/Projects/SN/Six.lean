@@ -7,7 +7,7 @@ SortBounds/Projects/SN/Six.lean
 No *network* gives this bound: the smallest sorting network on six wires has
 twelve comparators (a classical fact, not formalised here), so ten comparisons
 require an *adaptive* tree, exactly as for `n = 5` (`Five.lean`).  `tree6` below
-is such a tree: depth `10`, `720` leaves, one leaf per ordering.
+is such a tree: depth `10` with `720 = 6!` leaves.
 
 How `tree6` was found: the same exhaustive search over *knowledge states* that
 produced `tree5` (`Five.lean`).  A state is the set of orderings of the six
@@ -16,8 +16,8 @@ a state in two, and a leaf is a state with one ordering left.  The search itself
 is *not* formalised; everything that matters is checked in the kernel:
 
 * `tree6_depth`: the depth is `10`;
-* `tree6_numLeaves`: the tree has `720` leaves, as many as there are orderings of
-  six positions, so every leaf is reached and each carries a distinct ordering;
+* `tree6_numLeaves`: the tree has `720` leaves — exactly the counting bound for a
+  correct tree on six positions (`factorial_le_numLeaves`), so there is no slack;
 * `tree6_correct`: it sorts every `ℕ`-valued input with pairwise distinct values —
   `correct_of_forall_run_xOfPerm` reduces this to the `6! = 720` canonical inputs,
   and `decide` checks those.
@@ -27,12 +27,13 @@ answers that reach it, so a reader can check without redoing the search that the
 two children of a node add up to the node's own count, and that no subtree asks
 for more comparisons than its own count allows (`#orderings ≤ 2 ^ remaining
 depth`).  Along the leftmost path the counts read
-`720 → 360 → 180 → 90 → 45 → 26 → 12 → 6 → 3 → 1` (the first four splits are
-exactly even), against the information-theoretic capacity `2 ^ 10 = 1024` at the
-root.  A leaf carries its ordering as the permutation to output, written as a
-product of transpositions: `swapProd [(0, 1), (1, 2)]` is
-`Equiv.swap 0 1 * Equiv.swap 1 2`, which sends `0 ↦ 1 ↦ 2 ↦ 0`; the identity is
-written `1`.
+`720 → 360 → 180 → 90 → 45 → 26 → 12 → 6 → 3 → 1`, and their first four splits
+are exactly even (`720 = 2·360`, `360 = 2·180`, `180 = 2·90`, `90 = 2·45`), while
+`45` splits as `26 + 19`.
+
+A leaf carries its ordering as the permutation to output, written as a product of
+transpositions: `swapProd [(0, 1), (1, 2)]` is `Equiv.swap 0 1 * Equiv.swap 1 2`,
+which sends `0 ↦ 1 ↦ 2 ↦ 0`; the identity is written `1`.
 -/
 import SortBounds.Projects.SN.Verify
 import SortBounds.Projects.SN.Basic
@@ -2206,7 +2207,8 @@ def tree6 : Tree 6 :=
     )
   )
 
-/-- Every leaf of `tree6` is at depth exactly `10`. -/
+/-- The depth is `10`: ten comparisons always suffice.  (`depth` is the maximum over
+leaves, so some leaf sits exactly at depth `10`.) -/
 theorem tree6_depth : depth tree6 = 10 := by decide
 
 /-- As many leaves as there are orderings of six elements. -/

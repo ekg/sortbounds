@@ -19,7 +19,7 @@ other models"** — every open lane is about a model where the answer changes.
 
 | Lane | Question | Target theorem | Status | Milestone |
 | --- | --- | --- | --- | --- |
-| `Core` | bits per probe | `card_le_pow_of_prefixFree`, `logb_le_of_le_pow` | **DONE** | M0 |
+| `Core` | bits per probe | `card_le_pow_of_prefixFree`, `logb_le_of_le_pow`, **`mean_cost_ge_logb`** (Kraft + Gibbs, any `b`) | **DONE** | frame complete |
 | `Comparison` | comparison sorts | `exists_input_cost_ge_quarter`, `avg_cost_ge_log2_factorial` | **DONE** | frozen |
 | `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le`, `factorial_le_two_pow_length_of_sortsAll`, `sortsAll_of_sorts_zeroOne` | **DONE** | frozen |
 | `FordJohnson` | exact comparison counts, upper bound | `fjCount_le`, **`fjSortJ_count_le`**, **`fjCountJ_table`** (`F(4..11) = 5,7,10,13,16,19,22,26`), `fjCountJ_eq_sum` | **M2/M3 DONE** | attainment open |
@@ -141,11 +141,20 @@ other models"** — every open lane is about a model where the answer changes.
    hence **decidable**), `factorial_le_two_pow_length_of_sorts_zeroOne`, and
    `sorts_zeroOne_three_wire` verified by `decide` over 8 inputs. Concrete networks are now
    checkable without enumerating `n!` permutations.
+6c. ~~Average case for any branching factor~~ **DONE**: `Core/Entropy.mean_cost_ge_logb`
+   (and the `Finset` form): Kraft sum `≤ 1` ⇒ mean cost `≥ log_b N`. The b = 2 instance is
+   `Comparison/Average.avg_cost_ge_log2_factorial`; radix/word-RAM/algebraic decision
+   procedures get their average case by supplying `b` and the Kraft sum.
 7. `Comparison/Bridge` M1: `insertTree (σ) : Tree (n+1)` — binary search for the rank of
    `x n` among the prefix order `σ`, leaves `insertPerm σ j` (`Fin.succAbove`/`decomposeFin'`
    territory), then `sortTree n` by iterating `liftTree`, giving `S n ≤ n·(⌈log₂ n⌉+1)` and
    hence `Θ(n log n)` **inside one model**. M0 (substitution, depth, correctness transfer) landed.
-8. `XY` M2, `BenOr` M1+: research gates, only with a concrete plan.
+8. **FJA decision tree** (`S n ≤ fjCountJ n`): build the tree of merge-insertion by
+   sequencing binary searches (same-`n` `subst` + `insertTree` + FJA's Jacobsthal batch
+   windows).  *Blocked on* the `SortTree` lane (`insertTree`), then a 6–8 h lane; landing it
+   would give `S n = ⌈log₂ n!⌉` for `n ≤ 11` (and `n = 20, 21`) — machine-checked optimality
+   of Ford–Johnson, the strongest result available here.
+9. `XY` M2, `BenOr` M1+: research gates, only with a concrete plan.
 
 Working agreement: see `AGENTS.md` (autonomy, 4h lane deadlines, background fan-out,
 truth discipline).
@@ -154,6 +163,7 @@ truth discipline).
 
 | Date | Change |
 | --- | --- |
+| 2026-11-11 | Core completed: average case for any branching factor (`mean_cost_ge_logb`), and `prune`/`exists_depth_le_of_cost_le` showing depth = worst-case cost at the optimum. FJA-tree queued behind SortTree. |
 | 2026-11-11 | Round-2 reviews applied: FordJohnson prose no longer claims `S n = fjCountJ n` or attainment; Ford–Johnson added to PRIOR-ART; SN/SAIS/BenOr doc drifts fixed. |
 | 2026-11-11 | FordJohnson M2/M3: verified Jacobsthal-order merge-insertion with the literature closed form and the optimal table `F(4..11)`. |
 | 2026-11-11 | 0-1 principle in Lean: thresholding commutes with comparators (`map_netRun`), so a network sorting all `Fin n → Fin 2` inputs sorts everything; concrete networks verified by `decide`. |

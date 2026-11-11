@@ -1,4 +1,5 @@
 import SortBounds.Core.Branching
+import SortBounds.Core.Entropy
 import SortBounds.Comparison.Basic
 import SortBounds.Comparison.Tree
 import SortBounds.Comparison.Aggregate

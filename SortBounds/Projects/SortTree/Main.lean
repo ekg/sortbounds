@@ -9,7 +9,7 @@ statement live in the same model.
 
 Contents:
 
-* **M0** `insertIdx`, `insertPerm`, `rankOf` and `insertPerm_sorts`: if the prefix
+* **M0** `slotIdx`, `insertPerm`, `rankOf` and `insertPerm_sorts`: if the prefix
   `0..n-1` is already sorted in the order `σ`, then the permutation that puts
   element `n` at its true rank `rankOf x σ` sorts the whole input.
 * **M1** `insertSearch`/`insertTree` — binary search for that rank, with
@@ -33,8 +33,8 @@ open SortBounds
 The output order of the sort tree on `n+1` positions is a permutation
 `r : Equiv.Perm (Fin (n+1))` with `r j = Fin.last n` ("the new element sits at
 output slot `j`") and, at the other slots, the prefix order `σ`.  Reading the
-*source* position off a slot is `insertIdx j` ("drop the slot `j` from the
-indexing"), so that the two halves of `r` have a single spelling. -/
+*source* position off a slot is `slotIdx j` ("drop the slot `j` from the
+indexing"). -/
 
 /-- The *slot map* of the insertion: reading the output order of the sort tree on
 `n+1` positions at slot `t`, the source position is the prefix index `slotVal`
@@ -60,19 +60,6 @@ def slotIdx {n : ℕ} (j t : Fin (n + 1)) (h : t ≠ j) : Fin n := ⟨slotVal j 
 @[simp]
 theorem slotIdx_val {n : ℕ} (j t : Fin (n + 1)) (h : t ≠ j) :
     (slotIdx j t h).val = slotVal j t := rfl
-
-/-- Inserting the new element at slot `j` (`Fin.succAbove`) and then reading the
-slot off again returns the original prefix index. -/
-theorem slotIdx_succAbove {n : ℕ} (j : Fin (n + 1)) (x : Fin n) :
-    slotIdx j (j.succAbove x) (Fin.succAbove_ne j x) = x := by
-  refine Fin.ext ?_
-  rw [slotIdx_val]
-  simp only [slotVal]
-  rcases lt_or_ge x.val j.val with h | h
-  · rw [Fin.succAbove_of_castSucc_lt j x (Fin.lt_def.2 h), Fin.val_castSucc]
-    split_ifs with h' <;> omega
-  · rw [Fin.succAbove_of_le_castSucc j x (Fin.le_def.2 h), Fin.val_succ]
-    split_ifs with h' <;> omega
 
 /-- The slot map is the inverse of "insert the new element at slot `j`", away
 from that slot. -/
@@ -445,6 +432,14 @@ theorem insertTree_correct {n : ℕ} (σ : Equiv.Perm (Fin n)) {x : Fin (n + 1) 
   have := (rankOf x σ).isLt
   omega
 
+/-- **Non-vacuity witness** for the hypotheses of `insertPerm_sorts` and
+`insertTree_correct`: the identity prefix order and the identity input (element `i`
+has value `i`) satisfy both, so the theorems are not vacuous. -/
+theorem insertTree_correct_id (n : ℕ) :
+    Sorts (fun i : Fin (n + 1) => (i : ℕ))
+      (run (insertTree (1 : Equiv.Perm (Fin n))) fun i => (i : ℕ)) :=
+  insertTree_correct 1 (fun _ _ h => Fin.ext h) (fun _ _ h => h)
+
 /-- Halving the interval costs exactly one comparison: `⌈log₂(len+1)⌉` drops by one
 when the interval is halved (this is where the tightness of the bound lives). -/
 theorem one_add_clog_half_le {len : ℕ} (h : 1 ≤ len) :
@@ -524,7 +519,7 @@ theorem sortTree_correct : (n : ℕ) → Correct (α := ℕ) (sortTree n)
     omega
   | n + 2 =>
     liftTree_correct (sortTree_correct (n + 1))
-      fun σ x _ hmono => insertTree_correct σ (by assumption) hmono
+      fun σ x hx hmono => insertTree_correct σ hx hmono
 
 /-- **The depth bound**: sorting `n` elements takes at most `n·(⌈log₂ n⌉+1)`
 comparisons — the `n` insertion searches of `⌈log₂ n⌉` steps each. -/
@@ -545,6 +540,11 @@ theorem sortTree_depth_le : (n : ℕ) → depth (sortTree n) ≤ n * (Nat.clog 2
           have := Nat.mul_le_mul_left (n + 1) (Nat.add_le_add_right hmono 1)
           exact Nat.add_le_add_right this _
       _ = (n + 2) * (Nat.clog 2 (n + 2) + 1) := by ring
+
+/-- The same bound for the comparisons a run actually performs: `cost` is at most
+`depth`. -/
+theorem sortTree_cost_le (n : ℕ) (x : Fin n → ℕ) : cost (sortTree n) x ≤ n * (Nat.clog 2 n + 1) :=
+  le_trans (cost_le_depth (sortTree n) x) (sortTree_depth_le n)
 
 /-! ### M3: the upper bound on `S n`
 

@@ -103,7 +103,9 @@ sizes.
   `rankAt_le_cntWin : rankAt ≤ cntWin W q + (c - m)` (the chain holds all `m` winners
   and at most `c - m` non-winners); the pairing stage `pairAux`/`pairTree` with
   `pairAux_agree` (slots outside the pairs are untouched), `pairAux_decided` (every pair
-  is decided, so the winner of pair `k` is in slot `k`) and `pairAux_depth` = `n/2`;
+  is decided, so the larger element of pair `k` is in slot `k` — the comparison branch was
+  flipped when `fjTree_correct` was proved, see "Two defects" below) and `pairAux_depth` =
+  `n/2`;
   the transport `transportFun`/`transportPerm`/`transport` with `transport_winner`,
   `transport_loser` (loser of the `o`-th smallest winner to slot `m+o`) and
   `transport_last`.  Pairing `k` with `m+k` (not `2k` with `2k+1`) keeps the layout
@@ -117,9 +119,8 @@ sizes.
   — the depth of the tree built by `fjTree` is at most the count.  This is *only* a
   depth bound: `Tree.leaf 1` satisfies it too, and it says nothing about sorting until
   `fjTree_correct` lands.
-* **2026-02** `Correct.lean` — **`fjTree_correct`**: the tree sorts.  The generic transfer
-  lemma is `Basic.insSeqAt`/`insSeqAt_run` (a phase whose item slot `q` is *fixed* while the
-  chain grows — the shape a Jacobsthal batch has).  Its invariant is `Invar x W m M k p σ`
+* **2026-02** `Correct.lean` — **`fjTree_correct`**: the tree sorts.  The phase is carried by
+  the invariant `Invar x W m M k p σ`
   (batch `k`, position `p`, chain length `chainLen m M k p = m + jacLo M k + p`):
   `ChainSorted x σ c` ∧ `W ⊆ chainSet σ c` ∧ `∀ o, cntWin x W (σ ⟨c+o⟩) ≤ pendBound M k p o`,
   and `pendBound` is exactly `rank - 1` of the item in slot `c+o` (items of the current
@@ -130,9 +131,14 @@ sizes.
   shift lemmas `pendBound_shift_lo`/`_hi`), the batch is `insBatch_aux` (also the run
   homomorphism `run (insBatch next) = run (next ∘ run (insBatch leaf))`), the phase is
   `insBatches_sorts`/`insPhase_sorts`, the level is `fjStage_sorts` and the induction is
-  `fjTreeFuel_correct`.  The initial invariant is `cntWin_transport_le`: slot `m+o` holds
-  the partner of the `o`-th smallest winner, which is *smaller* than that winner, so at most
-  `o` winners lie below it.
+  `fjTreeFuel_correct`.  (`Basic.insSeqAt`/`insSeqAt_run` state the same transfer for a phase
+  whose item slot is fixed — landed and green, but `fjTree_correct` does not consume it:
+  `insBatch`'s recursion parameter counts the insertions still to come while `insSeqAt`'s
+  chain length counts up, so plugging one into the other needs a tree equality that is pure
+  bookkeeping.  `insBatch_aux` is that induction in `insBatch`'s own indices.)
+  The initial invariant is
+  `cntWin_transport_le`: slot `m+o` holds the partner of the `o`-th smallest winner, which is
+  *smaller* than that winner, so at most `o` winners lie below it.
 * **2026-02** `Optimal.lean` — **`S_le_fjCountJ`**, **`S_eq_clog`** (`4 ≤ n ≤ 11`) and
   `S_eq_clog_large` (`S 20 = ⌈log₂ 20!⌉`, `S 21 = 66`), the last two from
   `FordJohnson.fjCountJ_eq_clog_factorial(_large)` and `SN.S_lower`.  Cross-checked against

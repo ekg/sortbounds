@@ -8,8 +8,11 @@ along the recursive sort of the winners.
   `cntWin x W q` — how many *winners* are below the position `q`.  These two reduce the
   question "how big is the search window of a loser?" to counting: the chain contains at
   most `s - m` non-winners, so `rankAt ≤ cntWin + (s - m)` (`rankAt_le_cntWin`).
-* `pairTree` — compare the `n/2` pairs `{k, m+k}`; the state it leaves has the winner of
-  pair `k` in slot `k` and the loser in slot `m+k` (`pairTree_spec`).  Pairing `k` with
+* `pairTree` — compare the `n/2` pairs `{k, m+k}`; the state it leaves has the *larger*
+  element of pair `k` in slot `k` and its smaller partner in slot `m+k` (`pairTree_spec`).
+  The larger element is the one that goes on to be sorted (the "winner" of the
+  merge-insertion literature); the smaller one is inserted into that sorted chain later,
+  and the single pairing comparison is exactly the bound on its rank.  Pairing `k` with
   `m+k` (rather than `2k` with `2k+1`) keeps the target layout contiguous, so the pairing
   perm is a product of disjoint slot swaps and no de-interleaving permutation is needed.
 * `transport` — after the recursive call has sorted the winners, put the sorted winners in

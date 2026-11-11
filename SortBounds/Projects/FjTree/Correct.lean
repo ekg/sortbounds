@@ -288,7 +288,6 @@ theorem invar_step {m M k p : ℕ} {x : Fin n → ℕ} (hx : Function.Injective 
     (hσ' : σ' = insertAt (rankAt x σ (chainLen m M k p) ⟨itemSlot m M k, itemSlot_lt m M k hmM hM1⟩) (itemSlot m M k)
       (rankAt_le_itemSlot hmM hM hM1 hW hp h) (itemSlot_lt m M k hmM hM1) σ) :
     Invar x W m M k (p + 1) σ' := by
-  have hcn : 0 < cntB M k := by omega
   have hcq : chainLen m M k p ≤ itemSlot m M k := chainLen_le_itemSlot m M k p hp
   have hlt : itemSlot m M k < n := itemSlot_lt m M k hmM hM1
   have hrle : rankAt x σ (chainLen m M k p) ⟨itemSlot m M k, hlt⟩ ≤ chainLen m M k p := by

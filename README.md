@@ -40,6 +40,7 @@ in the main results (see [`#print axioms`](#axioms)).
 | `Instances.radixSort_sorted` / `radixSort_perm` / `radixSort_keys_congr` | radix sort is correct, and its output depends only on the key vectors — hence zero element comparisons |
 | **open lanes (what is *not* proved)** | |
 | `Projects.FordJohnson.fjCountJ_table` | `F(4..11) = 5,7,10,13,16,19,22,26` — Ford–Johnson's count reaches `⌈log₂ n!⌉`; **not** that `S n` equals it, and **not** attainment |
+| **`Projects.FjTree.S_eq_clog`** | **`S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`** — merge-insertion verified optimal, and `S_eq_clog_large` for `n = 20, 21`; two independent routes (`SN`'s explicit trees for `n ≤ 7`, this one) agree |
 | `Projects.SN.S_four` / `S_five` | `S 4 = 5`, `S 5 = 7` (least depth; `four_needs_five_comparisons` / `five_needs_seven_comparisons` give the comparison-count reading) — `n ≥ 6` open |
 | `Projects.BenOr.exists_decidesReal_distinct` | an algebraic decision tree of degree `n(n-1)` decides element distinctness — Ben-Or's *bound* is stated, not proved |
 | `Projects.SAIS.cmpFrom_lcp_advance` | comparing two suffixes can start after a known LCP, and the `aⁿ` contrast is cubic-vs-quadratic — the linear-time algorithms are not formalised |

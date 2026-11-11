@@ -73,6 +73,11 @@ open SortBounds
 #print axioms SortBounds.Projects.SortTree.sortTree_depth_le
 #print axioms SortBounds.Projects.SortTree.S_sandwich
 #print axioms SortBounds.Projects.FjTree.fjTree_depth_le
+#print axioms SortBounds.Projects.FjTree.fjTree_correct
+#print axioms SortBounds.Projects.FjTree.S_le_fjCountJ
+#print axioms SortBounds.Projects.FjTree.S_eq_clog
+#print axioms SortBounds.Projects.FjTree.S_eq_clog_large
+#print axioms SortBounds.Projects.FjTree.fjCountJ_not_attained
 #print axioms SortBounds.Projects.XY.pairSums_card_le
 #print axioms SortBounds.Projects.XY.naivePairsSorted_perm
 #print axioms SortBounds.Projects.XY.naivePairsSorted_count

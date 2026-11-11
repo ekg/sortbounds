@@ -37,3 +37,5 @@ import SortBounds.Projects.BenOr.Witness
 import SortBounds.Projects.SAIS.LCP
 import SortBounds.Projects.SortTree.Main
 import SortBounds.Projects.FjTree.Main
+import SortBounds.Projects.FjTree.Correct
+import SortBounds.Projects.FjTree.Optimal

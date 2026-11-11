@@ -86,12 +86,12 @@ theorem chainSet_transport {m : ℕ} (hm : 2 * m ≤ n) (ρ : Equiv.Perm (Fin n)
           have := (τ ⟨(τ.symm kk).val, by have := (τ.symm kk).isLt; omega⟩).isLt; omega⟩ : Fin n)
         = ⟨kk.val, by have := kk.isLt; omega⟩ := by
       refine Fin.ext ?_
-      simp only []
+      dsimp only
       exact congrArg Fin.val hτ
     rw [h1, h2]
     have hk' : (⟨kk.val, by have := kk.isLt; omega⟩ : Fin n) = k := by
       refine Fin.ext ?_
-      simp only []
+      dsimp only
       exact hkk
     rw [hk', hpk]
 
@@ -110,7 +110,7 @@ theorem transport_loser_lt {m : ℕ} (hm : 2 * m ≤ n) (ρ : Equiv.Perm (Fin n)
   have h2' : (⟨m + (τ (pendIdx m ho)).val, by have := (τ (pendIdx m ho)).isLt; omega⟩ : Fin n)
       = ⟨m + (τ ⟨o, ho⟩).val, by have := (τ ⟨o, ho⟩).isLt; omega⟩ := by
     refine Fin.ext ?_
-    simp only []
+    dsimp only
     exact congrArg (fun v => m + v) hpe
   have h2 : transport m hm ρ τ ⟨m + o, by omega⟩
       = ρ ⟨m + (τ ⟨o, ho⟩).val, by have := (τ ⟨o, ho⟩).isLt; omega⟩ := by
@@ -237,7 +237,7 @@ def Invar (x : Fin n → ℕ) (W : Finset (Fin n)) (m M k p : ℕ)
 `rankAt ≤ cntWin + (c - m)` and both terms are bounded by the Jacobsthal schedule, so the
 rank is at most `jacLo + jacHi - 1`, the window `binIns` searches. -/
 theorem rankAt_le_winWindow {m M k p : ℕ} {x : Fin n → ℕ} {W : Finset (Fin n)}
-    {σ : Equiv.Perm (Fin n)} (hmM : m + M ≤ n) (hM : M ≤ m + 1) (hM1 : 1 ≤ M)
+    {σ : Equiv.Perm (Fin n)} (hmM : m + M ≤ n) (hM1 : 1 ≤ M)
     (hW : W.card = m) (hp : p < cntB M k) (h : Invar x W m M k p σ) :
     rankAt x σ (chainLen m M k p) ⟨itemSlot m M k, itemSlot_lt m M k hmM hM1⟩ ≤ winWindow M k := by
   have hlt : itemSlot m M k < n := itemSlot_lt m M k hmM hM1
@@ -276,7 +276,7 @@ theorem rankAt_le_itemSlot {m M k p : ℕ} {x : Fin n → ℕ} {W : Finset (Fin 
     (hW : W.card = m) (hp : p < cntB M k) (h : Invar x W m M k p σ) :
     rankAt x σ (chainLen m M k p) ⟨itemSlot m M k, itemSlot_lt m M k hmM hM1⟩ ≤ itemSlot m M k := by
   have hcn : 0 < cntB M k := by omega
-  exact le_trans (rankAt_le_winWindow hmM hM hM1 hW hp h) (winWindow_le_itemSlot m M k hM hcn)
+  exact le_trans (rankAt_le_winWindow hmM hM1 hW hp h) (winWindow_le_itemSlot m M k hM hcn)
 
 /-- **One insertion keeps the invariant**: inserting the item in slot `q` at its rank
 extends the chain by one, keeps all winners inside it, and shifts the pending items so that
@@ -293,7 +293,7 @@ theorem invar_step {m M k p : ℕ} {x : Fin n → ℕ} (hx : Function.Injective 
   have hlt : itemSlot m M k < n := itemSlot_lt m M k hmM hM1
   have hrle : rankAt x σ (chainLen m M k p) ⟨itemSlot m M k, hlt⟩ ≤ chainLen m M k p := by
     have h1 : rankAt x σ (chainLen m M k p) ⟨itemSlot m M k, hlt⟩ ≤ winWindow M k :=
-      rankAt_le_winWindow hmM hM hM1 hW hp h
+      rankAt_le_winWindow hmM hM1 hW hp h
     have h2 : winWindow M k ≤ chainLen m M k p := winWindow_le_chainLen m M k p hM hM1
     omega
   have hqj : itemSlot m M k = chainLen m M k p + (cntB M k - 1 - p) :=
@@ -311,7 +311,7 @@ theorem invar_step {m M k p : ℕ} {x : Fin n → ℕ} (hx : Function.Injective 
   · intro o ho
     have ho' : chainLen m M k p + 1 + o < n := by omega
     have hfin : (⟨chainLen m M k (p + 1) + o, ho⟩ : Fin n)
-        = ⟨chainLen m M k p + 1 + o, ho'⟩ := Fin.ext (by simp only []; omega)
+        = ⟨chainLen m M k p + 1 + o, ho'⟩ := Fin.ext (by dsimp only; omega)
     rw [hfin, hσ']
     rcases le_or_gt (chainLen m M k p + 1 + o) (itemSlot m M k) with hle | hgt
     · have hrank : rankAt x σ (chainLen m M k p) ⟨itemSlot m M k, itemSlot_lt m M k hmM hM1⟩
@@ -331,7 +331,7 @@ theorem invar_step {m M k p : ℕ} {x : Fin n → ℕ} (hx : Function.Injective 
         rw [insertAt_apply_gt (rankAt x σ (chainLen m M k p) ⟨itemSlot m M k, itemSlot_lt m M k hmM hM1⟩) (itemSlot m M k)
           _ _ σ hgt]
         congr 1
-        exact Fin.ext (by simp only []; omega)
+        exact Fin.ext (by dsimp only; omega)
       rw [hval]
       have hcond : ¬ o + p + 1 < cntB M k := by omega
       rw [pendBound_shift_hi M k p o hcond]
@@ -352,7 +352,7 @@ theorem invar_next_batch {m M k : ℕ} {x : Fin n → ℕ} {W : Finset (Fin n)}
   · intro o ho
     have ho' : chainLen m M k (cntB M k) + o < n := by omega
     have hfin : (⟨chainLen m M (k + 1) 0 + o, ho⟩ : Fin n)
-        = ⟨chainLen m M k (cntB M k) + o, ho'⟩ := Fin.ext (by simp only []; omega)
+        = ⟨chainLen m M k (cntB M k) + o, ho'⟩ := Fin.ext (by dsimp only; omega)
     rw [hfin, pendBound_batch]
     exact h.2.2 o ho'
 
@@ -380,7 +380,7 @@ theorem insBatch_aux {m M k : ℕ} {x : Fin n → ℕ} (hx : Function.Injective 
     have hpos : cntB M k - (j + 1) = cntB M k - 1 - j := by omega
     rw [hpos] at h
     have hp : cntB M k - 1 - j < cntB M k := by omega
-    have hwin := rankAt_le_winWindow hmM hM hM1 hW hp h
+    have hwin := rankAt_le_winWindow hmM hM1 hW hp h
     have hrun_next := binIns_run (winWindow M k) 0 (winWindow M k)
       (chainLen m M k (cntB M k - 1 - j)) (itemSlot m M k)
       (itemSlot_lt m M k hmM hM1)
@@ -474,7 +474,7 @@ theorem insPhase_sorts {m M : ℕ} (hmM : m + M ≤ n) (hMn : m + M = n) (hM : M
     intro o ho
     have ho' : m + o < n := by omega
     have hfin : (⟨chainLen m M 0 0 + o, ho⟩ : Fin n) = ⟨m + o, ho'⟩ :=
-      Fin.ext (by simp only []; omega)
+      Fin.ext (by dsimp only; omega)
     rw [hfin, pendBound_zero]
     exact hpend o ho'
   have hcard : (chainSet σ m).card = m := chainSet_card σ (by omega)

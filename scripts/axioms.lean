@@ -43,7 +43,7 @@ open SortBounds
 #print axioms SortBounds.four_wire_tree
 #print axioms SortBounds.sorts_zeroOne_five_wire
 #print axioms SortBounds.liftTree_correct
-#print axioms SortBounds.liftTree_depth_le
+#print axioms SortBounds.depth_liftTree_le
 -- lanes
 #print axioms SortBounds.Projects.FordJohnson.insertCount_count
 #print axioms SortBounds.Projects.FordJohnson.fjSort_count_le

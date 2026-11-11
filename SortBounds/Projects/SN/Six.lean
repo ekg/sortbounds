@@ -20,8 +20,8 @@ is *not* formalised; everything that matters is checked in the kernel:
 * `tree6_numLeaves`: the tree has `720` leaves — exactly the counting bound for a
   correct tree on six positions (`factorial_le_numLeaves`), so there is no slack;
 * `tree6_correct`: it sorts every `ℕ`-valued input with pairwise distinct values —
-  `correct_of_forall_run_xOfPerm` reduces this to the `6! = 720` canonical inputs,
-  and `decide` checks those.
+  `correct_of_allPerms` reduces this to the `6! = 720` canonical inputs and has
+  `decide` check those.
 
 Every internal node is annotated with the number of orderings consistent with the
 answers that reach it, so a reader can check without redoing the search that the
@@ -2215,14 +2215,14 @@ theorem tree6_depth : depth tree6 = 10 := by decide
 /-- As many leaves as there are orderings of six elements. -/
 theorem tree6_numLeaves : numLeaves tree6 = 720 := by decide
 
--- `decide` enumerates `Equiv.Perm (Fin 6)`, and that `Fintype` instance filters
--- the `6 ^ 6 = 46656` functions `Fin 6 → Fin 6`, deeper than the default
--- elaborator recursion limit of 1000.
-set_option maxRecDepth 4000 in
+set_option maxRecDepth 8000 in
 /-- The tree sorts: on all `6! = 720` canonical inputs it outputs the sorting
-permutation, hence on every input with distinct values. -/
+permutation, hence on every input with distinct values.  `decide` folds over the
+`720` canonical inputs listed by `allPerms 6` (`Verify.lean`), so this does not go
+through the `Fintype (Equiv.Perm (Fin 6))` instance.  The fold is still `720`
+elements deep, past the elaborator's default recursion limit of 1000. -/
 theorem tree6_correct : Correct (α := ℕ) tree6 :=
-  correct_of_forall_run_xOfPerm (by decide)
+  correct_of_allPerms (by decide)
 
 /-- **`S 6 = 10`**: ten comparisons sort six elements, and counting rules out
 nine. -/

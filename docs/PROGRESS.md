@@ -139,85 +139,36 @@ The evidence chain: `kasai_lcp_correct` (the array is right, given `Verified s s
 
 ## Queue (take the next item without asking)
 
-1. `BenOr` witness: `∃ t, t.degreeLe (n*(n-1)) ∧ t.decidesReal (distinctSet n)` — removes the
-   vacuity risk on the unproved Ben-Or statements. *Running.*
-2. `FordJohnson` M2/M3: `fjCount n ≤ n·(⌈log₂ n⌉+1)` for the existing recurrence, then the real
-   Jacobsthal-order count with the table `F(4..11) = 5,7,10,13,16,19,22,26`. *Running.*
-3. `SN` M2: `S 4 = 5`, `S 5 = 7` by explicit optimal trees. *Running.*
-4. ~~`SAIS` M1~~ **DONE**, after correcting a false contract of mine: the LCP array's
-   "min property" is **not** true over text positions — on `"aba"` the min of `lcpAt` over
-   `[0,2)` is `0` while `lcp (suffix 0) (suffix 2) = 1` — it holds along a *lexicographically
-   increasing* chain (suffix-array order), and needs `i < j`.  What is proved instead:
-   text order gives a sound *lower bound* (`inf'_lcpAt_le_lcp`), which is exactly what
-   licenses the skip in `cmpFrom` (`inspectCount = 1 + (lcp - inf)`); along the sorted chain
-   the min property is equality, so a comparison inspects exactly one position and a suffix
-   array is **verifiable in exactly `sa.length - 1` inspections** (`verify_linear_time`),
-   versus `Θ(n²)` for naive comparison.  `compare_lt_iff_saRank_lt` says a verified candidate
-   *is* the suffix array.
-5. ~~`Core` leads with Mathlib~~ **DONE**: `card_le_pow_of_prefixFree` is now a
-   corollary of Mathlib's Kraft inequality
-   (`InformationTheory.IsPrefixFree.finsetSum_one_div_card_pow_length_le_one`),
-   not a re-proof: `Core/Branching.lean` dropped from ~110 lines of bespoke
-   padding combinatorics to 76 lines of instantiation. Recorded in PRIOR-ART.
-6. ~~`Instances.Network`~~ **DONE**: `factorial_le_two_pow_length_of_sortsAll`
-   (`n! ≤ 2 ^ #comparators` for any sorting network) and
-   `logb_factorial_le_length_of_sortsAll`. A network is a comparison algorithm with depth =
-   comparator count, so networks win on depth (AKS: `O(log n)`), never on work.
-6a. ~~Network → tree bridge~~ **DONE**: `netTree`/`netTree_depth`/`netTree_run`/`netTree_correct`
-   — a verified network yields a correct `Tree n` of depth = #comparators, so
-   `four_wire_tree` gives a correct 4-wire tree with 5 comparisons *verified on 16 zero-one
-   inputs* instead of 24 orderings.
-6b. ~~0-1 principle~~ **DONE**: `sortsAll_of_sorts_zeroOne` (hypothesis over `Fin n → Fin 2`,
-   hence **decidable**), `factorial_le_two_pow_length_of_sorts_zeroOne`, and
-   `sorts_zeroOne_three_wire` verified by `decide` over 8 inputs. Concrete networks are now
-   checkable without enumerating `n!` permutations.
-6c. ~~Average case for any branching factor~~ **DONE**: `Core/Entropy.mean_cost_ge_logb`
-   (and the `Finset` form): Kraft sum `≤ 1` ⇒ mean cost `≥ log_b N`. The b = 2 instance is
-   `Comparison/Average.avg_cost_ge_log2_factorial`; radix/word-RAM/algebraic decision
-   procedures get their average case by supplying `b` and the Kraft sum.
-7. `Comparison/Bridge` M1: `insertTree (σ) : Tree (n+1)` — binary search for the rank of
-   `x n` among the prefix order `σ`, leaves `insertPerm σ j` (`Fin.succAbove`/`decomposeFin'`
-   territory), then `sortTree n` by iterating `liftTree`, giving `S n ≤ n·(⌈log₂ n⌉+1)` and
-   hence `Θ(n log n)` **inside one model**. M0 (substitution, depth, correctness transfer) landed.
-8. ~~**FJA decision tree**~~ **DONE**: `fjTree_correct` (by the `Invar`/`invar_step`
-   induction over `insBatch`, `Correct.lean` — *not* via `insSeqAt`, which was landed on
-   the way and is not consumed by the final proof), hence `S_le_fjCountJ : S n ≤ fjCountJ n` and
-   **`S_eq_clog : S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`**, plus `S_eq_clog_large`
-   (`n = 20, 21`).  Merge-insertion is verified optimal at those sizes.
-   Note `fjCountJ_not_attained`: at `n = 12` the count is 30 while `⌈log₂ 12!⌉ = 29`,
-   and at `n = 22` it is 71 vs 70 — so counting alone cannot give `S 12`.
-   **Two defects were found only by proving correctness** — the depth bound had been
-   true of a tree that sorted nothing (see the lane README's "Two defects"):
-   (1) `insBatch`'s chain length was indexed by *remaining* insertions
-   (`m + jacLo + j`), so a batch's last item was searched in its shortest chain;
-   (2) `pairAux` put the **smaller** element of each pair in the chain, and again the
-   depth bound could not see it — at `n = 4` the tree inserted the value `2` at rank `0`.
-   Both fixed (`chainLen` indexed by position; the comparison branch flipped, with
-   `pairAux_decided` making the pairing comparison the rank bound).  Depth, `fjCountJ`
-   and all four contract signatures are unchanged.
-   `S_pin` now pins `S n` to within one for every `n ≤ 22`, and `S_eq_of_fjCountJ_eq`
-   is the transfer principle behind `S_eq_clog`.
-8a. ~~**Tree-side tightness**~~ **DONE**: `fjTree_cost_attains` (an explicit input
-   makes the tree pay exactly `fjCountJ n`) and `fjTree_depth_eq`
-   (`depth (fjTree n) = fjCountJ n`) — so the depth bound is *exact*, not merely
-   attained.  The lane also corrected my brief: the deep spine is the `rank = lo` one,
-   not `rank = hi` as the review suggested (`binIns` descends left on "below the
-   midpoint", and the left window is the larger one).
-8b. **Tree-side tightness (original note)** — `fjCountJ_attains` shows the *idealised list algorithm* is
-   tight; the tree `fjTree` should be too: `∃ x, Function.Injective x ∧ cost (fjTree n) x =
-   fjCountJ n`.  Starting lemma (reviewer's Q6): `binIns_cost_eq`, the `Tree`-side mirror of
-   `Attain.insertCount_eq_clog_of_forall_le` — when the true rank sits at the window's edge,
-   one search descends a full spine, so a batch costs `|batch| · ⌈log₂(jacLo+jacHi)⌉`.
-   *Running as a lane.*
-8b. **FJA decision tree (original note)** (`S n ≤ fjCountJ n`): build the tree of merge-insertion by
-   sequencing binary searches (same-`n` `subst` + `insertTree` + FJA's Jacobsthal batch
-   windows).  *Blocked on* the `SortTree` lane (`insertTree`), then a 6–8 h lane; landing it
-   would give `S n = ⌈log₂ n!⌉` for `n ≤ 11` (and `n = 20, 21`) — machine-checked optimality
-   of Ford–Johnson, the strongest result available here.
-9. `XY` M2, `BenOr` M1+: research gates, only with a concrete plan.
+### Landed (do not redo)
 
-Working agreement: see `AGENTS.md` (autonomy, 4h lane deadlines, background fan-out,
-truth discipline).
+`Core` (bits per probe, worst + average, any `b`) · `Comparison` (Ω(n log n):
+worst, average, any value type, randomised) · `SortTree` (`Θ` inside one model) ·
+`FordJohnson` (count, closed form, attainment) · `FjTree` (`S n = ⌈log₂ n!⌉` for
+`4..11`, `20`, `21`; `S_pin` for `n ≤ 22`; depth = count exactly) · `SN` (`S 4..7`
+by explicit kernel-checked trees) · `Instances` (radix; networks + comparator
+bound + 0-1 principle + network→tree; merge sort) · `SAIS` (LCP cost model;
+Kasai `≤ 2n`; verify `n − 1` on computed data) · `BenOr` (model + statement +
+non-vacuity witnesses).
+
+### Open — ordered by what is actually reachable
+
+1. **Domain / word-RAM model** (`Projects/Domain`, *running*): the bound becomes
+   `log_b U` instead of `log₂ n!`, and radix attains it exactly — the quantitative
+   answer to "does structure buy speed, or is `n log n` inescapable?".
+   `log_b U` probes are necessary and `⌈log_b U⌉` suffice, so for `U = n^{O(1)}` and
+   `b = n` integer sorting needs `O(1)` passes versus `Ω(n log n)` comparisons.
+2. **`BenOr` M1**: the distinctness set has `n!` connected components — the
+   topological ingredient of Ben-Or's bound.  Real algebraic geometry; the model and
+   the statement are already there, so this is the honest next rung.
+3. **`XY` M2**: Fredman's `O(n²)` comparison scheme for `X+Y` (statement first, with
+   citation; the algorithm is a research paper).
+4. **`SAIS`**: the `P2` from review — `saRank` is `O(n)` per lookup, so `kasai` is
+   quadratic in *list scans* though linear in *character inspections*; a cost model
+   that charges indexed access would be more faithful.
+5. **`S 12 = 30`**: open, and **not reachable by counting** (`12! < 2^29`, Kraft
+   realizes any `L ≤ 2^d`).  Needs a pruned search (Wells 1971, Peczarski 2004).
+6. **`SortTree`'s constant**: `n(⌈log₂ n⌉+1)` vs `⌈log₂ n!⌉` — the gap is a constant;
+   only worth doing if someone needs the constant.
 
 ## Changelog
 

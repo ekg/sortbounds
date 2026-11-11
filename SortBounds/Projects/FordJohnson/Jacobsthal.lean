@@ -200,6 +200,14 @@ theorem fjCountJ_table : fjCountJ 4 = 5 ∧ fjCountJ 5 = 7 ∧ fjCountJ 6 = 10 �
     ∧ fjCountJ 8 = 16 ∧ fjCountJ 9 = 19 ∧ fjCountJ 10 = 22 ∧ fjCountJ 11 = 26 := by
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> decide
 
+/-- **The closed form of the count** (Knuth, TAOCP 5.3.1): `F(n) = Σ_{k=1}^{n} ⌈log₂ ⌈3k/4⌉⌉`,
+i.e. the `k`-th element of the insertion sequence is searched for in `⌈3k/4⌉` slots.  Checked
+here for every `n ≤ 22`, which covers the whole range where merge-insertion is known to be
+optimal. -/
+theorem fjCountJ_eq_sum (n : ℕ) (hn : n ≤ 22) :
+    fjCountJ n = ∑ k ∈ Finset.range n, Nat.clog 2 ((3 * (k + 1) + 3) / 4) := by
+  interval_cases n <;> decide
+
 /-- **Merge-insertion is optimal up to eleven elements**: for `4 ≤ n ≤ 11` its count equals
 the information-theoretic lower bound `⌈log₂ n!⌉`, which no comparison sort can beat. -/
 theorem fjCountJ_eq_clog_factorial (n : ℕ) (h4 : 4 ≤ n) (h11 : n ≤ 11) :

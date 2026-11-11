@@ -21,7 +21,7 @@ other models"** — every open lane is about a model where the answer changes.
 | --- | --- | --- | --- | --- |
 | `Core` | bits per probe | `card_le_pow_of_prefixFree`, `logb_le_of_le_pow` | **DONE** | M0 |
 | `Comparison` | comparison sorts | `exists_input_cost_ge_quarter`, `avg_cost_ge_log2_factorial` | **DONE** | frozen |
-| `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le`, `factorial_le_two_pow_length_of_sortsAll` | **DONE** | frozen |
+| `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le`, `factorial_le_two_pow_length_of_sortsAll`, `sortsAll_of_sorts_zeroOne` | **DONE** | frozen |
 | `FordJohnson` | exact comparison counts, upper bound | `fjSort_count_le` (`fjCount`), `insertCount_count` | **M1 DONE** | M2/M3 open |
 | `SN` | exact `S(n)`, both bounds | `S 0..3`, **`S 4 = 5`, `S 5 = 7`** | **M2 for n ≤ 5** | n ≥ 6 open |
 | `XY` | sorting `X+Y` | `pairSums`, `pairSums_card_le`, `naivePairsSorted_*` | **M1 DONE** | M2 gated |
@@ -119,6 +119,10 @@ other models"** — every open lane is about a model where the answer changes.
    (`n! ≤ 2 ^ #comparators` for any sorting network) and
    `logb_factorial_le_length_of_sortsAll`. A network is a comparison algorithm with depth =
    comparator count, so networks win on depth (AKS: `O(log n)`), never on work.
+6b. ~~0-1 principle~~ **DONE**: `sortsAll_of_sorts_zeroOne` (hypothesis over `Fin n → Fin 2`,
+   hence **decidable**), `factorial_le_two_pow_length_of_sorts_zeroOne`, and
+   `sorts_zeroOne_three_wire` verified by `decide` over 8 inputs. Concrete networks are now
+   checkable without enumerating `n!` permutations.
 7. `Comparison/Bridge` M1: `insertTree (σ) : Tree (n+1)` — binary search for the rank of
    `x n` among the prefix order `σ`, leaves `insertPerm σ j` (`Fin.succAbove`/`decomposeFin'`
    territory), then `sortTree n` by iterating `liftTree`, giving `S n ≤ n·(⌈log₂ n⌉+1)` and
@@ -132,6 +136,7 @@ truth discipline).
 
 | Date | Change |
 | --- | --- |
+| 2026-11-11 | 0-1 principle in Lean: thresholding commutes with comparators (`map_netRun`), so a network sorting all `Fin n → Fin 2` inputs sorts everything; concrete networks verified by `decide`. |
 | 2026-11-11 | SN M2 for small n: `S 4 = 5`, `S 5 = 7` (integrated; the lane's two files needed an import fix). |
 | 2026-11-11 | Round-2 partial integration: BenOr witnesses (vacuity closed), SAIS cost model M0 (cubic-vs-quadratic `aⁿ` contrast), review prose fixes. |
 | 2026-11-11 | `Instances.Network`: sorting networks cannot beat the bound in comparator count (`n! ≤ 2^k`), only in depth. Round-2 lanes launched with 4h deadlines (BenOr witness, FordJohnson count, SN `S 4`/`S 5`, SAIS cost model). |

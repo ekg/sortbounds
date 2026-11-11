@@ -63,9 +63,9 @@ theorem splitBelow_append [LinearOrder α] (b : α) (l : List α) :
   | nil => rfl
   | cons a as ih =>
     by_cases h : a < b
-    · rw [splitBelow, if_pos h, List.cons_append]
+    · rw [splitBelow, ite_eq_left h, List.cons_append]
       exact congrArg (a :: ·) ih
-    · rw [splitBelow, if_neg h]
+    · rw [splitBelow, ite_eq_right h]
       rfl
 
 theorem splitBelow_fst_lt [LinearOrder α] (b : α) :
@@ -76,11 +76,11 @@ theorem splitBelow_fst_lt [LinearOrder α] (b : α) :
   | cons c cs ih =>
     intro a ha
     by_cases h : c < b
-    · rw [splitBelow, if_pos h] at ha
+    · rw [splitBelow, ite_eq_left h] at ha
       rcases List.mem_cons.mp ha with rfl | hmem
       · exact h
       · exact ih hmem
-    · rw [splitBelow, if_neg h] at ha
+    · rw [splitBelow, ite_eq_right h] at ha
       exact absurd ha (by simp)
 
 theorem splitBelow_snd_le [LinearOrder α] (b : α) :
@@ -93,9 +93,9 @@ theorem splitBelow_snd_le [LinearOrder α] (b : α) :
     have hcs : cs.Pairwise (· ≤ ·) := (List.pairwise_cons.mp hs).2
     have hcross : ∀ x ∈ cs, c ≤ x := (List.pairwise_cons.mp hs).1
     by_cases h : c < b
-    · rw [splitBelow, if_pos h] at ha
+    · rw [splitBelow, ite_eq_left h] at ha
       exact ih hcs a ha
-    · rw [splitBelow, if_neg h] at ha
+    · rw [splitBelow, ite_eq_right h] at ha
       rcases List.mem_cons.mp ha with rfl | hmem
       · exact not_lt.mp h
       · exact le_trans (not_lt.mp h) (hcross a hmem)
@@ -107,11 +107,11 @@ theorem splitBelow_fst_length_le_countP [LinearOrder α] (b : α) :
   | nil => simp [splitBelow]
   | cons c cs ih =>
     by_cases h : c < b
-    · rw [splitBelow, if_pos h, List.length_cons, List.countP_cons]
+    · rw [splitBelow, ite_eq_left h, List.length_cons, List.countP_cons]
       have hc : (if (decide (c < b) : Bool) = true then 1 else 0) = 1 := by simp [h]
       rw [hc]
       omega
-    · rw [splitBelow, if_neg h, List.length_nil]
+    · rw [splitBelow, ite_eq_right h, List.length_nil]
       exact Nat.zero_le _
 
 /-! ### Bounded binary insertion -/
@@ -187,7 +187,7 @@ theorem countP_eq_zero_of_forall [LinearOrder α] {b : α} :
       have hlt : ¬ a < b := not_lt.mpr (h a (by simp))
       simp [hlt]
     rw [List.countP_cons, ha]
-    simp only [Bool.false_eq_true, if_false, Nat.add_zero]
+    simp only [Bool.false_eq_true, ite_false, Nat.add_zero]
     exact ih (fun x hx => h x (List.mem_cons_of_mem a hx))
 
 /-! ### Ordering the pairs by winner -/
@@ -211,8 +211,8 @@ theorem insertPair_perm [LinearOrder α] (q : α × α) :
   | nil => simp [insertPair]
   | cons p ps ih =>
     by_cases h : q.1 ≤ p.1
-    · rw [insertPair, if_pos h]
-    · rw [insertPair, if_neg h]
+    · rw [insertPair, ite_eq_left h]
+    · rw [insertPair, ite_eq_right h]
       exact (List.Perm.cons p ih).trans (List.Perm.swap' q p (List.Perm.refl ps))
 
 theorem sortPairs_perm [LinearOrder α] (ps : List (α × α)) : (sortPairs ps).Perm ps := by
@@ -230,12 +230,12 @@ theorem insertPair_pairwise [LinearOrder α] (q : α × α) :
     intro hs
     obtain ⟨hhead, htail⟩ := List.pairwise_cons.mp hs
     by_cases h : q.1 ≤ p.1
-    · rw [insertPair, if_pos h, List.pairwise_cons]
+    · rw [insertPair, ite_eq_left h, List.pairwise_cons]
       refine ⟨fun x hx => ?_, hs⟩
       rcases List.mem_cons.mp hx with hxp | hx'
       · rw [hxp]; exact h
       · exact le_trans h (hhead x hx')
-    · rw [insertPair, if_neg h, List.pairwise_cons]
+    · rw [insertPair, ite_eq_right h, List.pairwise_cons]
       refine ⟨fun x hx => ?_, ih htail⟩
       have hmemy : x = q ∨ x ∈ ps := List.mem_cons.mp ((insertPair_perm q ps).mem_iff.mp hx)
       rcases hmemy with hxq | hx'
@@ -291,7 +291,7 @@ theorem insertBatch_perm [LinearOrder α] (batch : List (Option α × α)) (l : 
   induction batch generalizing l with
   | nil => simp [insertBatch]
   | cons q qs ih =>
-    simp only [insertBatch, List.map_cons, List.cons_append]
+    simp only [insertBatch, List.map_cons]
     refine (ih (insertWindow q.1 q.2 l).2).trans ?_
     refine ((insertWindow_perm q.1 q.2 l).append_right (qs.map Prod.snd)).trans ?_
     exact (List.perm_middle (l₁ := l) (l₂ := qs.map Prod.snd)).symm
@@ -406,7 +406,7 @@ theorem jacBatch_getElem? (items : List (Option α × α)) (k : ℕ) {j : ℕ}
     have h2 := jacLo_le_jacHi items.length k
     omega
   rw [List.getElem?_reverse (by rw [hlen]; omega), hlen, List.getElem?_take,
-    if_pos (by omega), List.getElem?_drop]
+    ite_eq_left (by omega), List.getElem?_drop]
   congr 1
   omega
 
@@ -736,14 +736,14 @@ theorem fjSortJ_count_le [LinearOrder α] (l : List α) : (fjSortJ l).1 ≤ fjCo
           ((sortedPairs (pairUp l)).map Prod.fst).countP (· < b) ≤ j := by
         intro j q b hjq hb
         by_cases hjn : j < (sortedPairs (pairUp l)).length
-        · rw [insertItems, List.getElem?_append, if_pos (by rw [hmaplen]; exact hjn),
+        · rw [insertItems, List.getElem?_append, ite_eq_left (by rw [hmaplen]; exact hjn),
             List.getElem?_map, List.getElem?_eq_getElem hjn] at hjq
           simp only [Option.map_some, Option.some.injEq] at hjq
           subst hjq
-          simp only at hb
+          simp only [Option.some.injEq] at hb
           rw [← hb]
           exact countP_fst_lt_le_index _ j hjn (sortPairs_pairwise _)
-        · rw [insertItems, List.getElem?_append, if_neg (by rw [hmaplen]; omega)] at hjq
+        · rw [insertItems, List.getElem?_append, ite_eq_right (by rw [hmaplen]; omega)] at hjq
           have hq1 : q.1 = none := by
             obtain ⟨hget, hqe⟩ := List.getElem?_eq_some_iff.mp hjq
             obtain ⟨y, _, hy⟩ := List.mem_map.mp (hqe ▸ List.getElem_mem hget)
@@ -756,7 +756,7 @@ theorem fjSortJ_count_le [LinearOrder α] (l : List α) : (fjSortJ l).1 ≤ fjCo
           ((sortedPairs (pairUp l)).map Prod.fst).length ≤ j := by
         intro j q hjq hn
         by_cases hjn : j < (sortedPairs (pairUp l)).length
-        · rw [insertItems, List.getElem?_append, if_pos (by rw [hmaplen]; exact hjn),
+        · rw [insertItems, List.getElem?_append, ite_eq_left (by rw [hmaplen]; exact hjn),
             List.getElem?_map, List.getElem?_eq_getElem hjn] at hjq
           simp only [Option.map_some, Option.some.injEq] at hjq
           subst hjq
@@ -768,13 +768,14 @@ theorem fjSortJ_count_le [LinearOrder α] (l : List α) : (fjSortJ l).1 ≤ fjCo
         ((sortedPairs (pairUp l)).map Prod.fst) (insertItems (pairUp l)).length 0
         ((sortedPairs (pairUp l)).map Prod.fst) [] (by simp)
         (by simp [jacLo, jacPred]) hsome hnonep
-      rw [hM] at hcount
       rw [fjSortJ]
-      simp only [hge, ite_false]
+      simp only [show ¬ (l.length < 2) by omega, ite_false]
+      rw [hM] at hcount ⊢
       rw [fjCountJ_le_recurrence l.length hge]
       have hpos : (l.length + 1) / 2
           = (pairUp l).1.length + (pairUp l).2.2.toList.length := by omega
       rw [hpos, show l.length / 2 = (pairUp l).1.length from (pairUp_fst_length l).symm]
+      simp only [jacInsertCost]
       omega
 
 end SortBounds.Projects.FordJohnson

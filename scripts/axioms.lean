@@ -32,6 +32,9 @@ open SortBounds
 #print axioms SortBounds.msortCount_le
 #print axioms SortBounds.factorial_le_two_pow_length_of_sortsAll
 #print axioms SortBounds.sorts_of_sortsAll
+#print axioms SortBounds.sortsAll_of_sorts_zeroOne
+#print axioms SortBounds.factorial_le_two_pow_length_of_sorts_zeroOne
+#print axioms SortBounds.sorts_zeroOne_three_wire
 #print axioms SortBounds.liftTree_correct
 #print axioms SortBounds.liftTree_depth_le
 -- lanes

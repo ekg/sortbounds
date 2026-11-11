@@ -22,7 +22,7 @@ other models"** — every open lane is about a model where the answer changes.
 | `Core` | bits per probe | `card_le_pow_of_prefixFree`, `logb_le_of_le_pow` | **DONE** | M0 |
 | `Comparison` | comparison sorts | `exists_input_cost_ge_quarter`, `avg_cost_ge_log2_factorial` | **DONE** | frozen |
 | `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le`, `factorial_le_two_pow_length_of_sortsAll`, `sortsAll_of_sorts_zeroOne` | **DONE** | frozen |
-| `FordJohnson` | exact comparison counts, upper bound | `fjSort_count_le` (`fjCount`), `insertCount_count` | **M1 DONE** | M2/M3 open |
+| `FordJohnson` | exact comparison counts, upper bound | `fjCount_le`, **`fjSortJ_count_le`**, **`fjCountJ_table`** (`F(4..11) = 5,7,10,13,16,19,22,26`), `fjCountJ_eq_sum` | **M2/M3 DONE** | attainment open |
 | `SN` | exact `S(n)`, both bounds | `S 0..3`, **`S 4 = 5`, `S 5 = 7`** | **M2 for n ≤ 5** | n ≥ 6 open |
 | `XY` | sorting `X+Y` | `pairSums`, `pairSums_card_le`, `naivePairsSorted_*` | **M1 DONE** | M2 gated |
 | `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement), `exists_decidesReal_distinct` | **M0 DONE** (semantics now witnessed) | M1+ gated |
@@ -56,10 +56,17 @@ other models"** — every open lane is about a model where the answer changes.
 
 * **FordJohnson** — `insertCount` (binary insertion, `≤ ⌈log₂(k+1)⌉` comparisons),
   `fjSort` (merge-insertion) with `fjSort_perm`, `fjSort_sorted`,
-  `fjSort_count_le : (fjSort l).1 ≤ fjCount l.length`. The lane worker hit the
-  30-minute cap with one arithmetic goal left open; the integrator closed it
-  (unfold `loserCost`, split on the unpaired element, align the recursive
-  hypothesis). `fjCount`'s closed form and the optimality table are M2/M3.
+  `fjSort_count_le : (fjSort l).1 ≤ fjCount l.length`. Round 2 added M2/M3:
+  `fjCount_le : fjCount n ≤ n·(⌈log₂ n⌉+1)`, then the real thing —
+  `fjSortJ` (losers inserted in JACOBSTHAL order into a growing sorted prefix,
+  `Jacobsthal.lean`), `fjSortJ_count_le : (fjSortJ l).1 ≤ fjCountJ l.length`,
+  the closed form `fjCountJ_eq_sum : fjCountJ n = Σ_{k<n} ⌈log₂((3(k+1)+3)/4)⌉`
+  for `n ≤ 22`, and `fjCountJ_table : fjCountJ 4..11 = 5,7,10,13,16,19,22,26` —
+  exactly the optimal `S(n)`. Smoke test: `fjSortJ [5,3,1,4,2]` costs 7.
+  **Caveat (documented in the lane):** two bookkeeping steps are uncharged (the
+  winner/loser reordering and locating the window), so the count is for an
+  idealised implementation; charging them needs an adversary argument.
+  *Attainment* of the bound by one input is also still open.
 * **SN** — `exists_correct_tree` (a compare-all-pairs tree, depth `n²`),
   `S`, `S_spec`, `S_le_iff`, `S_lower` (`⌈log₂ n!⌉ ≤ S n`), and
   `S 0 = 0, S 1 = 0, S 2 = 1, S 3 = 3`, and now **`S 4 = 5`, `S 5 = 7`**
@@ -139,6 +146,7 @@ truth discipline).
 
 | Date | Change |
 | --- | --- |
+| 2026-11-11 | FordJohnson M2/M3: verified Jacobsthal-order merge-insertion with the literature closed form and the optimal table `F(4..11)`. |
 | 2026-11-11 | 0-1 principle in Lean: thresholding commutes with comparators (`map_netRun`), so a network sorting all `Fin n → Fin 2` inputs sorts everything; concrete networks verified by `decide`. |
 | 2026-11-11 | SN M2 for small n: `S 4 = 5`, `S 5 = 7` (integrated; the lane's two files needed an import fix). |
 | 2026-11-11 | Round-2 partial integration: BenOr witnesses (vacuity closed), SAIS cost model M0 (cubic-vs-quadratic `aⁿ` contrast), review prose fixes. |

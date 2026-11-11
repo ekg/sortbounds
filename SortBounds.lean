@@ -16,6 +16,9 @@ import SortBounds.Instances.ZeroOne
 -- lanes
 import SortBounds.Projects.FordJohnson.Insertion
 import SortBounds.Projects.FordJohnson.MergeInsertion
+import SortBounds.Projects.FordJohnson.Count
+import SortBounds.Projects.FordJohnson.Jacobsthal
+import SortBounds.Projects.FordJohnson.JacobsthalInsertion
 import SortBounds.Projects.SN.Basic
 import SortBounds.Projects.SN.Small
 import SortBounds.Projects.SN.Verify

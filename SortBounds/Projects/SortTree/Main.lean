@@ -176,9 +176,9 @@ theorem card_filter_val_lt {n m : ℕ} (hm : m ≤ n) :
     simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_image]
     constructor
     · intro hk
-      exact ⟨⟨k.val, hk⟩, Finset.mem_univ _, by simp [Fin.castLE]⟩
+      exact ⟨⟨k.val, hk⟩, by simp [Fin.castLE]⟩
     · rintro ⟨a, -, rfl⟩
-      simpa using a.isLt
+      simp
   rw [hset, Finset.card_image_of_injective _ (Fin.castLE_injective hm), Finset.card_univ,
     Fintype.card_fin]
 
@@ -222,7 +222,7 @@ theorem below_last_iff {n : ℕ} {x : Fin (n + 1) → ℕ} {σ : Equiv.Perm (Fin
     have hsub : (Finset.univ.filter fun k : Fin n => k.val < m.val + 1) ⊆ rankSet x σ := by
       intro k hk
       simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hk
-      exact rankSet_down hmono hm (by omega)
+      exact rankSet_down (k' := k) hmono hm (Fin.le_def.2 (by omega))
     have := Finset.card_le_card hsub
     rw [card_filter_val_lt (by omega), hcard] at this
     omega

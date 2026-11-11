@@ -42,6 +42,9 @@ open SortBounds
 #print axioms SortBounds.Projects.FordJohnson.fjSort_count_le
 #print axioms SortBounds.Projects.FordJohnson.fjSort_sorted
 #print axioms SortBounds.Projects.FordJohnson.fjSort_perm
+#print axioms SortBounds.Projects.FordJohnson.fjCount_le
+#print axioms SortBounds.Projects.FordJohnson.fjSortJ_count_le
+#print axioms SortBounds.Projects.FordJohnson.fjCountJ_table
 #print axioms SortBounds.Projects.SN.exists_correct_tree
 #print axioms SortBounds.Projects.SN.S_le_iff
 #print axioms SortBounds.Projects.SN.S_lower

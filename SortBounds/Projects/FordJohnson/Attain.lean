@@ -361,7 +361,7 @@ theorem insertJacobsthal_eq (items : List (Option ℕ × ℕ)) (ws : List ℕ)
 theorem jacPred_eq_of_pos {k : ℕ} (hk : 0 < k) : jacPred k = jac (k - 1) := by
   cases k with
   | zero => omega
-  | succ j => rw [jacPred_succ]
+  | succ j => rw [jacPred_succ]; simp
 
 /-- Every rank lies in some batch, because `jac` dominates the identity. -/
 theorem jacBatchOf_exists (j : ℕ) : ∃ k, j < jac k := ⟨j, by have := le_jac j; omega⟩
@@ -426,6 +426,9 @@ def attainT (M j : ℕ) : ℕ := jacLo M (jacBatchOf j) + jacHi M (jacBatchOf j)
 `K … K + M - 1`. -/
 def attainVal (M K j : ℕ) : ℕ := K + (M - 1 - attainT M j)
 
+/-- The window of a batch never exceeds the whole chain of winners. -/
+theorem jacHi_le_jac (M k : ℕ) : jacHi M k ≤ jac k := min_le_right _ _
+
 theorem jacLo_jacBatchOf_le (M j : ℕ) : jacLo M (jacBatchOf j) ≤ j :=
   (min_le_right _ _).trans (jacPred_jacBatchOf_le j)
 
@@ -442,8 +445,10 @@ theorem attainT_le (M j : ℕ) (hj : j < M) : attainT M j ≤ M - 1 := by
 
 /-- Within one batch the values increase with the rank (the batch is inserted in decreasing
 rank order). -/
-theorem attainT_lt_of_batch_eq (M j j' : ℕ) (h : j < j')
+theorem attainT_lt_of_batch_eq (M j j' : ℕ) (hj' : j' < M) (h : j < j')
     (hb : jacBatchOf j = jacBatchOf j') : attainT M j' < attainT M j := by
+  have h2 : j' < jacHi M (jacBatchOf j') := lt_jacHi_jacBatchOf M j' hj'
+  have h3 : jacLo M (jacBatchOf j) ≤ j := jacLo_jacBatchOf_le M j
   simp only [attainT, hb]
   omega
 
@@ -456,6 +461,17 @@ theorem attainT_lt_of_batch_lt (M j j' : ℕ) (hj : j < M) (hj' : j' < M)
   have h3 : jacLo M (jacBatchOf j') ≤ j' := jacLo_jacBatchOf_le M j'
   have h4 : j' < jacHi M (jacBatchOf j') := lt_jacHi_jacBatchOf M j' hj'
   have h5 : jacHi M (jacBatchOf j) ≤ jacLo M (jacBatchOf j') := jacHi_le_jacLo M hb
+  have e1 : jacLo M (jacBatchOf j) + jacHi M (jacBatchOf j) - 1 - j
+      ≤ jacHi M (jacBatchOf j) - 1 := by
+    rw [Nat.sub_le_iff_le_add]
+    omega
+  have e2 : jacLo M (jacBatchOf j')
+      ≤ jacLo M (jacBatchOf j') + jacHi M (jacBatchOf j') - 1 - j' := by
+    have heq : jacLo M (jacBatchOf j') + jacHi M (jacBatchOf j') - 1 - j'
+        = jacLo M (jacBatchOf j') + (jacHi M (jacBatchOf j') - 1 - j') := by omega
+    rw [heq]
+    exact Nat.le_add_right _ _
+  have e3 : jacHi M (jacBatchOf j) - 1 < jacLo M (jacBatchOf j') := by omega
   simp only [attainT]
   omega
 
@@ -465,25 +481,32 @@ theorem attainT_inj (M j j' : ℕ) (hj : j < M) (hj' : j' < M)
   rcases lt_trichotomy (jacBatchOf j) (jacBatchOf j') with hb | hb | hb
   · have := attainT_lt_of_batch_lt M j j' hj hj' hb; omega
   · rcases lt_trichotomy j j' with hlt | hlt | hlt
-    · have := attainT_lt_of_batch_eq M j j' hlt hb; omega
+    · have := attainT_lt_of_batch_eq M j j' hj' hlt hb; omega
     · exact hlt
-    · have := attainT_lt_of_batch_eq M j' j hlt hb.symm; omega
+    · have := attainT_lt_of_batch_eq M j' j hj hlt hb.symm; omega
   · have := attainT_lt_of_batch_lt M j' j hj' hj hb; omega
 
 /-- The values of the items are strictly between `K` and `K + M`. -/
 theorem attainVal_lt (M K j : ℕ) (hj : j < M) : attainVal M K j < K + M := by
-  have := attainT_le M j hj
+  have h := Nat.sub_le (M - 1) (attainT M j)
+  simp only [attainVal]
+  omega
+
+theorem attainVal_le_add (M K j : ℕ) : attainVal M K j ≤ K + M := by
+  have h := Nat.sub_le (M - 1) (attainT M j)
   simp only [attainVal]
   omega
 
 theorem attainVal_le_self (M K j : ℕ) : attainVal M K j ≤ K + M + j :=
-  le_trans (Nat.le_add_right _ _) (Nat.le_add_right _ _)
+  le_trans (attainVal_le_add M K j) (Nat.le_add_right _ _)
 
 /-- Within one batch, the values increase with the rank. -/
 theorem attainVal_lt_of_batch_eq (M K j j' : ℕ) (hj : j < M) (hj' : j' < M) (h : j < j')
     (hb : jacBatchOf j = jacBatchOf j') : attainVal M K j < attainVal M K j' := by
-  have h1 := attainT_lt_of_batch_eq M j j' h hb
-  have h2 := attainT_le M j' hj'
+  have h1 := attainT_lt_of_batch_eq M j j' hj' h hb
+  have h2 := attainT_le M j hj
+  have h3 : M - 1 - attainT M j < M - 1 - attainT M j' :=
+    Nat.sub_lt_sub_left (by omega) h1
   simp only [attainVal]
   omega
 
@@ -491,7 +514,10 @@ theorem attainVal_lt_of_batch_eq (M K j j' : ℕ) (hj : j < M) (hj' : j' < M) (h
 theorem attainVal_lt_of_batch_lt (M K j j' : ℕ) (hj : j < M) (hj' : j' < M)
     (hb : jacBatchOf j < jacBatchOf j') : attainVal M K j' < attainVal M K j := by
   have h1 := attainT_lt_of_batch_lt M j j' hj hj' hb
-  have h2 := attainT_le M j hj
+  have h2 := attainT_le M j' hj'
+  have h2' := attainT_le M j hj
+  have h3 : M - 1 - attainT M j' < M - 1 - attainT M j :=
+    Nat.sub_lt_sub_left (by omega) h1
   simp only [attainVal]
   omega
 
@@ -502,5 +528,743 @@ theorem attainVal_inj (M K j j' : ℕ) (hj : j < M) (hj' : j' < M)
   have h2 := attainT_le M j' hj'
   simp only [attainVal] at h
   exact attainT_inj M j j' hj hj' (by omega)
+
+/-! ### The items and the chain of the attaining input -/
+
+/-- The chain of winners: the block `[A, A+m)` in increasing order. -/
+def attnChain (A m : ℕ) : List ℕ := (List.range m).map (fun i => A + i)
+
+/-- The `M` items to insert, in rank order.  The item of rank `j < m` is the loser of the
+rank-`j` winner `K+M+j`, searched for among the `j` winners below its own partner; an item of
+rank `m` (possible only for an odd number of elements) is the unpaired element, with no
+bound. -/
+def attnItems (K m M : ℕ) : List (Option ℕ × ℕ) :=
+  (List.range M).map (fun j => (if j < m then some (K + M + j) else none, attainVal M K j))
+
+theorem attnItems_length (K m M : ℕ) : (attnItems K m M).length = M := by
+  simp [attnItems]
+
+theorem attnChain_length (A m : ℕ) : (attnChain A m).length = m := by
+  simp [attnChain]
+
+theorem attnChain_mem (A m j : ℕ) (hj : j < m) : A + j ∈ attnChain A m :=
+  List.mem_map.mpr ⟨j, List.mem_range.mpr hj, rfl⟩
+
+theorem attnChain_sorted (A m : ℕ) : (attnChain A m).Pairwise (· ≤ ·) := by
+  simp only [attnChain]
+  suffices H : ∀ m : ℕ, (List.range m).map (fun i => A + i) |>.Pairwise (· ≤ ·) from H m
+  intro m
+  induction m with
+  | zero => simp
+  | succ n ih =>
+    rw [List.range_succ, List.map_append, List.pairwise_append]
+    refine ⟨ih, by simp, ?_⟩
+    intro x hx y hy
+    obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hx
+    obtain ⟨i', hi', rfl⟩ := List.mem_map.mp hy
+    have h1 := List.mem_range.mp hi
+    have h2 : i' = n := List.mem_singleton.mp hi'
+    omega
+
+theorem attnItems_getElem? (K m M j : ℕ) (hj : j < M) :
+    (attnItems K m M)[j]? = some (if j < m then some (K + M + j) else none, attainVal M K j) := by
+  simp [attnItems, hj]
+
+/-- The chain `[A, A+m)` has exactly `j` elements below `A + j`. -/
+theorem attnChain_countP (A m j : ℕ) (hj : j < m) :
+    (attnChain A m).countP (· < A + j) = j := by
+  suffices H : ∀ m j, j < m →
+      (List.map (fun i => A + i) (List.range m)).countP (· < A + j) = j from H m j hj
+  intro m
+  induction m with
+  | zero => intro j hj; omega
+  | succ n ih =>
+    intro j hj
+    rw [List.range_succ, List.map_append, List.countP_append]
+    have hz : List.countP (fun x => decide (x < A + j)) (List.map (fun i => A + i) [n]) = 0 := by
+      have hc : ¬ (A + n < A + j) := by omega
+      simp [hc]
+    rw [hz, Nat.add_zero]
+    rcases Nat.lt_or_ge j n with h | h
+    · exact ih j h
+    · have hje : j = n := by omega
+      rw [hje]
+      rw [countP_eq_length_of_forall_lt (A + n) (List.map (fun i => A + i) (List.range n))
+        (fun x hx => by
+          obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hx
+          have := List.mem_range.mp hi
+          omega), List.length_map, List.length_range]
+
+/-- A rank inside a batch determines the batch. -/
+theorem jacBatchOf_eq_of_mem {M j k : ℕ} (h1 : jacLo M k ≤ j) (h2 : j < jacHi M k) :
+    jacBatchOf j = k := by
+  have hk : j < jac k := lt_of_lt_of_le h2 (jacHi_le_jac M k)
+  have hM : j < M := lt_of_lt_of_le h2 (jacHi_le M k)
+  refine jacBatchOf_eq hk ?_
+  by_contra hcon
+  have hjacPred : j < jacPred k := by omega
+  by_cases hle : jacPred k ≤ M
+  · have hmin : jacLo M k = jacPred k := by
+      simp only [jacLo, min_def]
+      split <;> omega
+    omega
+  · have hmin : jacLo M k = M := by
+      simp only [jacLo, min_def]
+      split <;> omega
+    omega
+
+theorem jacBatch_attnItems_length (K m M k : ℕ) :
+    (jacBatch (attnItems K m M) k).length = jacHi M k - jacLo M k := by
+  rw [jacBatch_length, attnItems_length]
+
+/-- The `i`-th item of batch `k`, in insertion order: its value is the value of the item of
+rank `jacHi - 1 - i`. -/
+theorem jacBatch_attnItems_getElem? (K m M k i : ℕ) (hi : i < jacHi M k - jacLo M k) :
+    (jacBatch (attnItems K m M) k)[i]?
+      = some (if jacHi M k - 1 - i < m then some (K + M + (jacHi M k - 1 - i)) else none,
+          attainVal M K (jacHi M k - 1 - i)) := by
+  have hget : (jacBatch (attnItems K m M) k)[i]?
+      = (attnItems K m M)[jacHi (attnItems K m M).length k - 1 - i]? :=
+    jacBatch_getElem? (attnItems K m M) k (by rwa [attnItems_length])
+  rw [attnItems_length K m M] at hget
+  have hlt : jacHi M k - 1 - i < M := by
+    have := jacHi_le M k
+    omega
+  rw [attnItems_getElem? K m M _ hlt] at hget
+  exact hget
+
+theorem jacBatch_attnItems_getElem (K m M k i : ℕ)
+    (hi : i < (jacBatch (attnItems K m M) k).length) :
+    (jacBatch (attnItems K m M) k)[i]
+      = (if jacHi M k - 1 - i < m then some (K + M + (jacHi M k - 1 - i)) else none,
+          attainVal M K (jacHi M k - 1 - i)) := by
+  have hi' : i < jacHi M k - jacLo M k := by
+    rw [jacBatch_attnItems_length] at hi; exact hi
+  have hget := jacBatch_attnItems_getElem? K m M k i hi'
+  rw [List.getElem?_eq_getElem hi] at hget
+  exact Option.some.inj hget
+
+/-- The index, among the items, of the `i`-th item of batch `k` lies in batch `k`. -/
+theorem jacBatchOf_attnItems (M k i : ℕ) (hi : i < jacHi M k - jacLo M k) :
+    jacBatchOf (jacHi M k - 1 - i) = k := by
+  have h1 : jacLo M k ≤ jacHi M k - 1 - i := by omega
+  have h2 : jacHi M k - 1 - i < jacHi M k := by omega
+  exact jacBatchOf_eq_of_mem (k := k) h1 h2
+
+/-- Inside one batch an item inserted later has a smaller value: the batch is inserted in
+decreasing rank order. -/
+theorem attnItems_mono (K m M k : ℕ) :
+    (jacBatch (attnItems K m M) k).Pairwise (fun p q => q.2 ≤ p.2) := by
+  rw [List.pairwise_iff_getElem]
+  intro i j hi hj hlt
+  have hi' : i < jacHi M k - jacLo M k := by
+    rw [jacBatch_attnItems_length K m M k] at hi; exact hi
+  have hj' : j < jacHi M k - jacLo M k := by
+    rw [jacBatch_attnItems_length K m M k] at hj; exact hj
+  rw [jacBatch_attnItems_getElem K m M k j hj, jacBatch_attnItems_getElem K m M k i hi]
+  have hbi : jacBatchOf (jacHi M k - 1 - i) = k := jacBatchOf_attnItems M k i hi'
+  have hbj : jacBatchOf (jacHi M k - 1 - j) = k := jacBatchOf_attnItems M k j hj'
+  have hM : jacHi M k - 1 - j < M := by have := jacHi_le M k; omega
+  have hM' : jacHi M k - 1 - i < M := by have := jacHi_le M k; omega
+  exact le_of_lt (attainVal_lt_of_batch_eq M K _ _ hM hM' (by omega) (by rw [hbj, hbi]))
+
+/-- An item of a later batch has a smaller value than an item of an earlier batch: the batches
+are inserted in increasing order. -/
+theorem attnItems_cross (K m M k k' : ℕ) (hkk : k < k') :
+    ∀ (q p : Option ℕ × ℕ), q ∈ jacBatch (attnItems K m M) k' →
+      p ∈ jacBatch (attnItems K m M) k → q.2 ≤ p.2 := by
+  intro q p hq hp
+  obtain ⟨i, hi⟩ := List.mem_iff_getElem?.mp hq
+  obtain ⟨j, hj⟩ := List.mem_iff_getElem?.mp hp
+  have hil : i < (jacBatch (attnItems K m M) k').length := by
+    by_contra hcon
+    rw [List.getElem?_eq_none_iff.mpr (by omega)] at hi
+    exact absurd hi (by simp)
+  have hjl : j < (jacBatch (attnItems K m M) k).length := by
+    by_contra hcon
+    rw [List.getElem?_eq_none_iff.mpr (by omega)] at hj
+    exact absurd hj (by simp)
+  have hi' : i < jacHi M k' - jacLo M k' := by
+    rw [jacBatch_attnItems_length K m M k'] at hil; exact hil
+  have hj' : j < jacHi M k - jacLo M k := by
+    rw [jacBatch_attnItems_length K m M k] at hjl; exact hjl
+  have hq2 : q = (if jacHi M k' - 1 - i < m then some (K + M + (jacHi M k' - 1 - i)) else none,
+      attainVal M K (jacHi M k' - 1 - i)) := by
+    rw [List.getElem?_eq_getElem hil] at hi
+    rw [jacBatch_attnItems_getElem K m M k' i hil] at hi
+    exact (Option.some.inj hi).symm
+  have hp2 : p = (if jacHi M k - 1 - j < m then some (K + M + (jacHi M k - 1 - j)) else none,
+      attainVal M K (jacHi M k - 1 - j)) := by
+    rw [List.getElem?_eq_getElem hjl] at hj
+    rw [jacBatch_attnItems_getElem K m M k j hjl] at hj
+    exact (Option.some.inj hj).symm
+  have hbi : jacBatchOf (jacHi M k - 1 - j) = k := jacBatchOf_attnItems M k j hj'
+  have hbi' : jacBatchOf (jacHi M k' - 1 - i) = k' := jacBatchOf_attnItems M k' i hi'
+  have hM : jacHi M k - 1 - j < M := by have := jacHi_le M k; omega
+  have hM' : jacHi M k' - 1 - i < M := by have := jacHi_le M k'; omega
+  rw [hq2, hp2]
+  exact le_of_lt (attainVal_lt_of_batch_lt M K _ _ hM hM' (by rw [hbi, hbi']; exact hkk))
+
+/-! ### The insertion phase attains `jacInsertCost` -/
+
+/-- **The Jacobsthal walk on the canonical items costs exactly `jacInsertCost`**: the `M` items
+`attnItems K m M` inserted into the chain `[K+M, K+M+m)` (all of them below every winner, and
+decreasing along the insertion order) make every search of the walk a deepest-path search in a
+window of exactly `jacLo + jacHi - 1` elements. -/
+theorem insertJacobsthal_attnItems (K m M : ℕ) (hmM : m ≤ M) (hMm : M ≤ m + 1) :
+    (insertJacobsthal (attnItems K m M) M 0 (attnChain (K + M) m)).1 = jacInsertCost M := by
+  have hget : ∀ j : ℕ, j < m → (attnItems K m M)[j]?
+      = some (some (K + M + j), attainVal M K j) := by
+    intro j hj
+    rw [attnItems_getElem? K m M j (by omega), ite_eq_left hj]
+  have hmemy : ∀ j : ℕ, j < M → ¬ j < m → j = m := by
+    intro j hj hjm
+    omega
+  have hnoneq : ∀ j : ℕ, ¬ j < M → (attnItems K m M)[j]? = none := by
+    intro j hj
+    rw [List.getElem?_eq_none_iff, attnItems_length]
+    omega
+  have hcnt : ∀ (j : ℕ) (q : Option ℕ × ℕ) (b : ℕ), (attnItems K m M)[j]? = some q →
+      q.1 = some b → (attnChain (K + M) m).countP (· < b) = j := by
+    intro j q b hjq hb
+    by_cases hjM : j < M
+    · by_cases hj : j < m
+      · rw [hget j hj] at hjq
+        have hq : q = (some (K + M + j), attainVal M K j) := (Option.some.inj hjq).symm
+        have hb' : b = K + M + j := by rw [hq] at hb; exact (Option.some.inj hb).symm
+        rw [hb']
+        exact attnChain_countP (K + M) m j hj
+      · rw [attnItems_getElem? K m M j hjM, ite_eq_right hj] at hjq
+        have hq : q.1 = none := (congrArg Prod.fst (Option.some.inj hjq)).symm
+        rw [hq] at hb
+        exact absurd hb (by simp)
+    · rw [hnoneq j hjM] at hjq
+      exact absurd hjq (by simp)
+  have hnone : ∀ (j : ℕ) (q : Option ℕ × ℕ), (attnItems K m M)[j]? = some q → q.1 = none →
+      j = (attnChain (K + M) m).length := by
+    intro j q hjq hn
+    by_cases hjM : j < M
+    · by_cases hj : j < m
+      · rw [hget j hj] at hjq
+        have hq : q = (some (K + M + j), attainVal M K j) := (Option.some.inj hjq).symm
+        rw [hq] at hn
+        exact absurd hn (by simp)
+      · rw [attnChain_length]
+        exact hmemy j hjM hj
+    · rw [hnoneq j hjM] at hjq
+      exact absurd hjq (by simp)
+  have hbound : ∀ (j : ℕ) (q : Option ℕ × ℕ) (b : ℕ), (attnItems K m M)[j]? = some q →
+      q.1 = some b → b ∈ attnChain (K + M) m := by
+    intro j q b hjq hb
+    by_cases hjM : j < M
+    · by_cases hj : j < m
+      · rw [hget j hj] at hjq
+        have hq : q = (some (K + M + j), attainVal M K j) := (Option.some.inj hjq).symm
+        have hb' : b = K + M + j := by rw [hq] at hb; exact (Option.some.inj hb).symm
+        rw [hb']
+        exact attnChain_mem (K + M) m j hj
+      · rw [attnItems_getElem? K m M j hjM, ite_eq_right hj] at hjq
+        have hq : q.1 = none := (congrArg Prod.fst (Option.some.inj hjq)).symm
+        rw [hq] at hb
+        exact absurd hb (by simp)
+    · rw [hnoneq j hjM] at hjq
+      exact absurd hjq (by simp)
+  have hitem_ws : ∀ q ∈ attnItems K m M, ∀ w ∈ attnChain (K + M) m, q.2 < w := by
+    intro q hq w hw
+    obtain ⟨j, hj, rfl⟩ := List.mem_map.mp hq
+    have hj' : j < M := List.mem_range.mp hj
+    obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hw
+    have h := attainVal_lt M K j hj'
+    simp only
+    omega
+  have hitem_le : ∀ q ∈ attnItems K m M, ∀ b : ℕ, q.1 = some b → q.2 ≤ b := by
+    intro q hq b hb
+    obtain ⟨j, hj, rfl⟩ := List.mem_map.mp hq
+    have hj' : j < M := List.mem_range.mp hj
+    by_cases hjm : j < m
+    · rw [ite_eq_left hjm] at hb
+      rw [(Option.some.inj hb).symm]
+      exact attainVal_le_self M K j
+    · rw [ite_eq_right hjm] at hb
+      exact absurd hb (by simp)
+  have hwk := insertJacobsthal_eq (attnItems K m M) (attnChain (K + M) m) hcnt hnone hbound
+    hitem_ws hitem_le (attnItems_mono K m M)
+    (fun k k' q p hkk => attnItems_cross K m M k k' hkk q p)
+    M 0 (attnChain (K + M) m) [] (by simp) (by simp [jacLo, jacPred])
+    (attnChain_sorted _ _) (by simp) (by simp)
+  rw [attnItems_length] at hwk
+  rw [hwk]
+  rfl
+
+/-- **The insertion phase of merge-insertion attains its bound**: there are `M` items and a
+chain of winners on which `insertJacobsthal` spends exactly `jacInsertCost M` comparisons.  So
+`jacInsertCost` is the worst case of the insertion phase, not only an upper bound. -/
+theorem jacInsertCost_attains (M K : ℕ) :
+    ∃ items : List (Option ℕ × ℕ), items.length = M ∧
+      (insertJacobsthal items M 0 (attnChain (K + M) M)).1 = jacInsertCost M :=
+  ⟨attnItems K M M, attnItems_length K M M, insertJacobsthal_attnItems K M M le_rfl (by omega)⟩
+
+/-! ### The list of pairs, read back by `pairUp` -/
+
+/-- `pairUp` on an interleaved list of `(loser, winner)` pairs recovers the winners in order and
+the losers alongside them. -/
+theorem pairUp_flatMap_pairs (W : List ℕ) (f : ℕ → ℕ) (h : ∀ w ∈ W, f w < w) :
+    pairUp (W.flatMap (fun w => [f w, w])) = (W, W.map f, none) := by
+  induction W with
+  | nil => rfl
+  | cons w Ws ih =>
+    have hw : f w < w := h w (by simp)
+    have hne : ¬ w ≤ f w := by omega
+    have htail := ih (fun x hx => h x (by simp [hx]))
+    have hshape : ((w :: Ws).flatMap (fun w => [f w, w]))
+        = f w :: w :: Ws.flatMap (fun w => [f w, w]) := by
+      simp [List.flatMap_cons]
+    rw [hshape, pairUp_cons_of_not_le (f w) w _ hne, htail]
+    simp
+
+/-- The same with an unpaired element at the end. -/
+theorem pairUp_flatMap_pairs_cons (W : List ℕ) (f : ℕ → ℕ) (h : ∀ w ∈ W, f w < w) (u : ℕ) :
+    pairUp (W.flatMap (fun w => [f w, w]) ++ [u]) = (W, W.map f, some u) := by
+  induction W with
+  | nil => rfl
+  | cons w Ws ih =>
+    have hw : f w < w := h w (by simp)
+    have hne : ¬ w ≤ f w := by omega
+    have htail := ih (fun x hx => h x (by simp [hx]))
+    have hshape : ((w :: Ws).flatMap (fun w => [f w, w]) ++ [u])
+        = f w :: w :: (Ws.flatMap (fun w => [f w, w]) ++ [u]) := by
+      simp [List.flatMap_cons]
+    rw [hshape, pairUp_cons_of_not_le (f w) w _ hne, htail]
+    simp
+
+theorem flatMap_pairs_length (W : List ℕ) (f : ℕ → ℕ) :
+    (W.flatMap (fun w => [f w, w])).length = 2 * W.length := by
+  induction W with
+  | nil => rfl
+  | cons w Ws ih =>
+    have hshape : ((w :: Ws).flatMap (fun w => [f w, w]))
+        = f w :: w :: Ws.flatMap (fun w => [f w, w]) := by
+      simp [List.flatMap_cons]
+    rw [hshape, List.length_cons, List.length_cons, ih, List.length_cons]
+    omega
+
+theorem mem_flatMap_pairs (W : List ℕ) (f : ℕ → ℕ) (x : ℕ) :
+    x ∈ W.flatMap (fun w => [f w, w]) ↔ ∃ w ∈ W, x = f w ∨ x = w := by
+  simp [List.mem_flatMap]
+
+/-- The interleaved list has no repeats when the losers are all below the winners and distinct
+among themselves. -/
+theorem nodup_flatMap_pairs (W : List ℕ) (f : ℕ → ℕ) (A : ℕ) (hnd : W.Nodup)
+    (hbelow : ∀ w ∈ W, f w < A) (habove : ∀ w ∈ W, A ≤ w)
+    (hinj : ∀ w ∈ W, ∀ w' ∈ W, f w = f w' → w = w') :
+    (W.flatMap (fun w => [f w, w])).Nodup := by
+  induction W with
+  | nil => exact List.nodup_nil
+  | cons w Ws ih =>
+    obtain ⟨hwnd, hWs⟩ := List.nodup_cons.mp hnd
+    have hfw : f w < A := hbelow w (by simp)
+    have hwA : A ≤ w := habove w (by simp)
+    have hne : f w ≠ w := by omega
+    rw [List.flatMap_cons, List.nodup_append]
+    refine ⟨by simp [hne], ?_, ?_⟩
+    · exact ih hWs (fun x hx => hbelow x (by simp [hx])) (fun x hx => habove x (by simp [hx]))
+        (fun x hx y hy => hinj x (by simp [hx]) y (by simp [hy]))
+    · intro x hx y hy
+      rw [mem_flatMap_pairs] at hy
+      obtain ⟨v, hv, hvy⟩ := hy
+      rcases List.mem_cons.mp hx with hfx | hfx
+      · intro he
+        rw [hfx] at he
+        rcases hvy with hyv | hyv
+        · rw [hyv] at he
+          have hwv : w = v := hinj w (by simp) v (by simp [hv]) he
+          exact hwnd (hwv ▸ hv)
+        · rw [hyv] at he
+          have h1 : f v < A := hbelow v (by simp [hv])
+          have h2 : A ≤ v := habove v (by simp [hv])
+          omega
+      · intro he
+        have hxw : x = w := List.mem_singleton.mp hfx
+        rw [hxw] at he
+        rcases hvy with hyv | hyv
+        · rw [hyv] at he
+          have h1 : f v < A := hbelow v (by simp [hv])
+          have h2 : A ≤ w := hwA
+          omega
+        · rw [hyv] at he
+          exact hwnd (he ▸ hv)
+
+/-- The interleaved list consists exactly of the winners and the losers. -/
+theorem flatMap_pairs_mem_range (W : List ℕ) (f : ℕ → ℕ) (A : ℕ)
+    (hbelow : ∀ w ∈ W, f w < A) (habove : ∀ w ∈ W, A ≤ w) {x : ℕ}
+    (hx : x ∈ W.flatMap (fun w => [f w, w])) : x < A ∨ A ≤ x := by
+  rw [mem_flatMap_pairs] at hx
+  obtain ⟨w, hw, hxw | hxw⟩ := hx
+  · exact Or.inl (hxw ▸ hbelow w hw)
+  · exact Or.inr (hxw ▸ habove w hw)
+
+/-! ### The winner list is a block of values -/
+
+theorem nodup_range_map_add (A m : ℕ) : ((List.range m).map (fun j => A + j)).Nodup := by
+  refine List.Nodup.map ?_ List.nodup_range
+  intro a b hab
+  simp only at hab
+  omega
+
+theorem pairwise_lt_range_map_add (A m : ℕ) :
+    ((List.range m).map (fun j => A + j)).Pairwise (· < ·) := by
+  refine List.Pairwise.map _ ?_ (List.pairwise_lt_range (n := m))
+  intro a b hab
+  have h : A + a < A + b := Nat.add_lt_add_left hab A
+  simpa using h
+
+/-- A `≤`-sorted list without repeats is `<`-sorted. -/
+theorem pairwise_lt_of_pairwise_le_of_nodup (l : List ℕ) (h1 : l.Pairwise (· ≤ ·))
+    (h2 : l.Nodup) : l.Pairwise (· < ·) := by
+  induction l with
+  | nil => exact List.Pairwise.nil
+  | cons a as ih =>
+    rw [List.pairwise_cons] at h1 ⊢
+    obtain ⟨h1a, h1t⟩ := h1
+    obtain ⟨h2a, h2t⟩ := List.nodup_cons.mp h2
+    exact ⟨fun x hx => lt_of_le_of_ne (h1a x hx) (fun he => h2a (he ▸ hx)), ih h1t h2t⟩
+
+/-- **A list of `m` distinct values in `[A, A+m)` is a permutation of that block.** -/
+theorem perm_range_of_nodup_in_range (l : List ℕ) (A m : ℕ) (hlen : l.length = m)
+    (hnd : l.Nodup) (h : ∀ x ∈ l, A ≤ x ∧ x < A + m) :
+    l.Perm ((List.range m).map (fun j => A + j)) := by
+  have hnd' : ((List.range m).map (fun j => A + j)).Nodup := nodup_range_map_add A m
+  have hsub : l.toFinset ⊆ ((List.range m).map (fun j => A + j)).toFinset := by
+    intro x hx
+    rw [List.mem_toFinset] at hx ⊢
+    obtain ⟨h1, h2⟩ := h x hx
+    exact List.mem_map.mpr ⟨x - A, List.mem_range.mpr (by omega), by omega⟩
+  have hcard : ((List.range m).map (fun j => A + j)).toFinset.card ≤ l.toFinset.card := by
+    rw [List.toFinset_card_of_nodup hnd', List.toFinset_card_of_nodup hnd, hlen]
+    simp
+  have hfin : l.toFinset = ((List.range m).map (fun j => A + j)).toFinset :=
+    Finset.eq_of_subset_of_card_le hsub hcard
+  have hmem : ∀ x, x ∈ l ↔ x ∈ (List.range m).map (fun j => A + j) := by
+    intro x
+    rw [← List.mem_toFinset, hfin, List.mem_toFinset]
+  refine List.perm_iff_count.mpr (fun x => ?_)
+  by_cases hx : x ∈ l
+  · rw [List.count_eq_one_of_mem hnd hx, List.count_eq_one_of_mem hnd' ((hmem x).mp hx)]
+  · rw [List.count_eq_zero_of_not_mem hx,
+      List.count_eq_zero_of_not_mem (fun hc => hx ((hmem x).mpr hc))]
+
+/-! ### Sorting the pairs of the winners -/
+
+/-- **Sorting the pairs of a permuted block reproduces the block.**  The pairs of the winner
+list, ordered by winner, are the pairs of the block in increasing order: the keys are distinct,
+so the sorted order is unique. -/
+theorem sortPairs_map_eq (W : List ℕ) (f : ℕ → ℕ) (A m : ℕ)
+    (hW : W.Perm ((List.range m).map (fun j => A + j))) :
+    sortPairs (W.map (fun w => (w, f w))) = (List.range m).map (fun j => (A + j, f (A + j))) := by
+  have hperm : (W.map (fun w => (w, f w))).Perm
+      ((List.range m).map (fun j => (A + j, f (A + j)))) := by
+    rw [show (List.range m).map (fun j => (A + j, f (A + j)))
+        = ((List.range m).map (fun j => A + j)).map (fun a => (a, f a)) from by
+      rw [List.map_map]; rfl]
+    exact hW.map _
+  have hR : ((List.range m).map (fun j => (A + j, f (A + j)))).Pairwise
+      (fun p q => p.1 < q.1) := by
+    rw [show (List.range m).map (fun j => (A + j, f (A + j)))
+        = ((List.range m).map (fun j => A + j)).map (fun a => (a, f a)) from by
+      rw [List.map_map]; rfl]
+    exact List.Pairwise.map _ (fun a b hab => hab) (pairwise_lt_range_map_add A m)
+  have hsP : (sortPairs (W.map (fun w => (w, f w)))).Perm
+      ((List.range m).map (fun j => (A + j, f (A + j)))) :=
+    (sortPairs_perm _).trans hperm
+  have hRnd : ((List.range m).map (fun j => (A + j, f (A + j)))).map Prod.fst |>.Nodup :=
+    (List.Pairwise.map Prod.fst (fun a b h => h) hR).nodup
+  have hnod : ((sortPairs (W.map (fun w => (w, f w)))).map Prod.fst).Nodup :=
+    ((hsP.map Prod.fst).nodup_iff).mpr hRnd
+  have hlt : ((sortPairs (W.map (fun w => (w, f w)))).map Prod.fst).Pairwise (· < ·) :=
+    pairwise_lt_of_pairwise_le_of_nodup _
+      (List.Pairwise.map Prod.fst (fun a b h => h) (sortPairs_pairwise _)) hnod
+  have hsP' : (sortPairs (W.map (fun w => (w, f w)))).Pairwise (fun p q => p.1 < q.1) :=
+    List.pairwise_map.mp hlt
+  have _inst : Std.Antisymm (fun p q : ℕ × ℕ => p.1 < q.1) :=
+    ⟨fun a b h1 h2 => absurd h1 (by omega)⟩
+  exact hsP.eq_of_pairwise' hsP' hR
+
+/-! ### The attaining input -/
+
+set_option linter.unusedVariables false in
+/-- **The attaining input of length `n`**: the winners are an attaining list of length `n/2`
+scaled into the block `[K+M, K+M+m)` with `M = ⌈n/2⌉`, and the `M` items to insert are the
+values `K … K+M-1` in the order that makes the Jacobsthal walk insert them decreasingly. -/
+def attnList : ℕ → ℕ → List ℕ
+  | 0, _ => []
+  | 1, K => [K]
+  | t + 2, K =>
+    let m := (t + 2) / 2
+    let M := (t + 3) / 2
+    (attnList m (K + M)).flatMap (fun w => [attainVal M K (w - (K + M)), w]) ++
+      (if (t + 2) % 2 = 1 then [attainVal M K m] else [])
+termination_by n K => n
+
+theorem attnList_succ_succ (t K : ℕ) :
+    attnList (t + 2) K
+      = (attnList ((t + 2) / 2) (K + (t + 3) / 2)).flatMap
+          (fun w => [attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2)), w]) ++
+        (if (t + 2) % 2 = 1 then [attainVal ((t + 3) / 2) K ((t + 2) / 2)] else []) := by
+  rw [attnList]
+
+/-- The canonical list of items, written as the pairs of the block plus the unpaired item:
+this is the shape `insertItems` produces. -/
+theorem range_attnItems (K m M : ℕ) (hmM : m ≤ M) (hMm : M ≤ m + 1) :
+    (List.range m).map (fun j => (some (K + M + j), attainVal M K j)) ++
+        (if m < M then [(none, attainVal M K m)] else []) = attnItems K m M := by
+  rcases Nat.eq_or_lt_of_le hmM with heq | hlt
+  · subst heq
+    rw [ite_eq_right (by omega : ¬ m < m), List.append_nil, attnItems]
+    refine List.map_congr_left ?_
+    intro j hj
+    rw [List.mem_range] at hj
+    rw [ite_eq_left hj]
+  · have hM' : M = m + 1 := by omega
+    subst hM'
+    rw [ite_eq_left (by omega : m < m + 1), attnItems, List.range_succ, List.map_append,
+      List.map_cons, List.map_nil]
+    have hkey : (List.map
+        (fun j => ((if j < m then some (K + (m + 1) + j) else none), attainVal (m + 1) K j))
+        (List.range m))
+        = (List.map (fun j => (some (K + (m + 1) + j), attainVal (m + 1) K j)) (List.range m)) := by
+      refine List.map_congr_left ?_
+      intro j hj
+      rw [List.mem_range] at hj
+      rw [ite_eq_left hj]
+    rw [hkey, ite_eq_right (by omega : ¬ m < m)]
+
+/-- **The items and the chain `fjSortJ` builds on `attnList (t+2) K`** are the canonical ones. -/
+theorem pairUp_attnList (t K : ℕ)
+    (hW : ∀ w ∈ attnList ((t + 2) / 2) (K + (t + 3) / 2),
+      K + (t + 3) / 2 ≤ w ∧ w - (K + (t + 3) / 2) < (t + 3) / 2) :
+    pairUp (attnList (t + 2) K)
+      = (attnList ((t + 2) / 2) (K + (t + 3) / 2),
+          (attnList ((t + 2) / 2) (K + (t + 3) / 2)).map
+            (fun w => attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2))),
+          if (t + 2) % 2 = 1 then some (attainVal ((t + 3) / 2) K ((t + 2) / 2)) else none) := by
+  rw [attnList_succ_succ]
+  by_cases hodd : (t + 2) % 2 = 1
+  · rw [ite_eq_left hodd, ite_eq_left hodd]
+    refine pairUp_flatMap_pairs_cons _ _ ?_ _
+    intro w hw
+    have h1 := (hW w hw).1
+    have h2 := attainVal_lt ((t + 3) / 2) K (w - (K + (t + 3) / 2)) (hW w hw).2
+    omega
+  · rw [ite_eq_right hodd, ite_eq_right hodd, List.append_nil]
+    refine pairUp_flatMap_pairs _ _ ?_
+    intro w hw
+    have h1 := (hW w hw).1
+    have h2 := attainVal_lt ((t + 3) / 2) K (w - (K + (t + 3) / 2)) (hW w hw).2
+    omega
+
+/-- Zipping a list with its own image. -/
+theorem zip_map_self (W : List ℕ) (f : ℕ → ℕ) :
+    W.zip (W.map f) = W.map (fun a => (a, f a)) := by
+  induction W with
+  | nil => rfl
+  | cons w Ws ih => simp [ih]
+
+theorem attainVal_ge (M K j : ℕ) : K ≤ attainVal M K j := by
+  simp only [attainVal]
+  exact Nat.le_add_right _ _
+
+/-- The pool values of the attaining input, in rank order, are distinct and lie in `[K, K+M)`. -/
+theorem nodup_range_attainVal (M K : ℕ) :
+    ((List.range M).map (fun j => attainVal M K j)).Nodup := by
+  rw [List.nodup_map_iff_inj_on List.nodup_range]
+  intro a ha b hb hab
+  rw [List.mem_range] at ha hb
+  exact attainVal_inj M K a b ha hb hab
+
+theorem attainVal_mem_range (M K j : ℕ) (hj : j < M) :
+    K ≤ attainVal M K j ∧ attainVal M K j < K + M :=
+  ⟨attainVal_ge M K j, attainVal_lt M K j hj⟩
+
+/-- **The attaining input has all four properties.** -/
+theorem attnList_spec (n : ℕ) : ∀ K : ℕ,
+    (attnList n K).Nodup ∧ (attnList n K).length = n ∧
+      (∀ x ∈ attnList n K, K ≤ x ∧ x < K + n) ∧
+      (fjSortJ (attnList n K)).1 = fjCountJ n := by
+  induction n using Nat.strong_induction_on with
+  | h n ih =>
+    intro K
+    match n with
+    | 0 =>
+      refine ⟨by simp [attnList], by simp [attnList], by simp [attnList], ?_⟩
+      rw [fjCountJ_eq_zero 0 (by omega)]
+      simp [attnList, fjSortJ]
+    | 1 =>
+      refine ⟨by simp [attnList], by simp [attnList], ?_, ?_⟩
+      · intro x hx
+        rw [attnList] at hx
+        rw [List.mem_singleton] at hx
+        omega
+      · rw [fjCountJ_eq_zero 1 (by omega)]
+        simp [attnList, fjSortJ]
+    | t + 2 =>
+      obtain ⟨hWnd, hWlen, hWrange, hWcost⟩ := ih ((t + 2) / 2) (by omega) (K + (t + 3) / 2)
+      have hltA : ∀ w ∈ attnList ((t + 2) / 2) (K + (t + 3) / 2),
+          K + (t + 3) / 2 ≤ w ∧ w - (K + (t + 3) / 2) < (t + 3) / 2 := by
+        intro w hw
+        obtain ⟨h1, h2⟩ := hWrange w hw
+        exact ⟨h1, by omega⟩
+      have hsplit : (t + 3) / 2 = (t + 2) / 2 + (t + 2) % 2 := by omega
+      have hlenL : (List.flatMap
+          (fun w => [attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2)), w])
+          (attnList ((t + 2) / 2) (K + (t + 3) / 2)) ++
+          (if (t + 2) % 2 = 1 then [attainVal ((t + 3) / 2) K ((t + 2) / 2)] else [])).length
+          = t + 2 := by
+        rw [List.length_append, flatMap_pairs_length, hWlen]
+        by_cases hodd : (t + 2) % 2 = 1
+        · rw [ite_eq_left hodd, List.length_cons, List.length_nil]
+          omega
+        · rw [ite_eq_right hodd, List.length_nil]
+          omega
+      rw [attnList_succ_succ t K]
+      have hpair : pairUp (List.flatMap
+          (fun w => [attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2)), w])
+          (attnList ((t + 2) / 2) (K + (t + 3) / 2)) ++
+          (if (t + 2) % 2 = 1 then [attainVal ((t + 3) / 2) K ((t + 2) / 2)] else []))
+          = (attnList ((t + 2) / 2) (K + (t + 3) / 2),
+              (attnList ((t + 2) / 2) (K + (t + 3) / 2)).map
+                (fun w => attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2))),
+              if (t + 2) % 2 = 1 then some (attainVal ((t + 3) / 2) K ((t + 2) / 2))
+                else none) := by
+        rw [← attnList_succ_succ t K]
+        exact pairUp_attnList t K hltA
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · -- the input has no repeats
+        have hfl : (List.flatMap
+            (fun w => [attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2)), w])
+            (attnList ((t + 2) / 2) (K + (t + 3) / 2))).Nodup := by
+          refine nodup_flatMap_pairs _ _ (K + (t + 3) / 2) hWnd ?_ ?_ ?_
+          · intro w hw
+            exact attainVal_lt ((t + 3) / 2) K _ (hltA w hw).2
+          · intro w hw; exact (hltA w hw).1
+          · intro w hw w' hw' heq
+            have h3 := attainVal_inj ((t + 3) / 2) K _ _ (hltA w hw).2 (hltA w' hw').2 heq
+            have h4 := (hltA w hw).1
+            have h5 := (hltA w' hw').1
+            omega
+        by_cases hodd : (t + 2) % 2 = 1
+        · rw [ite_eq_left hodd, List.nodup_append]
+          refine ⟨hfl, by simp, ?_⟩
+          intro x hx y hy
+          rw [mem_flatMap_pairs] at hx
+          rw [List.mem_singleton] at hy
+          obtain ⟨v, hv, hxv | hxv⟩ := hx
+          · have h1 : v - (K + (t + 3) / 2) < (t + 2) / 2 := by
+              have := (hWrange v hv).2
+              omega
+            intro heq
+            rw [hxv, hy] at heq
+            have h3 := attainVal_inj ((t + 3) / 2) K (v - (K + (t + 3) / 2)) ((t + 2) / 2)
+              (hltA v hv).2 (by omega) heq
+            omega
+          · intro heq
+            rw [hxv, hy] at heq
+            have h1 : K + (t + 3) / 2 ≤ v := (hltA v hv).1
+            have h2 : attainVal ((t + 3) / 2) K ((t + 2) / 2) < K + (t + 3) / 2 :=
+              attainVal_lt ((t + 3) / 2) K ((t + 2) / 2) (by omega)
+            exact (Nat.not_le_of_gt h2) (heq ▸ h1)
+        · rw [ite_eq_right hodd, List.append_nil]
+          exact hfl
+      · -- it has `t + 2` elements
+        exact hlenL
+      · -- all its values lie in `[K, K + (t+2))`
+        intro x hx
+        rcases List.mem_append.mp hx with hx | hx
+        · rw [mem_flatMap_pairs] at hx
+          obtain ⟨w, hw, hxw | hxw⟩ := hx
+          · have h1 := attainVal_mem_range ((t + 3) / 2) K _ (hltA w hw).2
+            refine ⟨?_, ?_⟩
+            · rw [hxw]; exact h1.1
+            · rw [hxw]; omega
+          · obtain ⟨h1, h2⟩ := hWrange w hw
+            refine ⟨by omega, ?_⟩
+            rw [hxw]
+            omega
+        · by_cases hodd : (t + 2) % 2 = 1
+          · rw [ite_eq_left hodd, List.mem_singleton] at hx
+            have h1 := attainVal_mem_range ((t + 3) / 2) K ((t + 2) / 2) (by omega)
+            rw [hx]
+            exact ⟨h1.1, by omega⟩
+          · rw [ite_eq_right hodd] at hx
+            exact absurd hx (by simp)
+      · -- and merge-insertion spends exactly `fjCountJ (t+2)` on it
+        have hchain : (sortedPairs (attnList ((t + 2) / 2) (K + (t + 3) / 2),
+            (attnList ((t + 2) / 2) (K + (t + 3) / 2)).map
+              (fun w => attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2))),
+            if (t + 2) % 2 = 1 then some (attainVal ((t + 3) / 2) K ((t + 2) / 2))
+              else none)).map Prod.fst
+            = attnChain (K + (t + 3) / 2) ((t + 2) / 2) := by
+          rw [sortedPairs, zip_map_self]
+          rw [sortPairs_map_eq _ _ _ _ (perm_range_of_nodup_in_range _ _ _ hWlen hWnd hWrange),
+            attnChain]
+          simp
+        have hitems : insertItems (attnList ((t + 2) / 2) (K + (t + 3) / 2),
+            (attnList ((t + 2) / 2) (K + (t + 3) / 2)).map
+              (fun w => attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2))),
+            if (t + 2) % 2 = 1 then some (attainVal ((t + 3) / 2) K ((t + 2) / 2))
+              else none) = attnItems K ((t + 2) / 2) ((t + 3) / 2) := by
+          rw [insertItems, sortedPairs, zip_map_self]
+          rw [sortPairs_map_eq _ _ _ _ (perm_range_of_nodup_in_range _ _ _ hWlen hWnd hWrange)]
+          rw [List.map_map]
+          have hmap : (List.map ((fun q : ℕ × ℕ => (some q.1, q.2)) ∘
+              fun j => (K + (t + 3) / 2 + j,
+                attainVal ((t + 3) / 2) K (K + (t + 3) / 2 + j - (K + (t + 3) / 2))))
+              (List.range ((t + 2) / 2)))
+              = (List.range ((t + 2) / 2)).map
+                (fun j => (some (K + (t + 3) / 2 + j), attainVal ((t + 3) / 2) K j)) := by
+            refine List.map_congr_left ?_
+            intro j _
+            simp only [Function.comp_apply]
+            rw [show K + (t + 3) / 2 + j - (K + (t + 3) / 2) = j from by omega]
+          rw [hmap]
+          rw [← range_attnItems K ((t + 2) / 2) ((t + 3) / 2) (by omega) (by omega)]
+          by_cases hodd : (t + 2) % 2 = 1
+          · rw [ite_eq_left hodd, Option.toList_some, List.map_cons, List.map_nil,
+              ite_eq_left (by omega : (t + 2) / 2 < (t + 3) / 2)]
+          · rw [ite_eq_right hodd, Option.toList_none, List.map_nil,
+              ite_eq_right (by omega : ¬ ((t + 2) / 2 < (t + 3) / 2))]
+        have hwalk : (insertJacobsthal (insertItems (attnList ((t + 2) / 2) (K + (t + 3) / 2),
+            (attnList ((t + 2) / 2) (K + (t + 3) / 2)).map
+              (fun w => attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2))),
+            if (t + 2) % 2 = 1 then some (attainVal ((t + 3) / 2) K ((t + 2) / 2))
+              else none))
+            (insertItems (attnList ((t + 2) / 2) (K + (t + 3) / 2),
+            (attnList ((t + 2) / 2) (K + (t + 3) / 2)).map
+              (fun w => attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2))),
+            if (t + 2) % 2 = 1 then some (attainVal ((t + 3) / 2) K ((t + 2) / 2))
+              else none)).length 0
+            ((sortedPairs (attnList ((t + 2) / 2) (K + (t + 3) / 2),
+            (attnList ((t + 2) / 2) (K + (t + 3) / 2)).map
+              (fun w => attainVal ((t + 3) / 2) K (w - (K + (t + 3) / 2))),
+            if (t + 2) % 2 = 1 then some (attainVal ((t + 3) / 2) K ((t + 2) / 2))
+              else none)).map Prod.fst)).1 = jacInsertCost ((t + 3) / 2) := by
+          rw [hitems, attnItems_length, hchain]
+          exact insertJacobsthal_attnItems K ((t + 2) / 2) ((t + 3) / 2) (by omega) (by omega)
+        rw [fjSortJ]
+        rw [ite_eq_right (by rw [hlenL]; omega)]
+        rw [hpair]
+        simp only
+        rw [hwalk, hWcost, hWlen]
+        rw [fjCountJ_le_recurrence (t + 2) (by omega)]
+
+set_option linter.unusedVariables false in
+/-- **Merge-insertion's bound is exact for `n ≥ 2`**: there is an input on which the algorithm
+spends exactly `fjCountJ n = F(n)` comparisons — as many as `fjSortJ_count_le` allows.  So
+`fjCountJ n` is not merely an upper bound: it is the worst-case comparison count of `fjSortJ`
+on `n` elements.  (The hypothesis `2 ≤ n` is not needed: the statement also holds for
+`n = 0, 1`, where both sides vanish.) -/
+theorem fjCountJ_attains (n : ℕ) (hn : 2 ≤ n) :
+    ∃ l : List ℕ, l.length = n ∧ (fjSortJ l).1 = fjCountJ n := by
+  refine ⟨attnList n 0, ?_, (attnList_spec n 0).2.2.2⟩
+  rw [(attnList_spec n 0).2.1]
 
 end SortBounds.Projects.FordJohnson

@@ -10,7 +10,8 @@ require an *adaptive* tree, exactly as for `n = 5` (`Five.lean`).  `tree6` below
 is such a tree: depth `10` with `720 = 6!` leaves.
 
 How `tree6` was found: the same exhaustive search over *knowledge states* that
-produced `tree5` (`Five.lean`).  A state is the set of orderings of the six
+produced `tree5` (`Five.lean`), run by `search_optimal_tree.py` in this directory,
+which prints the literal below.  A state is the set of orderings of the six
 positions still consistent with the answers received so far, a comparison splits
 a state in two, and a leaf is a state with one ordering left.  The search itself
 is *not* formalised; everything that matters is checked in the kernel:

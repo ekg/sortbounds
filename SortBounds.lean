@@ -20,11 +20,14 @@ import SortBounds.Projects.FordJohnson.MergeInsertion
 import SortBounds.Projects.FordJohnson.Count
 import SortBounds.Projects.FordJohnson.Jacobsthal
 import SortBounds.Projects.FordJohnson.JacobsthalInsertion
+import SortBounds.Projects.FordJohnson.Attain
 import SortBounds.Projects.SN.Basic
 import SortBounds.Projects.SN.Small
 import SortBounds.Projects.SN.Verify
 import SortBounds.Projects.SN.Four
 import SortBounds.Projects.SN.Five
+import SortBounds.Projects.SN.Six
+import SortBounds.Projects.SN.Seven
 import SortBounds.Projects.XY.PairSums
 import SortBounds.Projects.XY.Naive
 import SortBounds.Projects.BenOr.Basic
@@ -33,3 +36,4 @@ import SortBounds.Projects.BenOr.Bound
 import SortBounds.Projects.BenOr.Witness
 import SortBounds.Projects.SAIS.LCP
 import SortBounds.Projects.SortTree.Main
+import SortBounds.Projects.FjTree.Main

@@ -7,9 +7,10 @@ SortBounds/Projects/SN/Seven.lean
 Thirteen comparisons is far below the sixteen comparators of the best sorting
 *network* on seven wires (a classical fact, not formalised here), so the upper
 bound again requires an *adaptive* tree — `tree7` below, of depth `13` with
-`5040 = 7!` leaves.  Like `tree5`/`tree6` it comes from the exhaustive search
-over knowledge states (`Five.lean`, `Six.lean`), which is *not* formalised.  The
-three facts that make the tree trustworthy are kernel-checked:
+`5040 = 7!` leaves.  Like `tree5`/`tree6` it is the output of the exhaustive
+search over knowledge states in `search_optimal_tree.py` (which prints the
+definitions below); the search is *not* formalised.  The three facts that make
+the tree trustworthy are kernel-checked:
 
 * `tree7_depth`: the depth is `13`;
 * `tree7_numLeaves`: the tree has `5040` leaves — exactly `7!`, the counting
@@ -38,19 +39,14 @@ namespace SortBounds.Projects.SN
 
 open SortBounds
 
--- Elaborating the deep nesting of `15118` nodes needs more recursion depth than
--- the default `1000`.
-set_option maxRecDepth 100000 in
-/-- A `13`-comparison decision tree sorting seven positions.  A node
-`.node i j l r` compares positions `i` and `j`: `l` is taken when `x i < x j`,
-`r` otherwise.  The comment on each internal node is the number of orderings of
-the seven positions consistent with the answers that lead to it. -/
-def tree7 : Tree 7 :=
-  (.node 0 1   -- 5040
-    (.node 2 3   -- 2520
-      (.node 0 2   -- 1260
-        (.node 4 5   -- 630
-          (.node 2 6   -- 315
+-- The tree is `5039` internal nodes and `5039` leaves — a term no elaborator
+-- wants to see at once (`set_option maxRecDepth` alone does not save it: the
+-- pending-mvar synthesis becomes quadratic).  So it is written in `63` pieces:
+-- one `private def` for every subtree with more than `120` nodes, children
+-- before parents, each piece small enough to elaborate on its own.  `tree7` is
+-- the top piece; every subtree below `120` nodes is spelled out inline.
+-- subtrees, children before parents
+private def tree70 : Tree 7 :=
             (.node 3 6   -- 168
               (.node 1 3   -- 84
                 (.node 1 2   -- 42
@@ -553,6 +549,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree71 : Tree 7 :=
             (.node 4 6   -- 147
               (.node 1 2   -- 66
                 (.node 1 6   -- 32
@@ -992,8 +990,14 @@ def tree7 : Tree 7 :=
                 )
               )
             )
-          )
+
+private def tree72 : Tree 7 :=
           (.node 2 6   -- 315
+            tree70
+            tree71
+          )
+
+private def tree73 : Tree 7 :=
             (.node 3 6   -- 168
               (.node 1 3   -- 84
                 (.node 1 2   -- 42
@@ -1496,6 +1500,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree74 : Tree 7 :=
             (.node 5 6   -- 147
               (.node 1 2   -- 66
                 (.node 1 6   -- 32
@@ -1935,10 +1941,20 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree75 : Tree 7 :=
+          (.node 2 6   -- 315
+            tree73
+            tree74
           )
-        )
+
+private def tree76 : Tree 7 :=
         (.node 4 5   -- 630
-          (.node 0 6   -- 315
+          tree72
+          tree75
+        )
+
+private def tree77 : Tree 7 :=
             (.node 1 6   -- 168
               (.node 1 3   -- 84
                 (.node 3 6   -- 42
@@ -2441,6 +2457,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree78 : Tree 7 :=
             (.node 4 6   -- 147
               (.node 0 3   -- 66
                 (.node 1 3   -- 34
@@ -2880,8 +2898,14 @@ def tree7 : Tree 7 :=
                 )
               )
             )
-          )
+
+private def tree79 : Tree 7 :=
           (.node 0 6   -- 315
+            tree77
+            tree78
+          )
+
+private def tree710 : Tree 7 :=
             (.node 1 6   -- 168
               (.node 1 3   -- 84
                 (.node 3 6   -- 42
@@ -3384,6 +3408,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree711 : Tree 7 :=
             (.node 5 6   -- 147
               (.node 0 3   -- 66
                 (.node 1 3   -- 34
@@ -3823,12 +3849,26 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree712 : Tree 7 :=
+          (.node 0 6   -- 315
+            tree710
+            tree711
           )
-        )
-      )
-      (.node 0 3   -- 1260
+
+private def tree713 : Tree 7 :=
         (.node 4 5   -- 630
-          (.node 3 6   -- 315
+          tree79
+          tree712
+        )
+
+private def tree714 : Tree 7 :=
+      (.node 0 2   -- 1260
+        tree76
+        tree713
+      )
+
+private def tree715 : Tree 7 :=
             (.node 2 6   -- 168
               (.node 1 2   -- 84
                 (.node 1 3   -- 42
@@ -4331,6 +4371,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree716 : Tree 7 :=
             (.node 4 6   -- 147
               (.node 1 3   -- 66
                 (.node 1 6   -- 32
@@ -4770,8 +4812,14 @@ def tree7 : Tree 7 :=
                 )
               )
             )
-          )
+
+private def tree717 : Tree 7 :=
           (.node 3 6   -- 315
+            tree715
+            tree716
+          )
+
+private def tree718 : Tree 7 :=
             (.node 2 6   -- 168
               (.node 1 2   -- 84
                 (.node 1 3   -- 42
@@ -5274,6 +5322,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree719 : Tree 7 :=
             (.node 5 6   -- 147
               (.node 1 3   -- 66
                 (.node 1 6   -- 32
@@ -5713,10 +5763,20 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree720 : Tree 7 :=
+          (.node 3 6   -- 315
+            tree718
+            tree719
           )
-        )
+
+private def tree721 : Tree 7 :=
         (.node 4 5   -- 630
-          (.node 0 6   -- 315
+          tree717
+          tree720
+        )
+
+private def tree722 : Tree 7 :=
             (.node 1 6   -- 168
               (.node 1 2   -- 84
                 (.node 2 6   -- 42
@@ -6219,6 +6279,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree723 : Tree 7 :=
             (.node 4 6   -- 147
               (.node 0 2   -- 66
                 (.node 1 2   -- 34
@@ -6658,8 +6720,14 @@ def tree7 : Tree 7 :=
                 )
               )
             )
-          )
+
+private def tree724 : Tree 7 :=
           (.node 0 6   -- 315
+            tree722
+            tree723
+          )
+
+private def tree725 : Tree 7 :=
             (.node 1 6   -- 168
               (.node 1 2   -- 84
                 (.node 2 6   -- 42
@@ -7162,6 +7230,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree726 : Tree 7 :=
             (.node 5 6   -- 147
               (.node 0 2   -- 66
                 (.node 1 2   -- 34
@@ -7601,14 +7671,32 @@ def tree7 : Tree 7 :=
                 )
               )
             )
-          )
-        )
-      )
-    )
-    (.node 2 3   -- 2520
-      (.node 0 3   -- 1260
-        (.node 4 5   -- 630
+
+private def tree727 : Tree 7 :=
           (.node 0 6   -- 315
+            tree725
+            tree726
+          )
+
+private def tree728 : Tree 7 :=
+        (.node 4 5   -- 630
+          tree724
+          tree727
+        )
+
+private def tree729 : Tree 7 :=
+      (.node 0 3   -- 1260
+        tree721
+        tree728
+      )
+
+private def tree730 : Tree 7 :=
+    (.node 2 3   -- 2520
+      tree714
+      tree729
+    )
+
+private def tree731 : Tree 7 :=
             (.node 5 6   -- 147
               (.node 1 4   -- 81
                 (.node 2 4   -- 44
@@ -8048,6 +8136,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree732 : Tree 7 :=
             (.node 1 6   -- 168
               (.node 2 6   -- 84
                 (.node 1 2   -- 42
@@ -8550,8 +8640,14 @@ def tree7 : Tree 7 :=
                 )
               )
             )
-          )
+
+private def tree733 : Tree 7 :=
           (.node 0 6   -- 315
+            tree731
+            tree732
+          )
+
+private def tree734 : Tree 7 :=
             (.node 4 6   -- 147
               (.node 1 5   -- 81
                 (.node 2 5   -- 44
@@ -8991,6 +9087,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree735 : Tree 7 :=
             (.node 1 6   -- 168
               (.node 2 6   -- 84
                 (.node 1 2   -- 42
@@ -9493,10 +9591,20 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree736 : Tree 7 :=
+          (.node 0 6   -- 315
+            tree734
+            tree735
           )
-        )
+
+private def tree737 : Tree 7 :=
         (.node 4 5   -- 630
-          (.node 3 6   -- 315
+          tree733
+          tree736
+        )
+
+private def tree738 : Tree 7 :=
             (.node 5 6   -- 147
               (.node 2 4   -- 81
                 (.node 1 4   -- 44
@@ -9936,6 +10044,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree739 : Tree 7 :=
             (.node 2 6   -- 168
               (.node 1 6   -- 84
                 (.node 1 2   -- 42
@@ -10438,8 +10548,14 @@ def tree7 : Tree 7 :=
                 )
               )
             )
-          )
+
+private def tree740 : Tree 7 :=
           (.node 3 6   -- 315
+            tree738
+            tree739
+          )
+
+private def tree741 : Tree 7 :=
             (.node 4 6   -- 147
               (.node 2 5   -- 81
                 (.node 1 5   -- 44
@@ -10879,6 +10995,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree742 : Tree 7 :=
             (.node 2 6   -- 168
               (.node 1 6   -- 84
                 (.node 1 2   -- 42
@@ -11381,12 +11499,26 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree743 : Tree 7 :=
+          (.node 3 6   -- 315
+            tree741
+            tree742
           )
-        )
-      )
-      (.node 0 2   -- 1260
+
+private def tree744 : Tree 7 :=
         (.node 4 5   -- 630
-          (.node 0 6   -- 315
+          tree740
+          tree743
+        )
+
+private def tree745 : Tree 7 :=
+      (.node 0 3   -- 1260
+        tree737
+        tree744
+      )
+
+private def tree746 : Tree 7 :=
             (.node 5 6   -- 147
               (.node 1 4   -- 81
                 (.node 3 4   -- 44
@@ -11826,6 +11958,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree747 : Tree 7 :=
             (.node 1 6   -- 168
               (.node 3 6   -- 84
                 (.node 1 3   -- 42
@@ -12328,8 +12462,14 @@ def tree7 : Tree 7 :=
                 )
               )
             )
-          )
+
+private def tree748 : Tree 7 :=
           (.node 0 6   -- 315
+            tree746
+            tree747
+          )
+
+private def tree749 : Tree 7 :=
             (.node 4 6   -- 147
               (.node 1 5   -- 81
                 (.node 3 5   -- 44
@@ -12769,6 +12909,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree750 : Tree 7 :=
             (.node 1 6   -- 168
               (.node 3 6   -- 84
                 (.node 1 3   -- 42
@@ -13271,10 +13413,20 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree751 : Tree 7 :=
+          (.node 0 6   -- 315
+            tree749
+            tree750
           )
-        )
+
+private def tree752 : Tree 7 :=
         (.node 4 5   -- 630
-          (.node 2 6   -- 315
+          tree748
+          tree751
+        )
+
+private def tree753 : Tree 7 :=
             (.node 5 6   -- 147
               (.node 3 4   -- 81
                 (.node 1 4   -- 44
@@ -13714,6 +13866,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree754 : Tree 7 :=
             (.node 3 6   -- 168
               (.node 1 6   -- 84
                 (.node 1 3   -- 42
@@ -14216,8 +14370,14 @@ def tree7 : Tree 7 :=
                 )
               )
             )
-          )
+
+private def tree755 : Tree 7 :=
           (.node 2 6   -- 315
+            tree753
+            tree754
+          )
+
+private def tree756 : Tree 7 :=
             (.node 4 6   -- 147
               (.node 3 5   -- 81
                 (.node 1 5   -- 44
@@ -14657,6 +14817,8 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree757 : Tree 7 :=
             (.node 3 6   -- 168
               (.node 1 6   -- 84
                 (.node 1 3   -- 42
@@ -15159,11 +15321,43 @@ def tree7 : Tree 7 :=
                 )
               )
             )
+
+private def tree758 : Tree 7 :=
+          (.node 2 6   -- 315
+            tree756
+            tree757
           )
+
+private def tree759 : Tree 7 :=
+        (.node 4 5   -- 630
+          tree755
+          tree758
         )
+
+private def tree760 : Tree 7 :=
+      (.node 0 2   -- 1260
+        tree752
+        tree759
       )
+
+private def tree761 : Tree 7 :=
+    (.node 2 3   -- 2520
+      tree745
+      tree760
     )
+
+private def tree762 : Tree 7 :=
+  (.node 0 1   -- 5040
+    tree730
+    tree761
   )
+
+/-- A `13`-comparison decision tree sorting seven positions.  A node
+`.node i j l r` compares positions `i` and `j`: `l` is taken when `x i < x j`,
+`r` otherwise.  The comment on each internal node is the number of orderings of
+the seven positions consistent with the answers that lead to it. -/
+def tree7 : Tree 7 :=
+  tree762
 
 /-- The depth is `13`: thirteen comparisons always suffice.  (`depth` is the
 maximum over leaves, so some leaf sits exactly at depth `13`.) -/
@@ -15174,7 +15368,7 @@ theorem tree7_numLeaves : numLeaves tree7 = 5040 := by decide
 
 -- `decide` enumerates `Equiv.Perm (Fin 7)`, and that `Fintype` instance filters
 -- the `7 ^ 7 = 823543` functions `Fin 7 → Fin 7`, far deeper than the default
--- elaborator recursion limit of 1000; the computation is also much longer than
+-- elaborator recursion limit of 1000; the computation is also far longer than
 -- the default heartbeat budget, so both limits are lifted here.
 set_option maxHeartbeats 0 in
 set_option maxRecDepth 300000 in

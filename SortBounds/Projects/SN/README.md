@@ -1,10 +1,12 @@
 # Lane: SN — certified exact minimum comparison counts `S(n)`
 
 **Question.** `S(n)` = fewest comparisons that suffice to sort `n` elements. In the code
-`S n` is the least **depth** of a correct decision tree; the least worst-case *cost* is
-a different (a priori smaller) quantity. For `n = 4, 5` both readings are settled here:
-`four_needs_five_comparisons` / `five_needs_seven_comparisons` rule out trees whose
-every input costs less, so "fewest comparisons that suffice" is 5 resp. 7 too.
+`S n` is the least **depth** of a correct decision tree; the two readings agree, because
+`Comparison.Tree.exists_depth_le_of_cost_le` truncates a tree whose every input costs `≤ d`
+to depth `≤ d` (`S_le_of_forall_cost_le` states the consequence). For `n = 4..7` the
+*fewest-comparisons* reading is also settled outright by `four_needs_five_comparisons`,
+`five_needs_seven_comparisons`, `six_needs_ten_comparisons`,
+`seven_needs_thirteen_comparisons`.
 Known exactly for `n ≤ 22`; `S(n) = ⌈log₂ n!⌉` for `n ≤ 11`, and the first gap is
 `S(12) = 30 > ⌈log₂ 12!⌉ = 29`. The table is computer-assisted folklore with no
 machine-checked verification of the *lower* bounds.
@@ -48,13 +50,13 @@ theorem S_twelve : S 12 = 30
 end SortBounds.Projects.SN
 ```
 
-**Status: M0 + M1 landed, M2 in progress (`S 4 = 5` and `S 5 = 7` landed),
-M3 open.** The contract block above lists all three milestones so the targets stay
-pinned; `S_eq_clog` and `S_twelve` do not exist in code yet.
+**Status: M2 landed for `n ≤ 7` (`S 0..7`), M3 open.** The contract block lists all
+milestones so the targets stay pinned; `S_eq_clog` and `S_twelve` do not exist in code.
 
 Files: `Basic.lean` (M0), `Small.lean` (M1), `Verify.lean` (tree builders and the
-canonical-input correctness reduction), `Four.lean` (`S 4 = 5`), `Five.lean`
-(`S 5 = 7`).  Build them in that order (`Verify` before `Four`/`Five`).
+canonical-input correctness reduction), `Four/Five/Six/Seven.lean` (`S 4..7`), and
+`search_optimal_tree.py` (the DFS that emits the tree literals — commit-able
+certificate generator; `Six`/`Seven` reproduce from it).  Build in that order.
 
 ## Milestones
 
@@ -142,3 +144,51 @@ machine-checked `S(n)` table found.
     machinery; the `decide` check grows to `720` kernel evaluations of a
     depth-`10` tree, and the tree itself is best taken from a merge-insertion
     construction (`FordJohnson` M1 gives the shape) rather than from a search.
+* 2026-11-11 — **M2, two more cases landed**: `S_six : S 6 = 10` and
+  `S_seven : S 7 = 13`, no `sorry` (`Six.lean`, `Seven.lean`, plus
+  `search_optimal_tree.py`).
+  * Both upper bounds are adaptive trees (no network reaches 10/13: the smallest
+    sorting networks on six and seven wires have 12 resp. 16 comparators — a
+    classical fact, not formalised here), of depth `10`/`13` with exactly
+    `720`/`5040` leaves.  The lower bounds are `S_lower` plus
+    `Nat.clog 2 720 = 10` / `Nat.clog 2 5040 = 13` by `decide`, so both readings
+    of "fewest comparisons" are settled at `n = 6, 7`:
+    `six_needs_ten_comparisons` / `seven_needs_thirteen_comparisons` rule out
+    trees whose every input costs `< 10` resp. `< 13` (same shape as
+    `Four.lean`/`Five.lean`).
+  * **The search is now reproducible in-repo**: `search_optimal_tree.py` is the
+    generator (deterministic DFS over knowledge states — a state is a bitmask of
+    the orderings still consistent, a node tries the most even splits first,
+    states that failed at a given remaining depth are remembered).  It prints the
+    Lean literal; regenerate with `python3 search_optimal_tree.py 6 10
+    --threshold 0` resp. `python3 search_optimal_tree.py 7 13`.  Nothing is taken
+    on trust from it: `tree6_depth`/`tree7_depth`, `tree6_numLeaves`
+    (`720`)/`tree7_numLeaves` (`5040`) and `tree6_correct`/`tree7_correct` are
+    kernel-checked, correctness again via `correct_of_forall_run_xOfPerm`
+    (`decide` on the `6!`/`7!` canonical inputs).  `Five.lean`'s tree came from
+    an equivalent ad-hoc search that was never in the repo; the script also finds
+    a depth-`7` tree for `n = 5` (`python3 search_optimal_tree.py 5 7`), so the
+    same recipe covers `Five.lean`.
+  * Elaboration note (this cost a while and will bite again for `n = 8`): a
+    single `Tree n` literal of `5000` nodes whose leaves are
+    `swapProd [(i, j), …]` does *not* elaborate — the elaborator accumulates one
+    pending metavariable per leaf and its `synthesizeSyntheticMVars` becomes
+    quadratic (raise `maxRecDepth` and you get a heartbeat timeout instead; a
+    type ascription on each leaf does not help).  The fix used in `Seven.lean`:
+    emit one `private def` per subtree with more than `120` nodes, children
+    before parents (`63` such pieces), so every command stays small; `tree7` is
+    the top piece.  `Six.lean` (2158 lines) is still one literal.
+  * Costs, measured with `lake env lean`: `Six.lean` 25 s, `Seven.lean` 3 m 20 s
+    (the `decide` over `7!` canonical inputs needs `maxHeartbeats 0` and
+    `maxRecDepth 300000`; the `Equiv.Perm (Fin 7)` `Fintype` instance filters
+    `7 ^ 7 = 823543` functions).  `#print axioms` for `S_six`, `S_seven`,
+    `tree6_correct`, `tree7_correct`, `six_needs_ten_comparisons`,
+    `seven_needs_thirteen_comparisons`: `[propext, Classical.choice,
+    Quot.sound]` — no `sorryAx`, no `Lean.ofReduceBool`.
+  * Not attempted: `n = 8` (`S 8 = 16`) and `n ≤ 11` (`S_eq_clog`).  The
+    machinery carries over unchanged — the search finds a depth-`16` tree on
+    eight positions instantly, and enumerating `Equiv.Perm (Fin 8)` costs 21 s by
+    `decide` — but the tree is `~80k` nodes and the correctness check is `8!`
+    evaluations, so expect a file of a few megabytes and a compile time of tens
+    of minutes; that needs its own decision.  Reproducible search for `n ≥ 12`
+    (where `⌈log₂ n!⌉` stops being attainable) is a different problem.

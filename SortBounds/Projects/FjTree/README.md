@@ -88,4 +88,58 @@ sizes.
 
 ## Log
 
-* (empty)
+* **2026-02** `Basic.lean` — the machinery, and M0.  Same-index substitution
+  (`substTree`/`run_substTree`/`depth_substTree_le`/`substTree_correct`), re-indexing
+  along an injection (`imageTree`/`run_imageTree`/`depth_imageTree`), insertion of the
+  element of slot `q` at rank `j` of a chain of length `c ≤ q` (`insertFun`/`insertAt`,
+  with the pointwise lemmas `insertAt_apply_lt/eq/mid/gt`), the rank
+  (`rankSet`/`rankAt`, `rankAt_eq_card`, `lt_rankAt_iff`, `rankAt_le_cntWin`) and the
+  binary search `binIns` with `binIns_run` (the leaf reached is `insertAt (rankAt ·)`)
+  and `binIns_depth_le : ≤ ⌈log₂ (hi-lo+1)⌉`.  M0 is `insTree` with `insTree_correct`
+  and `insTree_depth_le : depth ≤ n·(⌈log₂ n⌉+1)` — `Projects/SortTree` reproved through
+  the API, which validates it.
+* **2026-02** `Setup.lean` — `chainSet`, `cntWin` and
+  `rankAt_le_cntWin : rankAt ≤ cntWin W q + (c - m)` (the chain holds all `m` winners
+  and at most `c - m` non-winners); the pairing stage `pairAux`/`pairTree` with
+  `pairAux_agree` (slots outside the pairs are untouched), `pairAux_decided` (every pair
+  is decided, so the winner of pair `k` is in slot `k`) and `pairAux_depth` = `n/2`;
+  the transport `transportFun`/`transportPerm`/`transport` with `transport_winner`,
+  `transport_loser` (loser of the `o`-th smallest winner to slot `m+o`) and
+  `transport_last`.  Pairing `k` with `m+k` (not `2k` with `2k+1`) keeps the layout
+  contiguous, so no de-interleaving permutation is needed.
+* **2026-02** `Main.lean` — the Jacobsthal batches (`jacLo`, `jacHi`, `jacLo_self`), the
+  insertion phase `insBatch`/`insBatches`/`insPhase` with `insBatch_depth` and
+  `insBatches_depth : ≤ jacInsertCostAux M fuel k + B` (the batch sum is literally
+  `FordJohnson`'s, so there is no sum identity to prove), the level `fjStage` with
+  `fjStage_depth : ≤ depth rec + jacInsertCost M`, and the tree
+  `fjTreeFuel`/`fjTree n`.  **Landed: `fjTree_depth_le : depth (fjTree n) ≤ fjCountJ n`**
+  — the count is realised by a `Tree n`.
+* **NOT landed (the one open obligation): `fjTree_correct`, hence neither
+  `S_le_fjCountJ` nor `S_eq_clog`.**  Everything except the correctness invariant of the
+  insertion phase is in place; below is the exact statement that remains.
+
+### What remains, precisely
+
+`fjTree n` is `pairTree`, then (through `imageTree`) the recursive tree on the winners,
+`transport`, then the insertion phase.  Correctness of the first three stages is proved
+(`pairTree_spec`, `transport_*`, `substTree_correct`/`run_imageTree`).  What is missing
+is the invariant of `insBatches`, to be proved by induction with the recursion (this is
+`P` for `Basic.insSeq_sorts`, which is already generic): for the state `σ` at batch `k`,
+position `j`, with chain length `c = m + jacLo M k + j`,
+
+  `ChainSorted x σ c`  ∧  `W ⊆ chainSet σ c`  ∧
+  `∀ o, jacLo M k + j + o < M → cntWin x W (σ ⟨c+o, _⟩) ≤ pendBound M k j o`
+
+where `W = chainSet ρ m` is the winner set of the pairing state `ρ`,
+`pendBound M k j o` is `jacLo M k + o` while `o + j < jacHi M k - jacLo M k` and
+`jacHi M k + (o - (jacHi M k - jacLo M k - j))` after, and with the shift lemma
+`pendBound M k (j+1) o = pendBound M k j (if o < cnt-j-1 then o else o+1)`.
+It is preserved because the pending items after the inserted one keep their slots, and
+the window is then exactly wide enough:
+`rankAt x σ c q ≤ cntWin + (q - m)`, `cntWin ≤ jacLo + cnt - 1 - j`, so
+`rankAt ≤ 2·jacLo + cnt - 1 = jacLo + jacHi - 1 = w`; note `w` is *exactly* the window
+of `binIns`, with no slack.  The initial invariant (`k = j = 0`) follows from
+`transport_loser` and the pairing fact `x (loser) < x (partner)`; the final one
+(`k = j = 0`, `M` batches) from `jacLo_self` gives `c = n`, i.e. `Sorts`.
+`binIns` already takes `(c, q)` separately (`c` = chain length, `q` = item slot), which
+is the generalisation this invariant needs.

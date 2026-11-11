@@ -316,11 +316,11 @@ theorem exists_correct_tree (n : ℕ) : ∃ t : Tree n, Correct (α := ℕ) t :=
 def depths (n : ℕ) : Set ℕ :=
   {d : ℕ | ∃ t : Tree n, Correct (α := ℕ) t ∧ depth t ≤ d}
 
-/-- `S n`: the least *depth* of a correct comparison tree on `n` positions.
-This is the least worst-case number of comparisons, on the reading of `depth` as
-the length of a root-to-leaf path; the identification with the least worst-case
-`cost` over inputs is **not** formalised here (`cost_le_depth` gives one
-direction only, and truncating a tree at depth `cost` is not proved). -/
+/-- `S n`: the least *depth* of a correct comparison tree on `n` positions.  By
+`Comparison.Tree.exists_depth_le_of_cost_le` this is also the least worst-case
+*number of comparisons*, i.e. exactly "the fewest comparisons that suffice to sort
+`n` elements": a tree whose every input costs `≤ d` is truncated (`prune`) to depth
+`≤ d` without losing correctness, and conversely `cost ≤ depth`. -/
 noncomputable def S (n : ℕ) : ℕ :=
   sInf (depths n)
 
@@ -335,6 +335,16 @@ theorem S_le_iff (n d : ℕ) : S n ≤ d ↔ ∃ t : Tree n, Correct (α := ℕ)
   refine ⟨fun h => ?_, fun h => Nat.sInf_le h⟩
   obtain ⟨t, ht, hd⟩ := S_spec n
   exact ⟨t, ht, le_trans hd h⟩
+
+/-- **Fewest comparisons that suffice ⇒ least depth.**  This is the direction that
+makes `S n` mean "fewest comparisons": a tree whose every input costs at most `d` can
+be truncated to depth `d` (`Comparison.Tree.exists_depth_le_of_cost_le`). -/
+theorem S_le_of_forall_cost_le {n d : ℕ}
+    (h : ∃ t : Tree n, Correct (α := ℕ) t ∧
+      ∀ x : Fin n → ℕ, Function.Injective x → cost t x ≤ d) : S n ≤ d := by
+  obtain ⟨t, ht, hcost⟩ := h
+  obtain ⟨t', ht', hdepth⟩ := exists_depth_le_of_cost_le ht hcost
+  exact (S_le_iff n d).mpr ⟨t', ht', hdepth⟩
 
 /-- Lower bound: counting (`n! ≤ 2^depth`). -/
 theorem S_lower (n : ℕ) : Nat.clog 2 (Nat.factorial n) ≤ S n := by

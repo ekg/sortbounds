@@ -22,10 +22,11 @@ other models"** — every open lane is about a model where the answer changes.
 | `Core` | bits per probe | `card_le_pow_of_prefixFree`, `logb_le_of_le_pow`, **`mean_cost_ge_logb`** (Kraft + Gibbs, any `b`) | **DONE** | frame complete |
 | `Comparison` | comparison sorts | `exists_input_cost_ge_quarter`, `avg_cost_ge_log2_factorial` | **DONE** | frozen |
 | `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le`, `factorial_le_two_pow_length_of_sortsAll`, `sortsAll_of_sorts_zeroOne` | **DONE** | frozen |
-| `FordJohnson` | exact comparison counts, upper bound | `fjCount_le`, **`fjSortJ_count_le`**, **`fjCountJ_table`** (`F(4..11) = 5,7,10,13,16,19,22,26`), `fjCountJ_eq_sum` | **M2/M3 DONE** | attainment open |
-| `SN` | exact `S(n)`, both bounds | `S 0..3`, **`S 4 = 5`, `S 5 = 7`** | **M2 for n ≤ 5** | n ≥ 6 open |
+| `FordJohnson` | exact comparison counts, upper bound | `fjCountJ_table` (`F(4..11) = 5,7,10,13,16,19,22,26`), `fjCountJ_eq_sum`, **`fjCountJ_attains`** (the count is *attained*) | **M2/M3/M4 DONE** | list→`Tree` transfer (lane `FjTree`) |
+| `SN` | exact `S(n)`, both bounds | `S 0..7` (**`S 4=5, S 5=7, S 6=10, S 7=13`**), each in both readings | **M2 for n ≤ 7** | `n ≥ 8`, `S 12 = 30` open |
 | `XY` | sorting `X+Y` | `pairSums`, `pairSums_card_le`, `naivePairsSorted_*` | **M1 DONE** | M2 gated |
 | `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement), `exists_decidesReal_distinct` | **M0 DONE** (semantics now witnessed) | M1+ gated |
+| `FjTree` | FJA's decision tree | `fjTree`, `fjTree_depth_le ≤ fjCountJ n` | **depth DONE, correctness open** | `fjTree_correct` → `S n ≤ fjCountJ n` |
 | `SortTree` | `Θ` inside one model | **`S_sandwich`**: `⌈log₂ n!⌉ ≤ S n ≤ n(⌈log₂ n⌉+1)` | **DONE** | — |
 | `SAIS` | suffix arrays, cost model | `cmpFrom` soundness, `inspectCount_replicate`, `three_mul_naiveInspectSum` (cubic vs quadratic) | **M0 DONE** | M1 needs LCP-array construction |
 
@@ -64,10 +65,14 @@ other models"** — every open lane is about a model where the answer changes.
   the closed form `fjCountJ_eq_sum : fjCountJ n = Σ_{k<n} ⌈log₂((3(k+1)+3)/4)⌉`
   for `n ≤ 22`, and `fjCountJ_table : fjCountJ 4..11 = 5,7,10,13,16,19,22,26` —
   the information-theoretic value `⌈log₂ n!⌉` in each case. Smoke test:
-  `fjSortJ [5,3,1,4,2]` costs 7. **Not claimed:** `fjCountJ n = S n` (needs a
-  list→`Tree` transfer; `Comparison/Bridge` has the mechanism) and *attainment*
-  (some input actually costing `fjCountJ n`). Review caught prose that claimed
-  both; fixed in `Jacobsthal.lean`/`JacobsthalInsertion.lean`/the lane README.
+  `fjSortJ [5,3,1,4,2]` costs 7.  Round 4 added **attainment**: `fjCountJ_attains`
+  (an explicit input family makes *every* search in a batch cost its full
+  `⌈log₂(jacLo + jacHi)⌉`), so `fjCountJ` is the exact worst case of the idealised
+  algorithm, not merely an upper bound.  **Still not claimed:** `S n ≤ fjCountJ n`
+  (needs the list→`Tree` transfer — lane `FjTree`).  The lane's comparison model is
+  an *idealisation*: `sortPairs`/`splitBelow`/`countP` inspect values without being
+  charged, which is faithful to the real algorithm (where that bookkeeping is
+  threaded, not recomputed) and is now stated at `JacobsthalInsertion.lean`.
   **Caveat (documented in the lane):** two bookkeeping steps are uncharged (the
   winner/loser reordering and locating the window), so the count is for an
   idealised implementation; charging them needs an adversary argument.
@@ -77,7 +82,9 @@ other models"** — every open lane is about a model where the answer changes.
   `S 0 = 0, S 1 = 0, S 2 = 1, S 3 = 3`, and now **`S 4 = 5`, `S 5 = 7`**
   (`Four.lean`, `Five.lean`: upper bounds from explicit 5- and 7-comparison
   trees, lower bounds from `S_lower` since `⌈log₂ 4!⌉ = 5`, `⌈log₂ 5!⌉ = 7`).
-  So `S(n) = ⌈log₂ n!⌉` is machine-checked for `n ≤ 5`, **in both readings**:
+  So `S(n) = ⌈log₂ n!⌉` is machine-checked for `n ≤ 7` (**`S 6 = 10`, `S 7 = 13`**
+  added with kernel-checked 720- and 5040-leaf trees from the committed generator
+  `search_optimal_tree.py`), **in both readings**:
   `four_needs_five_comparisons` / `five_needs_seven_comparisons` rule out any tree
   whose every input costs `≤ 4` resp. `≤ 6`, so "fewest comparisons that suffice"
   (least worst-case *cost*) is also 5 / 7, not just the least *depth*. `S_eq_clog` (n ≤ 11) and
@@ -150,7 +157,14 @@ other models"** — every open lane is about a model where the answer changes.
    `x n` among the prefix order `σ`, leaves `insertPerm σ j` (`Fin.succAbove`/`decomposeFin'`
    territory), then `sortTree n` by iterating `liftTree`, giving `S n ≤ n·(⌈log₂ n⌉+1)` and
    hence `Θ(n log n)` **inside one model**. M0 (substitution, depth, correctness transfer) landed.
-8. **FJA decision tree** (`S n ≤ fjCountJ n`): build the tree of merge-insertion by
+8. **FJA decision tree (follow-up)** — `FjTree/Main.lean` has `fjTree` with
+   `depth (fjTree n) ≤ fjCountJ n`; missing is `fjTree_correct`.  The single open
+   obligation is the insertion-phase state invariant
+   (`ChainSorted x σ c ∧ W ⊆ chainSet σ c ∧ ∀ o, cntWin … ≤ pendBound M k j o`),
+   stated in the lane README; `Basic.insSeq_sorts` is the generic transfer lemma it
+   plugs into.  Landing it gives `S n ≤ fjCountJ n`, hence
+   `S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11` and `20, 21`.
+8b. **FJA decision tree (original note)** (`S n ≤ fjCountJ n`): build the tree of merge-insertion by
    sequencing binary searches (same-`n` `subst` + `insertTree` + FJA's Jacobsthal batch
    windows).  *Blocked on* the `SortTree` lane (`insertTree`), then a 6–8 h lane; landing it
    would give `S n = ⌈log₂ n!⌉` for `n ≤ 11` (and `n = 20, 21`) — machine-checked optimality
@@ -164,6 +178,7 @@ truth discipline).
 
 | Date | Change |
 | --- | --- |
+| 2026-11-11 | Round 4: `S 6 = 10`, `S 7 = 13` (kernel-checked 720/5040-leaf trees), `fjCountJ_attains` (the FJA count is attained), `FjTree` depth accounting (`depth (fjTree n) ≤ fjCountJ n`), `S_le_of_forall_cost_le` (fewest-comparisons reading = least depth, generally). |
 | 2026-11-11 | Core completed: average case for any branching factor (`mean_cost_ge_logb`), and `prune`/`exists_depth_le_of_cost_le` showing depth = worst-case cost at the optimum. FJA-tree queued behind SortTree. |
 | 2026-11-11 | Round-2 reviews applied: FordJohnson prose no longer claims `S n = fjCountJ n` or attainment; Ford–Johnson added to PRIOR-ART; SN/SAIS/BenOr doc drifts fixed. |
 | 2026-11-11 | FordJohnson M2/M3: verified Jacobsthal-order merge-insertion with the literature closed form and the optimal table `F(4..11)`. |

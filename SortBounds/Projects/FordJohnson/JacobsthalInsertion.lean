@@ -30,10 +30,15 @@ It does **not** show `fjCountJ n = S n`: that needs a list→`Tree` transfer
 
 ### What is counted, and what is not
 
-Only `pairUp` and `insertWindow` compare values, so `(fjSortJ l).1` is a genuine comparison
-count: `⌊n/2⌋` for the pairing, `F(⌊n/2⌋)` recursively, and one bounded binary search per
-item.  Two bookkeeping steps inspect values without being charged a comparison, and neither
-needs one in a real implementation:
+`(fjSortJ l).1` counts the comparisons of an **idealised** merge-insertion — `⌊n/2⌋` for the
+pairing, `F(⌊n/2⌋)` for the recursive winners sort, and one bounded binary search per loser —
+which is exactly the literature's `F(n)`.  It is not a *literal* count of the Lean code's
+comparisons: `sortPairs`, `splitBelow` and `countP` also inspect values and are not charged,
+and `fjSortJ` even charges a recursive call whose sorted output it discards and recomputes
+(`r.2` is unused).  That is faithful to the real algorithm, where the loser array rides along
+with the winners through the recursion and the window is located from the schedule's counts,
+so none of those steps costs a comparison — but the Lean implementation recomputes that
+bookkeeping from the values rather than threading it.  Details:
 
 * `sortPairs` orders the winner/loser pairs by winner.  In merge-insertion the loser array
   travels with the winners through the recursive sort, so this permutation is free — we

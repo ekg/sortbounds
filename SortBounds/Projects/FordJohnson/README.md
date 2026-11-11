@@ -107,3 +107,34 @@ machine-checked found.
   count is an upper bound on comparisons (attainment by an adversarial input is not proved),
   and `sortPairs` reorders the loser array for free (the loser array rides along with the
   winners' recursive sort in the real algorithm).
+* 2026-11-11 — **M4 landed** (`Attain.lean`): the bounds of this lane are **attained**, so
+  `fjCountJ` is the *worst-case* comparison count of `fjSortJ`, not merely an upper bound.
+  Proved (all kernel-checked, `#print axioms` = `propext, Classical.choice, Quot.sound`):
+  * **`insertCount_attains (k : ℕ) : ∃ x : ℕ, ∃ l : List ℕ, l.length = k ∧ (insertCount x l).1 = Nat.clog 2 (k + 1)`**
+    via `insertCount_eq_clog_of_forall_le` (`x` below the whole window always takes the left
+    branch, which is a deepest leaf) and `clog_half_eq`;
+  * **`loserCost_attains (m : ℕ) : ∃ ws ls : List ℕ, ws.length = m ∧ ls.length = m ∧ (insertAll ls ws).1 = loserCost m`**
+    (witnesses `replicate m 0`: inserting `0` into an all-`0` chain is always a deepest-path
+    search).  Stated without the `1 ≤ m` hypothesis of the original sketch — it is not needed;
+  * **`jacInsertCost_attains (M K : ℕ) : ∃ items, items.length = M ∧ (insertJacobsthal items M 0 (attnChain (K+M) M)).1 = jacInsertCost M`**
+    — the insertion phase alone, on the canonical items `attnItems` / chain `attnChain`;
+  * **`fjCountJ_attains (n : ℕ) (hn : 2 ≤ n) : ∃ l : List ℕ, l.length = n ∧ (fjSortJ l).1 = fjCountJ n`**
+    — the prize.  The witness is `attnList n 0`, and `attnList_spec` gives more:
+    `(attnList n K).Nodup ∧ length = n ∧ ∀ x ∈ attnList n K, K ≤ x ∧ x < K + n ∧
+    (fjSortJ (attnList n K)).1 = fjCountJ n`, i.e. **the input is a permutation of
+    `K … K+n-1` on which the algorithm spends exactly `F(n)`**.
+  Method: the items to insert are the values `K … K+M-1` in *decreasing insertion order*
+  (`attainVal M K j = K + M - 1 - t(j)`, `jacBatchOf` = the batch of rank `j`), so every item
+  is below everything inserted before it and below every winner; the search window of a batch-`k`
+  item then has exactly `jacLo + jacHi - 1 - j'` elements with `j' < 2^k`, so every search of
+  the batch costs exactly `⌈log₂ (jacLo + jacHi)⌉`.  The general exact-count lemmas are
+  `insertBatch_eq` (a batch costs exactly `|batch| ⌈log₂ T⌉`) and `insertJacobsthal_eq` (the
+  walk costs exactly `jacInsertCostAux`); the bookkeeping around `pairUp`/`sortPairs` is
+  `pairUp_flatMap_pairs`, `sortPairs_map_eq`, `perm_range_of_nodup_in_range`.
+  Attainment was checked by brute force first (`n ≤ 9` exhaustive over permutations: max over
+  inputs `= fjCountJ n` exactly for `2 ≤ n ≤ 9`; the same construction attains for `n ≤ 40`),
+  so the target is true and no counterexample exists.
+  **Stale prose to fix by the integrator**: the "does not prove *attainment*" clauses above
+  (README intro and the M3 log entry) are superseded by this entry; the remaining caveat
+  `fjCountJ n = S n` (a list→`Tree` transfer, `Comparison/Bridge.lean`) is *not* addressed here
+  and still stands.

@@ -52,6 +52,8 @@ open SortBounds
 #print axioms SortBounds.Projects.FordJohnson.fjCount_le
 #print axioms SortBounds.Projects.FordJohnson.fjSortJ_count_le
 #print axioms SortBounds.Projects.FordJohnson.fjCountJ_table
+#print axioms SortBounds.Projects.FordJohnson.fjCountJ_attains
+#print axioms SortBounds.Projects.FordJohnson.insertCount_attains
 #print axioms SortBounds.Projects.SN.exists_correct_tree
 #print axioms SortBounds.Projects.SN.S_le_iff
 #print axioms SortBounds.Projects.SN.S_lower
@@ -60,9 +62,17 @@ open SortBounds
 #print axioms SortBounds.Projects.SN.S_five
 #print axioms SortBounds.Projects.SN.four_needs_five_comparisons
 #print axioms SortBounds.Projects.SN.five_needs_seven_comparisons
+#print axioms SortBounds.Projects.SN.tree6_correct
+#print axioms SortBounds.Projects.SN.S_six
+#print axioms SortBounds.Projects.SN.six_needs_ten_comparisons
+#print axioms SortBounds.Projects.SN.tree7_correct
+#print axioms SortBounds.Projects.SN.S_seven
+#print axioms SortBounds.Projects.SN.seven_needs_thirteen_comparisons
+#print axioms SortBounds.Projects.SN.S_le_of_forall_cost_le
 #print axioms SortBounds.Projects.SortTree.sortTree_correct
 #print axioms SortBounds.Projects.SortTree.sortTree_depth_le
 #print axioms SortBounds.Projects.SortTree.S_sandwich
+#print axioms SortBounds.Projects.FjTree.fjTree_depth_le
 #print axioms SortBounds.Projects.XY.pairSums_card_le
 #print axioms SortBounds.Projects.XY.naivePairsSorted_perm
 #print axioms SortBounds.Projects.XY.naivePairsSorted_count

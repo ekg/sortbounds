@@ -98,9 +98,10 @@ were not checked against a primary source.
   count reaches `⌈log₂ n!⌉` for `n ≤ 11` and `n = 20, 21`.
 * **No machine-checked Ford–Johnson found** (searched 2026-11-11): the closest
   Lean work is Mathlib's `List.mergeSort` correctness, which has no count.
-  This repo's `Projects/FordJohnson` proves the algorithm's correctness and an
-  upper bound on its count (closed form for `n ≤ 22`, table `F(4..11)`), but not
-  attainment and not `S n = fjCountJ n`.
+  This repo's `Projects/FordJohnson` proves the algorithm's correctness, its count
+  (closed form for `n ≤ 22`, table `F(4..11)`) **and that the count is attained**;
+  what is missing is the list→`Tree` transfer (`Projects/FjTree`) that would turn
+  the count into a statement about minimum tree depth.
 
 ## Textbook statements
 

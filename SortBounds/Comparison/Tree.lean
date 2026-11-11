@@ -109,6 +109,66 @@ theorem factorial_le_two_pow_depth {t : Tree n} (h : Correct (α := ℕ) t) :
     Nat.factorial n ≤ 2 ^ depth t :=
   le_trans (factorial_le_numLeaves h) (numLeaves_le_pow_depth t)
 
+/-! ### Depth versus worst-case cost
+
+`depth` is the longest root-to-leaf path, which can be longer than any input's run
+(see `WorstCase`).  For the *optimum* over trees, however, the two coincide: if every
+input costs at most `d`, the tree can be truncated at depth `d` without losing
+correctness.  Hence "least depth" and "least worst-case cost" are the same number,
+which is what lets `S n` be defined as a least depth and still answer "fewest
+comparisons that suffice".
+-/
+
+/-- Truncate a tree at depth `d`: internal nodes at depth `d` become leaves.  Leaves
+are never replaced, so a tree of depth `≤ d` is unchanged. -/
+def prune (d : ℕ) : Tree n → Tree n
+  | Tree.leaf σ => Tree.leaf σ
+  | Tree.node i j l r =>
+    match d with
+    | 0 => Tree.leaf 1
+    | d + 1 => Tree.node i j (prune d l) (prune d r)
+
+theorem prune_depth_le (d : ℕ) (t : Tree n) : depth (prune d t) ≤ d := by
+  induction d generalizing t with
+  | zero => cases t with
+    | leaf σ => simp [prune, depth]
+    | node i j l r => simp [prune, depth]
+  | succ d ih =>
+    cases t with
+    | leaf σ => simp [prune, depth]
+    | node i j l r =>
+      simp only [prune, depth]
+      have h1 := ih l
+      have h2 := ih r
+      omega
+
+/-- Truncation does not change the run of an input that costs at most `d`. -/
+theorem run_prune [LinearOrder α] (d : ℕ) (t : Tree n) (x : Fin n → α)
+    (h : cost t x ≤ d) : run (prune d t) x = run t x := by
+  induction d generalizing t with
+  | zero =>
+    cases t with
+    | leaf σ => simp [prune, run]
+    | node i j l r => simp only [cost] at h; omega
+  | succ d ih =>
+    cases t with
+    | leaf σ => simp [prune, run]
+    | node i j l r =>
+      have hcost : 1 + (if x i < x j then cost l x else cost r x) ≤ d + 1 := h
+      simp only [prune, run]
+      by_cases hlt : x i < x j
+      · rw [ite_eq_left hlt, ite_eq_left hlt]
+        exact ih l (by rw [ite_eq_left hlt] at hcost; omega)
+      · rw [ite_eq_right hlt, ite_eq_right hlt]
+        exact ih r (by rw [ite_eq_right hlt] at hcost; omega)
+
+/-- **Least depth = least worst-case cost.**  A correct tree whose every input costs
+at most `d` can be replaced by a correct tree of depth at most `d`. -/
+theorem exists_depth_le_of_cost_le {d : ℕ} {t : Tree n} (ht : Correct (α := ℕ) t)
+    (h : ∀ x : Fin n → ℕ, Function.Injective x → cost t x ≤ d) :
+    ∃ t' : Tree n, Correct (α := ℕ) t' ∧ depth t' ≤ d :=
+  ⟨prune d t, fun x hx => by rw [run_prune d t x (h x hx)]; exact ht x hx, prune_depth_le d t⟩
+
 /-- The number of comparisons made on any input is at most the depth. -/
 theorem cost_le_depth [LinearOrder α] (t : Tree n) (x : Fin n → α) : cost t x ≤ depth t := by
   induction t with

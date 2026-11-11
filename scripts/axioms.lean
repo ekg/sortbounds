@@ -11,6 +11,8 @@ open SortBounds
 
 #print axioms SortBounds.Sorts.unique
 #print axioms SortBounds.factorial_le_two_pow_depth
+#print axioms SortBounds.exists_depth_le_of_cost_le
+#print axioms SortBounds.run_prune
 #print axioms SortBounds.factorial_le_two_pow_worstCase
 #print axioms SortBounds.exists_input_cost_ge
 #print axioms SortBounds.depth_ge_log2_factorial

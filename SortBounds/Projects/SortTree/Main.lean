@@ -445,4 +445,129 @@ theorem insertTree_correct {n : ℕ} (σ : Equiv.Perm (Fin n)) {x : Fin (n + 1) 
   have := (rankOf x σ).isLt
   omega
 
+/-- Halving the interval costs exactly one comparison: `⌈log₂(len+1)⌉` drops by one
+when the interval is halved (this is where the tightness of the bound lives). -/
+theorem one_add_clog_half_le {len : ℕ} (h : 1 ≤ len) :
+    1 + Nat.clog 2 (len / 2 + 1) ≤ Nat.clog 2 (len + 1) := by
+  have h2 : 1 < len + 1 := by omega
+  rw [Nat.clog_of_one_lt (b := 2) (by norm_num) h2]
+  have hid : (len + 1 + 2 - 1) / 2 = len / 2 + 1 := by omega
+  rw [hid]
+  omega
+
+/-- **Depth of the binary search**: each comparison halves the slot interval, so the
+depth is `⌈log₂ (number of slots)⌉`. -/
+theorem insertSearch_depth_le {n : ℕ} (σ : Equiv.Perm (Fin n)) (lo hi : Fin (n + 1)) :
+    depth (insertSearch σ lo hi) ≤ Nat.clog 2 (hi.val - lo.val + 1) := by
+  induction lo, hi using insertSearch.induct with
+  | case1 lo hi h ih1 ih2 =>
+    rw [insertSearch_eq_node σ h]
+    simp only [depth]
+    have hlen : 1 ≤ hi.val - lo.val := by omega
+    have hA : ((midCand lo hi h).castSucc : Fin (n + 1)).val - lo.val + 1
+        = (hi.val - lo.val) / 2 + 1 := by
+      rw [midCand_castSucc_val, midVal_sub_lo h]
+    have hB : hi.val - ((⟨midVal lo hi + 1, midVal_succ_lt h⟩ : Fin (n + 1))).val + 1
+        = hi.val - lo.val - (hi.val - lo.val) / 2 := by
+      have h1 := le_midVal lo hi
+      have h2 := midVal_lt_hi h
+      simp only [midVal_def]
+      omega
+    have step1 : depth (insertSearch σ lo (midCand lo hi h).castSucc)
+        ≤ Nat.clog 2 ((hi.val - lo.val) / 2 + 1) := by
+      have := ih1
+      rwa [hA] at this
+    have step2 : depth (insertSearch σ ⟨midVal lo hi + 1, midVal_succ_lt h⟩ hi)
+        ≤ Nat.clog 2 ((hi.val - lo.val) / 2 + 1) := by
+      have := ih2
+      rw [hB] at this
+      refine le_trans this (Nat.clog_mono_right 2 (by omega))
+    calc 1 + max (depth (insertSearch σ lo (midCand lo hi h).castSucc))
+            (depth (insertSearch σ ⟨midVal lo hi + 1, midVal_succ_lt h⟩ hi))
+        ≤ 1 + Nat.clog 2 ((hi.val - lo.val) / 2 + 1) := by
+          have : max _ _ ≤ Nat.clog 2 ((hi.val - lo.val) / 2 + 1) := max_le step1 step2
+          omega
+      _ ≤ Nat.clog 2 (hi.val - lo.val + 1) := one_add_clog_half_le hlen
+  | case2 lo hi h =>
+    rw [insertSearch_eq_leaf σ h]
+    simp [depth]
+
+/-- **Depth of the insertion tree**: binary search on `n` candidates, plus the leaf,
+costs at most `⌈log₂ (n+1)⌉ + 1` comparisons. -/
+theorem insertTree_depth_le {n : ℕ} (σ : Equiv.Perm (Fin n)) :
+    depth (insertTree σ) ≤ Nat.clog 2 (n + 1) + 1 := by
+  show depth (insertSearch σ 0 (Fin.last n)) ≤ Nat.clog 2 (n + 1) + 1
+  have h := insertSearch_depth_le σ (0 : Fin (n + 1)) (Fin.last n)
+  simp only [Fin.val_zero, Fin.val_last, Nat.sub_zero] at h
+  omega
+
+/-! ### M2: the whole sort tree
+
+`sortTree (n+2)` runs the `n+1`-tree on the prefix (via `liftTree`) and then, at the
+leaf holding the prefix order `σ`, the insertion tree for the new element. -/
+
+/-- The whole sort tree, by iterating `liftTree` (`Comparison/Bridge.lean`). -/
+noncomputable def sortTree : (n : ℕ) → Tree n
+  | 0 => Tree.leaf 1
+  | 1 => Tree.leaf 1
+  | n + 2 => liftTree (sortTree (n + 1)) fun σ => insertTree σ
+
+/-- **The sort tree is correct** (induction on `n` through `liftTree`). -/
+theorem sortTree_correct : (n : ℕ) → Correct (α := ℕ) (sortTree n)
+  | 0 => by
+    intro x _ a _
+    exact a.elim0
+  | 1 => by
+    intro x _ a b hab
+    have ha := a.isLt
+    have hb := b.isLt
+    omega
+  | n + 2 =>
+    liftTree_correct (sortTree_correct (n + 1))
+      fun σ x _ hmono => insertTree_correct σ (by assumption) hmono
+
+/-- **The depth bound**: sorting `n` elements takes at most `n·(⌈log₂ n⌉+1)`
+comparisons — the `n` insertion searches of `⌈log₂ n⌉` steps each. -/
+theorem sortTree_depth_le : (n : ℕ) → depth (sortTree n) ≤ n * (Nat.clog 2 n + 1)
+  | 0 => by simp [sortTree, depth]
+  | 1 => by simp [sortTree, depth]
+  | n + 2 => by
+    have ih := sortTree_depth_le (n + 1)
+    have step := depth_liftTree_le (sortTree (n + 1)) (fun σ => insertTree σ)
+      (Nat.clog 2 (n + 2) + 1) (fun σ => insertTree_depth_le σ)
+    have hmono : Nat.clog 2 (n + 1) ≤ Nat.clog 2 (n + 2) := Nat.clog_mono_right 2 (by omega)
+    show depth (liftTree (sortTree (n + 1)) fun σ => insertTree σ) ≤ (n + 2) * (Nat.clog 2 (n + 2) + 1)
+    calc depth (liftTree (sortTree (n + 1)) fun σ => insertTree σ)
+        ≤ depth (sortTree (n + 1)) + (Nat.clog 2 (n + 2) + 1) := step
+      _ ≤ (n + 1) * (Nat.clog 2 (n + 1) + 1) + (Nat.clog 2 (n + 2) + 1) := by
+          exact Nat.add_le_add_right ih _
+      _ ≤ (n + 1) * (Nat.clog 2 (n + 2) + 1) + (Nat.clog 2 (n + 2) + 1) := by
+          have := Nat.mul_le_mul_left (n + 1) (Nat.add_le_add_right hmono 1)
+          exact Nat.add_le_add_right this _
+      _ = (n + 2) * (Nat.clog 2 (n + 2) + 1) := by ring
+
+/-! ### M3: the upper bound on `S n`
+
+`S n` (`Projects/SN/Basic.lean`) is the least depth of a correct comparison tree on
+`n` positions; `sortTree n` is one, of depth `n·(⌈log₂ n⌉+1)`.  Together with
+`SN.S_lower` (`⌈log₂ n!⌉ ≤ S n`) this pins the optimal worst case to `Θ(n log n)`
+with every step inside the `Tree` model. -/
+
+/-- **An explicit correct tree of depth `n·(⌈log₂ n⌉+1)`.** -/
+theorem exists_correct_tree_depth (n : ℕ) :
+    ∃ t : Tree n, Correct (α := ℕ) t ∧ depth t ≤ n * (Nat.clog 2 n + 1) :=
+  ⟨sortTree n, sortTree_correct n, sortTree_depth_le n⟩
+
+/-- **`S n ≤ n·(⌈log₂ n⌉+1)`**: the optimal depth is at most what insertion by
+binary search achieves. -/
+theorem S_le (n : ℕ) : SortBounds.Projects.SN.S n ≤ n * (Nat.clog 2 n + 1) :=
+  (SortBounds.Projects.SN.S_le_iff n _).2 (exists_correct_tree_depth n)
+
+/-- **`Θ(n log n)` inside the `Tree` model alone**: counting gives
+`⌈log₂ n!⌉ ≤ S n`, and the sort tree gives `S n ≤ n·(⌈log₂ n⌉+1)`. -/
+theorem S_sandwich (n : ℕ) :
+    Nat.clog 2 (Nat.factorial n) ≤ SortBounds.Projects.SN.S n ∧
+      SortBounds.Projects.SN.S n ≤ n * (Nat.clog 2 n + 1) :=
+  ⟨SortBounds.Projects.SN.S_lower n, S_le n⟩
+
 end SortBounds.Projects.SortTree

@@ -157,9 +157,11 @@ non-vacuity witnesses).
    answer to "does structure buy speed, or is `n log n` inescapable?".
    `log_b U` probes are necessary and `⌈log_b U⌉` suffice, so for `U = n^{O(1)}` and
    `b = n` integer sorting needs `O(1)` passes versus `Ω(n log n)` comparisons.
-2. **`BenOr` M1**: the distinctness set has `n!` connected components — the
-   topological ingredient of Ben-Or's bound.  Real algebraic geometry; the model and
-   the statement are already there, so this is the honest next rung.
+2. **`BenOr` M1** (*running*): the distinctness set has `n!` connected components — the
+   topological ingredient of Ben-Or's bound.  **No algebraic geometry needed**: the set
+   is a disjoint union of `n!` open convex *sectors* (one per ordering), so each sector is
+   clopen in the subspace and hence exactly one connected component.  Route and edge cases
+   are in the lane README.
 3. **`XY` M2**: Fredman's `O(n²)` comparison scheme for `X+Y` (statement first, with
    citation; the algorithm is a research paper).
 4. **`SAIS`**: the `P2` from review — `saRank` is `O(n)` per lookup, so `kasai` is

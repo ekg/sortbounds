@@ -43,6 +43,7 @@ in the main results (see [`#print axioms`](#axioms)).
 | `Projects.FordJohnson.fjCountJ_table` | `F(4..11) = 5,7,10,13,16,19,22,26`, i.e. `⌈log₂ n!⌉` at each; `fjCountJ_attains` says the count is attained by an explicit input |
 | `Projects.SN.S_four` … `S_seven` | `S 4 = 5, S 5 = 7, S 6 = 10, S 7 = 13` by explicit kernel-checked trees — an independent route to the same values; `four_needs_five_comparisons` etc. give the comparison-count reading |
 | `Projects.FjTree.fjCountJ_not_attained` | where the counting bound stops being tight: `fjCountJ 12 = 30 > 29 = ⌈log₂ 12!⌉`, `fjCountJ 22 = 71 > 70` |
+| `Projects.FjTree.S_twelve_le` / `S_twenty_two_le` | **30 comparisons suffice for 12 elements** (Wells 1965) and **71 suffice for 22** (Peczarski), from FJA's tree; the literature's exact values `S 12 = 30`, `S 22 = 71` differ from what is proved here only in the lower bound |
 | **open lanes (what is *not* proved)** | |
 | `Projects.SN.S_twelve` (`S 12 = 30`) | open, and **not reachable by counting**: `12! < 2^29`, so any `L ≤ 2^d` is a tree of depth `≤ d` and leaf counting gives only `⌈log₂ 12!⌉ = 29`.  The known proofs are pruned searches (Wells 1971; Peczarski 2004) |
 | `Projects.BenOr.exists_decidesReal_distinct` | an algebraic decision tree of degree `n(n-1)` decides element distinctness — Ben-Or's *bound* is stated, not proved |

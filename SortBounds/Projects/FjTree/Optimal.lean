@@ -82,4 +82,20 @@ theorem S_eq_of_fjCountJ_eq (n : ℕ) (h : fjCountJ n = Nat.clog 2 (Nat.factoria
     SN.S n = Nat.clog 2 (Nat.factorial n) :=
   le_antisymm (h ▸ S_le_fjCountJ n) (SN.S_lower n)
 
+/-- **Wells' 1965 construction, machine-checked**: 30 comparisons suffice to sort 12
+elements (`S 12 ≤ 30`), while counting gives only `S 12 ≥ ⌈log₂ 12!⌉ = 29`.  So the
+literature's `S 12 = 30` differs from what is proved here *only* in the lower bound. -/
+theorem S_twelve_le : SN.S 12 ≤ 30 := by
+  have h := S_le_fjCountJ 12
+  have h30 : fjCountJ 12 = 30 := fjCountJ_not_attained.1
+  omega
+
+/-- **Peczarski's exact value at `n = 22` as a machine-checked upper bound**:
+`S 22 ≤ 71`, while counting gives `S 22 ≥ ⌈log₂ 22!⌉ = 70`.  Again the gap to the
+literature's `S 22 = 71` is exactly the lower bound. -/
+theorem S_twenty_two_le : SN.S 22 ≤ 71 := by
+  have h := S_le_fjCountJ 22
+  have h71 : fjCountJ 22 = 71 := fjCountJ_not_attained.2.2.1
+  omega
+
 end SortBounds.Projects.FjTree

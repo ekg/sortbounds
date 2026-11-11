@@ -37,7 +37,7 @@ namespace SortBounds.Projects.FjTree
 open SortBounds
 open SortBounds.Projects.FordJohnson (jac jacPred jac_pos le_jac jacPred_succ jacInsertCost
   jacInsertCostAux fjCountJ fjCountJ_eq_zero fjCountJ_le_recurrence attainVal attainT
-  jacBatchOf_eq_of_mem attainVal_lt clog_half_eq)
+  jacBatchOf jacBatchOf_eq_of_mem attainVal_lt clog_half_eq)
 
 variable {n : ℕ}
 
@@ -94,7 +94,7 @@ theorem binIns_cost : ∀ (fuel lo hi c q : ℕ) (hqn : q < n) (hcq : c ≤ q) (
     Function.Injective x → ChainSorted x σ c → rankAt x σ c ⟨q, hqn⟩ = lo →
     cost (binIns fuel lo hi c q hqn hcq hhi σ next) x
       = Nat.clog 2 (hi - lo + 1) + cost (next (insertAt lo q hjq hqn σ)) x
-  | 0, lo, hi, c, q, hqn, hcq, hhi, hm, hle, hjq, σ, next, x, hx, hchain, hrank => by
+  | 0, lo, hi, c, q, hqn, hcq, hhi, _hm, _hle, hjq, σ, next, x, hx, hchain, hrank => by
     simp only [binIns]
     obtain rfl : hi = lo := by omega
     rw [Nat.sub_self, Nat.clog_one_right, Nat.zero_add]
@@ -123,11 +123,89 @@ theorem binIns_cost : ∀ (fuel lo hi c q : ℕ) (hqn : q < n) (hcq : c ≤ q) (
       have hIH := binIns_cost fuel lo (midOf lo hi) c q hqn hcq (le_of_lt hmidc) (by omega)
         (le_midOf lo hi) hjq σ next x hx hchain hrank
       have hlog : Nat.clog 2 (hi - lo + 1) = Nat.clog 2 (midOf lo hi - lo + 1) + 1 := by
-        have h5 := clog_half_eq (hi - lo) (by omega)
-        have h6 : midOf lo hi - lo + 1 = (hi - lo) / 2 + 1 := half_eq h
-        omega
+        rw [half_eq h]
+        exact clog_half_eq (hi - lo) (by omega)
       rw [hIH, hlog]
-      trace_state
-      omega
+      ac_rfl
     · obtain rfl : hi = lo := by omega
       rw [Nat.sub_self, Nat.clog_one_right, Nat.zero_add]
+
+/-! ### The arrangement of the insertion phase
+
+The insertion phase of `fjTree` walks the pending items in Jacobsthal order.  To count *exactly*
+what it spends we have to know not only that its chain is sorted (which is
+`Correct.Invar`) but *which value sits in every slot*: the item must be below its whole
+window.  `slotVal` is that bookkeeping. -/
+
+/-- The rank of the item sitting in the `r`-th slot of the pending block at batch `k`,
+position `p`: the batch inserts its items in *decreasing* rank order, so the ranks still
+pending are `jacLo … jacHi-1-p` in increasing order, followed by the ranks of the later
+batches.  It is the number of items below that item. -/
+def tailRank (M k p r : ℕ) : ℕ :=
+  if r + p < cntB M k then jacLo M k + r else jacHi M k + (r + p - cntB M k)
+
+/-- **The value expected in slot `s` of the arrangement** at batch `k`, position `p`: the
+`jacLo + p` items already inserted (newest, hence smallest, first), the `m` sorted winners in
+the middle, and the pending items of the batch and the later ones at the end. -/
+noncomputable def slotVal (m M k p s : ℕ) : ℕ :=
+  if s < jacLo M k + p then M - (jacLo M k + p) + s
+  else if s < chainLen m M k p then M + (s - (jacLo M k + p))
+  else attainVal M 0 (tailRank M k p (s - chainLen m M k p))
+
+/-- **The arrangement of the insertion phase at batch `k`, position `p`**: the value of *every*
+slot is pinned by `slotVal`. -/
+def Arranged (x : Fin n → ℕ) (m M k p : ℕ) (σ : Equiv.Perm (Fin n)) : Prop :=
+  ∀ s : Fin n, x (σ s) = slotVal m M k p s.val
+
+theorem cntB_pos (M k p : ℕ) (hp : p < cntB M k) : 1 ≤ cntB M k := by omega
+
+theorem jacLo_add_p_lt_jacHi (M k p : ℕ) (hp : p < cntB M k) : jacLo M k + p < jacHi M k := by
+  have h := jacLo_le_jacHi M k
+  simp only [cntB] at hp
+  omega
+
+theorem jacLo_add_p_le (M k p : ℕ) (hp : p < cntB M k) : jacLo M k + p < M := by
+  have h1 := jacLo_add_p_lt_jacHi M k p hp
+  have h2 := jacHi_le M k
+  omega
+
+theorem jacLo_add_p_le_chainLen (m M k p : ℕ) : jacLo M k + p ≤ chainLen m M k p := by
+  simp only [chainLen]
+  omega
+
+/-- **The value of an item of a known rank**, from the Jacobsthal schedule: the rank `j` of
+batch `k` is inserted when `jacLo + jacHi - 1 - j` items are already in. -/
+theorem attainVal_of_mem {M k j : ℕ} (h1 : jacLo M k ≤ j) (h2 : j < jacHi M k) :
+    attainVal M 0 j = M - 1 - (jacLo M k + jacHi M k - 1 - j) := by
+  have hb : jacBatchOf j = k := jacBatchOf_eq_of_mem h1 h2
+  simp only [attainVal, attainT, hb, Nat.zero_add]
+
+/-- The item sitting in the batch's item slot is the one being inserted. -/
+theorem tailRank_itemSlot (M k p : ℕ) (hp : p < cntB M k) :
+    tailRank M k p (itemSlot m M k - chainLen m M k p) = jacHi M k - 1 - p := by
+  have hle := jacLo_le_jacHi M k
+  have h1 : itemSlot m M k - chainLen m M k p = cntB M k - 1 - p := by
+    simp only [itemSlot, chainLen, cntB]
+    omega
+  have h2 : cntB M k - 1 - p + p < cntB M k := by omega
+  rw [h1, tailRank, ite_eq_left h2]
+  omega
+
+/-- **The value in the item slot** is the value of the item about to be inserted: the
+`(jacLo+p)`-th insertion of the phase. -/
+theorem slotVal_itemSlot {m M k p : ℕ} (hp : p < cntB M k) :
+    slotVal m M k p (itemSlot m M k) = M - 1 - (jacLo M k + p) := by
+  have h1 := jacLo_add_p_lt_jacHi M k p hp
+  have h2 := jacLo_add_p_le_chainLen m M k p
+  have h3 : ¬ itemSlot m M k < jacLo M k + p := by
+    simp only [itemSlot, chainLen, cntB] at h1 h2 ⊢
+    omega
+  have h4 : ¬ itemSlot m M k < chainLen m M k p := by
+    simp only [itemSlot, chainLen, cntB] at h1 h2 ⊢
+    omega
+  rw [slotVal, if_neg h3, if_neg h4, tailRank_itemSlot M k p hp, attainVal_of_mem
+    (by omega : jacLo M k ≤ jacHi M k - 1 - p) h1]
+  have h5 := jacLo_le_jacHi M k
+  have h6 := jacHi_pos M k
+  simp only [chainLen]
+  omega

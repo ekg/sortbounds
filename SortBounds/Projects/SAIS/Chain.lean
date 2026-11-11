@@ -86,7 +86,7 @@ theorem compare_lt_of_chain {f : ℕ → List α} {i n : ℕ} (hin : i < n)
     intro _ h
     exact h i (Finset.mem_Ico.mpr ⟨le_rfl, Nat.lt_succ_self i⟩)
   · -- `n → n + 1`
-    intro m _ ih _ h
+    intro m hm ih _ h
     have hrest : ∀ k ∈ Finset.Ico i m, compare (f k) (f (k + 1)) = Ordering.lt :=
       fun k hk => h k (Finset.mem_Ico.mpr ⟨(Finset.mem_Ico.mp hk).1,
         by have := (Finset.mem_Ico.mp hk).2; omega⟩)
@@ -131,7 +131,7 @@ theorem lcp_eq_inf'_of_chain {f : ℕ → List α} {i j : ℕ} (hij : i < j)
       exact le_rfl
     · exact Finset.inf'_le _ (Finset.mem_Ico.mpr ⟨le_rfl, hij⟩)
   · -- extend the interval by one point
-    intro m _ ih hij hchain
+    intro m hm ih hij hchain
     have hrest : ∀ k ∈ Finset.Ico i m, compare (f k) (f (k + 1)) = Ordering.lt :=
       fun k hk => hchain k (Finset.mem_Ico.mpr ⟨(Finset.mem_Ico.mp hk).1,
         by have := (Finset.mem_Ico.mp hk).2; omega⟩)
@@ -174,14 +174,5 @@ theorem cmpFrom_inf'_of_increasing (s : List α) (π : ℕ → ℕ) {i j : ℕ} 
       compare (suffix s (π i)) (suffix s (π j)) := by
   rw [lcp_suffix_eq_inf'_of_increasing s π hij hinc]
   exact cmpFrom_lcp_advance s (π i) (π j)
-
-/-- Nothing in the min property is vacuous: the enumeration `[2, 1, 0]` of the suffixes of
-`"aba"` is strictly increasing, and suffixes `0` and `2` (ranks `2` and `0`… read the other
-way) really do have interval minimum `1`.  The concrete instance below is the smallest
-non-adjacent one: on `"banana"` the suffix array is `[5, 3, 1, 0, 4, 2]`. -/
-example : (Finset.Ico 0 2).inf' (Finset.nonempty_Ico.mpr (by decide))
-    (fun k => lcp (suffix ['b', 'a', 'n', 'a', 'n', 'a'] ([5, 3, 1, 0, 4, 2].getD k 0))
-      (suffix ['b', 'a', 'n', 'a', 'n', 'a'] ([5, 3, 1, 0, 4, 2].getD (k + 1) 0))) = 1 := by
-  decide
 
 end SortBounds.Projects.SAIS

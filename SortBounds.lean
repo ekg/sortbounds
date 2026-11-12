@@ -15,6 +15,9 @@ import SortBounds.Projects.BestCase.Main
 import SortBounds.Projects.BestCase.Sharp
 import SortBounds.Projects.BestCase.General
 import SortBounds.Projects.Repetitiveness.Count
+import SortBounds.Projects.Repetitiveness.Measures
+import SortBounds.Projects.Repetitiveness.Certify
+import SortBounds.Projects.Repetitiveness.Greedy
 import SortBounds.Instances.Radix
 import SortBounds.Instances.MergeSort
 import SortBounds.Instances.Network

@@ -53,6 +53,7 @@ in the main results (see [`#print axioms`](#axioms)).
 | `Projects.Repetitiveness.distinctFactors_card_le_mul_attractor` | for any string attractor `Γ`, at most `k·|Γ|` distinct factors of length `k` — KNP Lemma II.4's counting core |
 | `Projects.Repetitiveness.substringComplexity_le_minAttractorSize` | hence **`δ ≤ γ`** (`δ = max_k d_k/k`, `γ` = minimum attractor size), machine-checked |
 | `Projects.Repetitiveness.distinctFactors_card_le_mul_slp` / `substringComplexity_le_slp` | the same counting with a grammar: `δ ≤ g` for an SLP of size `g` |
+| **`Projects.Repetitiveness.delta_le_greedyAttractor_card`** | **the certification system**: `δ` computable exactly, a *computable* attractor `greedyAttractor` whose validity is proved (`greedyAttractor_isAttractor`) and which the `O(n)` verifier `checkAttractor` can check — so `[δ, |Γ|]` is a *proved* interval on the smallest attractor, without solving the NP-hard search |
 | **the topological ingredient** | |
 | **`Projects.BenOr.numComponents_distinctSet`** | **the distinctness set has exactly `n!` connected components** (`componentsEquivPerm`) — what Ben-Or's bound consumes; the bound itself (components ⇒ height, Milnor–Thom) is still a statement, not a proof |
 | **open lanes (what is *not* proved)** | |

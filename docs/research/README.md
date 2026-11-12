@@ -31,6 +31,21 @@ Given a space budget, how fast can queries be, and what is the trade-off frontie
 * `time-5-practice.md` — where the time actually goes (Move-r, MONI, construction cost,
   constants that the asymptotics hide).
 
+## Status
+
+| file | thread | state |
+| --- | --- | --- |
+| `space.md` | S | done — hierarchy, separations, δ-optimal space, σ term, lower bounds |
+| `time-1-query-times.md` | T | done — exact `O(r)` bounds (OptBWTR Thm 9), and it *falsified* an `O(m)`-count claim |
+| `time-2-tradeoffs.md` | T | done — 11 knobs, frontier table, and it *corrected* `O(r+n/s)` (rlfm, not r-index) and the role of `s` |
+| `time-3-lower-bounds.md` | T | done — Demaine–López-Ortiz, Gál–Miltersen gap, no `r`-space bound |
+| `time-4-grammar-attractor.md` | T | done — `O(γ log(n/γ))` and δ-optimal times, plus matching δ-space lower bounds for SA/LF/Φ |
+| `time-5-practice.md` | T | done — measured numbers (13.1 MiB / 629 MB DNA; construction dominates) |
+| `SYNTHESIS.md` | both | the answer, with corrections to what the supervisor had asserted |
+
+Five of the six briefs corrected either a claim of mine or a claim of a sibling. That is
+the point of the arrangement: the briefs are evidence, the synthesis is judgement.
+
 ## Why this belongs next to a sorting-lower-bounds repository
 
 The `sortbounds` development is about **time** lower bounds in a decision model

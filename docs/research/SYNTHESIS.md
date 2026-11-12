@@ -19,8 +19,11 @@ unproven in that direction either way.**
   `r/δ = Θ(log n log log n)` (at `δ = n^ε`).
 * So an `O(r)`-space index can be a `Θ(log n log log n)` factor larger than necessary.
   The r-index is **not** space-optimal, and `r` is not a proxy for `δ`.
-* Hierarchy (Kempa–Prezza Thm 3.5–3.9): `γ ≤ min(z, r, g, c, b, e)` — in particular
-  "T has an attractor of size r", so `δ ≤ r` always.
+* Hierarchy: the **proved chain is `δ ≤ γ ≤ b ≤ c ≤ z ≤ g_rl ≤ g`** (KNP §VI), plus
+  `δ ≤ r` ("T has an attractor of size r", Kempa–Prezza Thm 3.9).  Note `γ ≤ r` is
+  **not** part of the proved chain — `γ = O(min(b,c,z,z_no,r,g_rl,g))` holds only up to
+  constants (Kempa–Prezza, quoted in Navarro's survey §3.9).  So "*`δ ≤ γ ≤ r`*" is
+  **not** a theorem, and `r` and `γ` are not ordered by a proved inequality.
 
 ### `δ` is the floor, and `σ` is not an order
 
@@ -69,6 +72,8 @@ unproven in that direction either way.**
 | `O(r)` (OptBWTR, NT'21 Thm 9) | `O(m log log_w σ)` | `O(m log log_w σ + occ)` | PROVED |
 | `O(r log(n/r))` (GNP Thm 9 + Thm 3) | **`O(m)`** | **`O(m+occ)`** | PROVED |
 | `O(δ log(n log σ/(δ log n)))` (KNO'24) | `O(m + log^{2+ε} n)` | `O(m + (occ+1) log^ε n)` | PROVED |
+| same, + `log^ε n` space | — | `O(m+occ)` | PROVED |
+| same, + `log n` space | `O(m)` | — | PROVED |
 
 **Correction to an earlier draft of this file** (and to what I had said verbally): at
 `O(r)` space there is **no unconditional `O(m)` count**. OptBWTR gives
@@ -84,6 +89,17 @@ large-space end, so "compressed versus fast" is not the dichotomy it sounds like
 `O(m)` count" from GNP; `time-1` ties the unconditional `O(m)` row to `O(r log(n/r))`
 words. `log log_w(σ+n/r) ≤ log(n/r)`, so the first is the stronger claim; we use the
 second (primary, GNP Thm 9/Thm 3) and mark the first UNVERIFIED pending the paper text.
+
+### And the δ-space *lower* bounds now match (for everything except count/locate)
+
+Kempa–Kociumaka (SODA 2026, per `time-4`): in `O(δ log^{O(1)} n)` space,
+`Ω(log n / log log n)` for the suffix-array family and `Ω(log log n)` for
+BWT/LF/Φ, **matching upper bounds**.  So for those operations the δ-space story is
+*closed*; only pattern-matching **count/locate** in optimal time within δ-optimal space
+remains open (quoted verbatim from KNO's conclusions).
+
+The small-space end in one line: nothing is known at `O(γ)` itself — the reachable space
+is `O(γ log(n/γ))`, and whether `o(γ log n)` is always achievable is **open** (KNP §VII).
 
 ### How to get faster, concretely
 

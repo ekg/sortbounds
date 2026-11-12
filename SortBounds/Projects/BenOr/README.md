@@ -128,6 +128,8 @@ theorem componentsEquivPerm_mk {σ} {x} (hx : x ∈ sectorIn σ) :
     componentsEquivPerm n (ConnectedComponents.mk x) = σ                        -- PROVED
 theorem numComponents_distinctSet (n : ℕ) :
     Nat.card (ConnectedComponents ↥(distinctSet n)) = Nat.factorial n           -- PROVED
+theorem numComponents_distinctSet_four :
+    Nat.card (ConnectedComponents ↥(distinctSet 4)) = 24                        -- PROVED
 
 theorem forall_elementDistinctComponents : ∀ n : ℕ, elementDistinctComponents n -- PROVED
 theorem benOrBound_benOrDistinctness (h : BenOrBound) :

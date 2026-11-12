@@ -25,7 +25,7 @@ other models"** — every open lane is about a model where the answer changes.
 | `FordJohnson` | exact comparison counts, upper bound | `fjCountJ_table` (`F(4..11) = 5,7,10,13,16,19,22,26`), `fjCountJ_eq_sum`, **`fjCountJ_attains`** (the count is *attained*) | **M2/M3/M4 DONE** | list→`Tree` transfer (lane `FjTree`) |
 | `SN` | exact `S(n)`, explicit trees | `S 0..7` (**`S 4=5, S 5=7, S 6=10, S 7=13`**), each in both readings | **M2 for n ≤ 7** | `S 12 = 30` open |
 | `XY` | sorting `X+Y` | `pairSums`, `pairSums_card_le`, `naivePairsSorted_*` | **M1 DONE** | M2 gated |
-| `BenOr` | algebraic decision trees | `ADT`, `decides`, `ADT.card_cells_le`, `BenOrBound` (statement), `exists_decidesReal_distinct` | **M0 DONE** (semantics now witnessed) | M1+ gated |
+| `BenOr` | algebraic decision trees | model, `exists_decidesReal_distinct`, **`numComponents_distinctSet` (`= n!`)** | **M1 DONE** | Milnor–Thom step (components ⇒ height) |
 | `FjTree` | FJA's decision tree | **`S_eq_clog`**: `S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`, `S_eq_clog_large` for `20, 21` | **DONE** | — |
 | `SortTree` | `Θ` inside one model | **`S_sandwich`**: `⌈log₂ n!⌉ ≤ S n ≤ n(⌈log₂ n⌉+1)` | **DONE** | — |
 | `SAIS` | suffix arrays, cost model | `kasai_cost_le` (`≤ 2n`, build the LCP array), `checkOn_computed_cost` (`n − 1`, verify against the *computed* array) | `inf'_lcpAt_le_lcp` (text-order skip), `lcp_suffix_eq_inf'_of_increasing` (the real min property, along a sorted chain), `verify_linear_time` (`n-1` inspections to verify a suffix array) | **M1 DONE** | sorting in `O(n log n)` inspections not formalised |
@@ -162,11 +162,15 @@ non-vacuity witnesses).
    `b = n` integer sorting needs `O(1)` passes versus `Ω(n log n)` comparisons.  The
    model's one loophole — encoding the key in *which* digit is read — is closed by the
    `hfiber` hypothesis on values only; review is auditing exactly that.
-2. **`BenOr` M1** (*running*): the distinctness set has `n!` connected components — the
-   topological ingredient of Ben-Or's bound.  **No algebraic geometry needed**: the set
-   is a disjoint union of `n!` open convex *sectors* (one per ordering), so each sector is
-   clopen in the subspace and hence exactly one connected component.  Route and edge cases
-   are in the lane README.
+2. ~~**`BenOr` M1**~~ **DONE**: `numComponents_distinctSet : Nat.card (ConnectedComponents
+   ↥(distinctSet n)) = n!`, with an explicit `componentsEquivPerm : ConnectedComponents
+   ↥(distinctSet n) ≃ Equiv.Perm (Fin n)`.  **No algebraic geometry needed**: the
+   distinctness set is a disjoint union of `n!` open convex *sectors* (one per ordering),
+   so in the subspace each sector is clopen (complement = the other open sectors) and
+   connected (continuous image of a convex set), hence exactly one component.
+   `benOrBound_benOrDistinctness` now supplies the component count that Ben-Or's bound
+   consumes.  What remains for the bound itself is the Milnor–Thom step (components ⇒
+   height), which is still a `Prop` statement, not a proof.
 3. **`XY` M2**: Fredman's `O(n²)` comparison scheme for `X+Y` (statement first, with
    citation; the algorithm is a research paper).
 4. **`SAIS`**: the `P2` from review — `saRank` is `O(n)` per lookup, so `kasai` is

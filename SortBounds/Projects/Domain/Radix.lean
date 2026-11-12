@@ -182,7 +182,7 @@ theorem radix_passes (d n b : ℕ) :
 /-- `Key 2 10` is the `100` two-digit decimal keys. -/
 example : Fintype.card (Key 2 10) = 100 := by norm_num [card_Key]
 
-/-- Base-`10` digests: `[3, 1]` spells `31`, digit `0` least significant. -/
+/-- Base-`10` digests with digit `0` least significant: `[3, 1]` is `3·10^0 + 1·10^1 = 13`. -/
 example : digitsVal (fun i : Fin 2 => if i.val = 0 then (3 : Fin 10) else 1) = 13 := by
   rw [digitsVal, Fin.sum_univ_two]
   norm_num

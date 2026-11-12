@@ -38,7 +38,7 @@ in the main results (see [`#print axioms`](#axioms)).
 | `Instances.sortsAll_of_sorts_zeroOne` | the 0-1 principle, stated over `Fin n → Fin 2` so it is **decidable** |
 | `Instances.netTree_correct` | a verified network yields a correct `Tree n` of depth = #comparators |
 | `Instances.radixSort_sorted` / `radixSort_perm` / `radixSort_keys_congr` | radix sort is correct, and its output depends only on the key vectors — hence zero element comparisons |
-| **`Projects.Domain.probes_tight`** | **`log_b U` probes are necessary and `d = log_b U` suffice** for `b`-ary digit access on a domain of `b^d` keys — structure buys speed, and radix attains the bound *exactly* |
+| **`Projects.Domain.probes_tight`** | **`log_b U` probes are necessary and `d = log_b U` suffice** for `b`-ary digit access on a domain of `b^d` keys — structure buys speed, and radix attains the bound *exactly*. (Model: a per-key digest plan, `KeyProc`; a general list algorithm over an array is **not** covered) |
 | `Projects.Domain.wordram_probes` | with `w`-bit words: `n` word reads necessary and sufficient for `n` digits, and `log_{2^w}(b^d) = d` |
 | **exact comparison counts** | |
 | **`Projects.FjTree.S_eq_clog`** | **`S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`** — merge-insertion verified optimal; `S_eq_clog_large` the same for `n = 20, 21`; `S_pin` pins `S n` to within one for every `n ≤ 22` |

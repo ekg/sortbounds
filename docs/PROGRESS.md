@@ -158,10 +158,18 @@ non-vacuity witnesses).
    sufficient for `n` digits), and the contrast `radix_cost_le_comparison_cost`: the bound becomes
    `log_b U` instead of `log₂ n!`, and radix attains it exactly — the quantitative
    answer to "does structure buy speed, or is `n log n` inescapable?".
-   `log_b U` probes are necessary and `⌈log_b U⌉` suffice, so for `U = n^{O(1)}` and
-   `b = n` integer sorting needs `O(1)` passes versus `Ω(n log n)` comparisons.  The
-   model's one loophole — encoding the key in *which* digit is read — is closed by the
-   `hfiber` hypothesis on values only; review is auditing exactly that.
+   **Scope, stated precisely** (review finding): for a *per-key digest plan*
+   (`KeyProc`: `p` digit reads per key, each position chosen from the values already
+   read, digest a function of those values), `2 ≤ b` and `p < d` ⇒ no plan separates the
+   `b^d` keys; `radixProc` attains `d = log_b U`.  So in the probe currency `U = b^d`,
+   `b = n` costs `O(1)` reads per key against `Ω(n log n)` comparisons
+   (`exists_input_cost_ge_quarter`).  Radix's *list* cost is the separate definition
+   `radixCost d n b = d·(n+b)`, not an operation count extracted from `radixSort`.
+   The loophole — encoding the key in *which* digit is read — is closed by the type of
+   `next` (it can only consult observed values), and `card_le_pow_probes`'s fibre
+   hypothesis is *proved* from digest injectivity (`Lower.lean:108`).  **Not covered:**
+   a general *list* algorithm (sorting by integer `O(1)`-time reads over an array) —
+   that is the follow-up, with `exists_obs_eq_of_lt` as the adversary skeleton.
 2. ~~**`BenOr` M1**~~ **DONE**: `numComponents_distinctSet : Nat.card (ConnectedComponents
    ↥(distinctSet n)) = n!`, with an explicit `componentsEquivPerm : ConnectedComponents
    ↥(distinctSet n) ≃ Equiv.Perm (Fin n)`.  **No algebraic geometry needed**: the

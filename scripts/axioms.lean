@@ -97,6 +97,8 @@ open SortBounds
 #print axioms SortBounds.Projects.Domain.passes_lower
 #print axioms SortBounds.Projects.Domain.probes_tight
 #print axioms SortBounds.Projects.Domain.wordram_probes
+#print axioms SortBounds.Projects.Domain.radix_sorts_Key
+#print axioms SortBounds.Projects.Domain.radix_cost_le_comparison_cost
 #print axioms SortBounds.Projects.SAIS.sum_inspectCount_computed
 #print axioms SortBounds.Projects.FjTree.S_eq_of_fjCountJ_eq
 #print axioms SortBounds.Projects.SN.correct_of_allPerms

@@ -7,7 +7,7 @@ key* rather than compare it needs far fewer steps.  This lane makes that
 quantitative and shows the bound is **tight**: `log_b U` probes are necessary, and
 radix sort uses exactly `⌈log_b U⌉`.
 
-This is the formal answer to "are we proving there is no escape?". No: we prove
+This is the formal answer, **in this model** (per-key digest plans), to "are we proving there is no escape?". No: we prove
 exactly how much an escape costs — `log_b U` steps of `b`-way access — and that
 radix attains it. For `U = n^{O(1)}` and `b = n` that is `O(1)` passes, versus
 `Ω(n log n)` comparisons.

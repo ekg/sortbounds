@@ -61,7 +61,13 @@ That is not a paradox: the comparison bound charges *comparisons of keys*, and r
 none.  A comparison procedure is not a `p`-probe procedure in the sense of this lane — it reads the
 order of two positions, not the digits of a key, and it must separate the `N!` arrangements of the
 input rather than the `N ^ 2` keys (`Model.lean`, separation remark).  Hence no `log_b U` bound can
-be derived for it, and no comparison bound for the probe plan. -/
+be derived for it, and no comparison bound for the probe plan.
+
+**Units, stated plainly**: radix's side of the inequality is the *definition*
+`radixCost d n b = d · (n + b)`, not an operation count extracted from `radixSort`; the
+comparison side is `cost` on a `Tree`, and one comparison is here charged as at least one
+elementary operation.  `65536 = 2 ^ 16` is the exact crossover for the `N / 4` constant —
+i.e. `16 ≤ log₂ N` — not an asymptotic artefact. -/
 theorem radix_cost_le_comparison_cost (N : ℕ) (hN : 65536 ≤ N) {t : Tree N}
     (ht : Correct (α := ℕ) t) :
     ∃ x : Fin N → ℕ, Function.Injective x ∧ (radixCost 2 N N : ℝ) ≤ (cost t x : ℝ) := by

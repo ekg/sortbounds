@@ -93,6 +93,10 @@ open SortBounds
 #print axioms SortBounds.Projects.SAIS.build_then_verify
 #print axioms SortBounds.Projects.SAIS.checkOn_cost
 #print axioms SortBounds.Projects.SAIS.checkOn_computed_cost
+#print axioms SortBounds.Projects.Domain.card_le_pow_probes
+#print axioms SortBounds.Projects.Domain.passes_lower
+#print axioms SortBounds.Projects.Domain.probes_tight
+#print axioms SortBounds.Projects.Domain.wordram_probes
 #print axioms SortBounds.Projects.SAIS.sum_inspectCount_computed
 #print axioms SortBounds.Projects.FjTree.S_eq_of_fjCountJ_eq
 #print axioms SortBounds.Projects.SN.correct_of_allPerms

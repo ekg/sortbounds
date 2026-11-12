@@ -15,6 +15,10 @@ import SortBounds.Instances.Radix
 import SortBounds.Instances.MergeSort
 import SortBounds.Instances.Network
 import SortBounds.Instances.ZeroOne
+import SortBounds.Projects.Domain.Model
+import SortBounds.Projects.Domain.Lower
+import SortBounds.Projects.Domain.Radix
+import SortBounds.Projects.Domain.Contrast
 -- lanes
 import SortBounds.Projects.FordJohnson.Insertion
 import SortBounds.Projects.FordJohnson.MergeInsertion

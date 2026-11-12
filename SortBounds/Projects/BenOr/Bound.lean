@@ -9,7 +9,8 @@ proved.
 * `BenOrBound` — the same, for every fixed degree; this is "the statement of
   Ben-Or's bound", recorded as a `Prop` and deliberately not proved.
 * `elementDistinctComponents` (`SortBounds.Projects.BenOr.Components`) — the
-  component count `n!` that feeds the bound; also not proved.
+  component count `n!` that feeds the bound; proved in
+  `SortBounds.Projects.BenOr.Sectors` (`numComponents_distinctSet`).
 * `BenOrDistinctness d` — what one actually wants: `Ω(log n!)` for element
   distinctness at fixed degree.
 * `ElementDistinctHeightBound d` — the same bound as usually quoted,
@@ -18,9 +19,9 @@ proved.
   `elementDistinctHeightBound_of_benOrBound` — the *proved* steps
   `componentBound d + (n! components) ⇒ Ω(log n!) ⇒ Ω(n log n)`.
 
-So the only unproved inputs are the two algebraic-geometry statements; the
-model, the counting, the component bookkeeping, the Stirling arithmetic and the
-reductions are all checked.  Nothing here is a `sorry`.
+So the only unproved input left is Ben-Or's own bound; the model, the counting,
+the component count (`Sectors.lean`), the Stirling arithmetic and the reductions
+are all checked.  Nothing here is a `sorry`.
 -/
 import Mathlib
 import SortBounds.Comparison.Stirling
@@ -62,8 +63,10 @@ count of element distinctness and out comes the height bound:
 `componentBound d` + (`n!` components for every `n`) ⇒ `Ω(log n!)` for
 distinctness at degree `d`.
 
-The two hypotheses are exactly the unproved algebraic-geometry inputs; the step
-that turns components into a height bound is this theorem. -/
+The first hypothesis is Ben-Or's own unproved input; the second is a *theorem*
+since `SortBounds.Projects.BenOr.Sectors` (`forall_elementDistinctComponents`),
+so `Sectors.lean` restates this reduction with only `componentBound d` assumed.  The
+step that turns components into a height bound is this theorem. -/
 theorem componentBound_distinctness (d : ℕ) (hb : componentBound d)
     (hcomp : ∀ n : ℕ, elementDistinctComponents n) : BenOrDistinctness d := by
   obtain ⟨c, hc, hbound⟩ := hb
@@ -165,11 +168,14 @@ theorem benOrBound_distinctness (h : BenOrBound)
 /-- `BenOrBound`, i.e. the bound at every fixed degree, gives the element
 distinctness height bound at every fixed degree.
 
-**Everything except the two algebraic-geometry inputs is checked**: from
+**Everything except Ben-Or's topological bound itself is checked**: from
 `BenOrBound` (the topological method) and the component count `n!` of
 `elementDistinctComponents` follows `Ω(n log n)` tests for element distinctness
 at every fixed degree — the same conclusion the comparison model gives with
-`b = 2`, recovered from components rather than from branching. -/
+`b = 2`, recovered from components rather than from branching.  The component
+count is now a theorem, so `Sectors.lean`
+(`benOrBound_elementDistinctHeightBound`) states this with `BenOrBound` as the
+only hypothesis. -/
 theorem elementDistinctHeightBound_of_benOrBound (d : ℕ) (h : BenOrBound)
     (hcomp : ∀ n : ℕ, elementDistinctComponents n) : ElementDistinctHeightBound d :=
   elementDistinctHeightBound_of_distinctness d (componentBound_distinctness d (h d) hcomp)

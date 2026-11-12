@@ -12,13 +12,16 @@ real points by reading the coefficients through `ℚ ↪ ℝ`.  `ADT.run` / `ADT
 remain the rational semantics of the model; `ADT.runReal` / `ADT.decidesReal`
 below are the real semantics that the topology needs.
 
-The content of Ben-Or's method is then a single statement, recorded as a `Prop`
-and deliberately *not* proved here (it is real algebraic geometry):
+The content of Ben-Or's method is then a single statement, recorded here as the
+`Prop` `elementDistinctComponents` and **proved** in
+`SortBounds.Projects.BenOr.Sectors` (`numComponents_distinctSet`):
 
 > the set of real points with pairwise distinct coordinates has exactly `n!`
 > connected components — one per ordering of the coordinates.
 
-No `sorry`: an unproved target is stated as a `def … : Prop`.
+No `sorry`: an unproved target is stated as a `def … : Prop`.  (Of the lane's two
+remaining inputs only Ben-Or's own bound, `componentBound` in
+`SortBounds.Projects.BenOr.Bound`, is still unproved.)
 -/
 import Mathlib
 import SortBounds.Projects.BenOr.Basic
@@ -57,9 +60,9 @@ bounds).  `n!` components, one per ordering of the coordinates: on the region
 the region is convex, and two different regions are separated by the continuous
 function `x ↦ sign (x i - x j)`.
 
-Stated, not proved: this is semialgebraic geometry, out of scope for the lane's
-committed milestone.  `SortBounds.Projects.BenOr.Bound` derives Ben-Or's bound
-*from* this statement. -/
+Stated here and proved in `SortBounds.Projects.BenOr.Sectors`
+(`numComponents_distinctSet`), with the sectors `sector σ` as the components.
+`SortBounds.Projects.BenOr.Bound` derives Ben-Or's bound *from* this statement. -/
 def elementDistinctComponents (n : ℕ) : Prop :=
   numComponents (distinctSet n) = n.factorial
 

@@ -14,11 +14,11 @@ machine-checked it.
 ## Contract
 
 Everything below is *in the source today* and elaborated (`lake env lean` on each
-file; `Witness.lean` is new, so the integrator still has to import it into
-`SortBounds.lean`). The label says what is established about it: `PROVED` =
-there is a proof in this lane; `STATED-ONLY` = the signature is a definition
-whose *proposition* nothing here proves (it is stated, cited, and used as a
-hypothesis — never `sorry`-ed).
+file; `Witness.lean` and `Sectors.lean` are new, so the integrator still has to
+import them into `SortBounds.lean`). The label says what is established about it:
+`PROVED` = there is a proof in this lane; `STATED-ONLY` = the signature is a
+definition whose *proposition* nothing here proves (it is stated, cited, and used as
+a hypothesis — never `sorry`-ed).
 
 ```lean
 namespace SortBounds.Projects.BenOr
@@ -61,7 +61,7 @@ theorem numComponents_eq_one_of_isPreconnected {S : Set (Fin n → ℝ)}
     (hne : S.Nonempty) (hpre : IsPreconnected S) : numComponents S = 1         -- PROVED
 
 /-- `numComponents (distinctSet n) = n!` — `n!` orderings. -/
-def elementDistinctComponents (n : ℕ) : Prop                                   -- STATED-ONLY
+def elementDistinctComponents (n : ℕ) : Prop                                   -- PROVED (Sectors.lean)
 theorem elementDistinctComponents_zero : elementDistinctComponents 0           -- PROVED
 theorem elementDistinctComponents_one : elementDistinctComponents 1            -- PROVED
 
@@ -101,6 +101,40 @@ theorem leaf_not_decidesReal_distinct {n : ℕ} (hn : 2 ≤ n) (b : Bool) :
 theorem distinctnessTree_decides (n : ℕ) :
     (distinctnessTree n).decides {x : Fin n → ℚ | Function.Injective x}          -- PROVED
 
+/-! ---- M1, `Sectors.lean` (the component count, proved) ---- -/
+
+/-- The sector of a permutation: the points whose increasing order is `σ`. -/
+def sector (σ : Equiv.Perm (Fin n)) : Set (Fin n → ℝ)                          -- PROVED (def)
+theorem sector_convex (σ) : Convex ℝ (sector σ)                                 -- PROVED
+theorem sector_isOpen (σ) : IsOpen (sector σ)                                   -- PROVED
+theorem sector_eq_univ_of_le_one (hn : n ≤ 1) (σ) : sector σ = Set.univ        -- PROVED
+theorem sectors_disjoint {σ τ} (h : σ ≠ τ) : Disjoint (sector σ) (sector τ)     -- PROVED
+theorem distinctSet_eq_iUnion (n) : distinctSet n = ⋃ σ, sector σ               -- PROVED
+
+/-- A sector as a subset of the subspace `↥(distinctSet n)`. -/
+def sectorIn (σ) : Set ↥(distinctSet n)                                         -- PROVED (def)
+theorem isOpen_sectorIn (σ) : IsOpen (sectorIn σ)                               -- PROVED
+theorem isClosed_sectorIn (σ) : IsClosed (sectorIn σ)                           -- PROVED
+theorem isClopen_sectorIn (σ) : IsClopen (sectorIn σ)                           -- PROVED
+theorem isConnected_sectorIn (σ) : IsConnected (sectorIn σ)                     -- PROVED
+theorem iUnion_sectorIn (n) : ⋃ σ, sectorIn σ = Set.univ                       -- PROVED
+theorem pairwiseDisjoint_sectorIn (n) {σ τ} (h : σ ≠ τ) :
+    Disjoint (sectorIn σ) (sectorIn τ)                                          -- PROVED
+
+/-- Components of the distinctness set = orderings of the coordinates. -/
+noncomputable def componentsEquivPerm (n) :
+    ConnectedComponents ↥(distinctSet n) ≃ Equiv.Perm (Fin n)                   -- PROVED (def)
+theorem componentsEquivPerm_mk {σ} {x} (hx : x ∈ sectorIn σ) :
+    componentsEquivPerm n (ConnectedComponents.mk x) = σ                        -- PROVED
+theorem numComponents_distinctSet (n : ℕ) :
+    Nat.card (ConnectedComponents ↥(distinctSet n)) = Nat.factorial n           -- PROVED
+
+theorem forall_elementDistinctComponents : ∀ n : ℕ, elementDistinctComponents n -- PROVED
+theorem benOrBound_benOrDistinctness (h : BenOrBound) :
+    ∀ d : ℕ, BenOrDistinctness d                                                -- PROVED
+theorem benOrBound_elementDistinctHeightBound (d : ℕ) (h : BenOrBound) :
+    ElementDistinctHeightBound d                                                -- PROVED
+
 end SortBounds.Projects.BenOr
 ```
 
@@ -108,13 +142,14 @@ end SortBounds.Projects.BenOr
 
 * **M0** the `ADT` datatype, `height`, `decides`, and the leaf-counting corollary
   (`b = 2`, reuse `Core.Branching`'s idea). Everything must compile.
-* **M1** *gated*: `BenOrBound` specialised to element distinctness, i.e. the
-  statement that `{x | all xᵢ distinct}` has `n!` connected components. Real
-  algebraic geometry; state it, cite Ben-Or 1983, do not attempt a proof.
-  M1 also carries the lane's **non-vacuity** obligation: `decidesReal` has to be
-  satisfiable for the sets the bound quantifies over, or the `componentBound`
-  implications hold for want of a tree. `Witness.lean` supplies that witness
-  (`exists_decidesReal_distinct`).
+* **M1** the `BenOrBound` specialised to element distinctness.  The component count
+  `n!` — the mathematical heart, `numComponents (distinctSet n) = n!` — is **proved**
+  (`Sectors.lean`, no algebraic geometry needed: the ordering sectors are the
+  components).  Still unproved: `componentBound d` itself (Ben-Or 1983 with
+  Milnor–Thom), stated and cited.  M1 also carries the lane's **non-vacuity**
+  obligation: `decidesReal` has to be satisfiable for the sets the bound quantifies
+  over, or the `componentBound` implications hold for want of a tree.  `Witness.lean`
+  supplies that witness (`exists_decidesReal_distinct`).
 * **M2** *gated*: the bound itself. Not committed.
 
 **Deliverable = a precise, compiled statement of the theorem plus its model.**
@@ -130,13 +165,16 @@ BenOrBound : Prop := …` with no proof is the correct shape for the unproved pa
 Ben-Or 1983 (STOC, topological method); Milnor–Thom component bounds. No
 formalization found.
 
-## M1 target: `n!` connected components of the distinctness set (opened 2026-11-11)
+## M1 target: `n!` connected components of the distinctness set (opened 2026-11-11, **done**)
 
 Ben-Or's bound reads off the number of connected components of the set being decided;
 for element distinctness that number is `n!`, which is *why* the bound gives `Ω(n log n)`
 there even though an algebraic test has three outcomes rather than two.  The model and
 the statements are already in this lane; this is the missing mathematical ingredient, and
-it is provable without any algebraic geometry:
+it is provable without any algebraic geometry.  The sketch below was the contract; the
+file `Sectors.lean` proves all of it (the name `sector_open` came out as
+`sector_isOpen`, matching the rest of the repository; everything else is verbatim, with
+`n` implicit where the sketch leaves it implicit):
 
 ```lean
 /-- The **sector** of a permutation: the points whose increasing order is `σ`. -/
@@ -153,18 +191,24 @@ theorem numComponents_distinctSet (n : ℕ) :
     Nat.card (ConnectedComponents ↥(distinctSet n)) = Nat.factorial n
 ```
 
-**Proof route (no paths needed).** Each `sector σ` is open (a finite intersection of
-half-spaces `{x | x i < x j}`), convex (same), and the sectors are pairwise disjoint with
-union the distinctness set.  Inside the subspace `↥(distinctSet n)`, each sector is
-therefore *clopen*: open by `sector_open`, and closed because its complement is the
-(finite) union of the other open sectors.  A clopen connected set is a connected
+**Proof route (no paths needed), as carried out.** Each `sector σ` is open (a finite
+intersection of half-spaces `{x | x i < x j}`), convex (same), and the sectors are
+pairwise disjoint with union the distinctness set.  Inside the subspace `↥(distinctSet n)`,
+each sector is therefore *clopen*: open by `sector_isOpen`, and closed because its
+complement is the union of the other open sectors.  A clopen connected set is a connected
 component, and `sector σ` is connected because it is convex.  So the components are in
-bijection with `Equiv.Perm (Fin n)`, whose cardinality is `n!`.
+bijection with `Equiv.Perm (Fin n)`, whose cardinality is `n!` — realised as the
+equivalence `componentsEquivPerm`, with `componentsEquivPerm_mk` certifying that a point
+of `sectorIn σ` lands in component `σ` (so the bijection is the intended one, not a junk
+bijection between two finite types of equal size).  The single Mathlib input is
+`ConnectedComponents.equivOfIsClopenOfIsConnected`; the uniqueness of the ordering of a
+point is `Tuple.unique_monotone`, its existence `Tuple.sort`.
 
-Watch out for: `n = 0, 1` (one permutation, one component, `distinctSet` is everything);
-the ambient type — `distinctSet` is over `Fin n → ℝ`, so state the topology lemmas there
-(or generally over a `LinearOrder`+`Topology`); and `Nat.card` of
-`ConnectedComponents` needs the subtype's topology, not the ambient one.
+Edge cases: `n = 0, 1` need no case split (`sector_eq_univ_of_le_one`: there is no pair
+`k < l`, so the one sector is everything), and the topology is the subtype topology of
+`↥(distinctSet n)` throughout (`sectorIn`, `isOpen_sectorIn`, `isClosed_sectorIn`), with
+`Nat.card` computed through the equivalence to `Equiv.Perm (Fin n)` so no
+`Fintype (ConnectedComponents …)` instance is needed.
 
 ## Log
 
@@ -231,3 +275,62 @@ the ambient type — `distinctSet` is over `Fin n → ℝ`, so state the topolog
   component bounds).  `log_factorial_ge_sixteenth` belongs in
   `SortBounds/Comparison/Stirling.lean` — outside this lane's write scope; the
   integrator may move it.
+* 2026-11-11 — **M1 component count PROVED** (`Sectors.lean`).  The statement
+  `elementDistinctComponents` is no longer a `Prop` with no proof:
+
+  ```lean
+  theorem numComponents_distinctSet (n : ℕ) :
+      Nat.card (ConnectedComponents ↥(distinctSet n)) = Nat.factorial n
+  ```
+
+  The route is the one sketched under "M1 target" above and needs no algebraic
+  geometry.  `sector σ = {x | ∀ k l, k < l → x (σ k) < x (σ l)}`;
+  `sector_convex` (intersection of half-spaces `{x | x (σ k) < x (σ l)}`, i.e. of
+  `LinearMap.proj` preimages of `Iio 0`), `sector_isOpen` (`isOpen_lt` +
+  `isOpen_iInter_of_finite`), `sectors_disjoint` and
+  `distinctSet_eq_iUnion` (`distinctSet n = ⋃ σ, sector σ`).  Uniqueness of the
+  ordering of an injective point is `eq_of_mem_sector`, from
+  `Tuple.unique_monotone`; existence is `sort_mem_sector`, from `Tuple.sort` /
+  `Tuple.monotone_sort` plus injectivity.  Inside the subspace `↥(distinctSet n)`
+  the sector becomes `sectorIn σ`: `isOpen_sectorIn` (preimage under
+  `Subtype.val`), `isClosed_sectorIn` (complement = union of the other open
+  sectors), `isConnected_sectorIn` (image of the convex `sector σ`, which is
+  `PreconnectedSpace`), `iUnion_sectorIn`, `pairwiseDisjoint_sectorIn` — the four
+  hypotheses of `ConnectedComponents.equivOfIsClopenOfIsConnected`, which yields
+
+  ```lean
+  noncomputable def componentsEquivPerm (n : ℕ) :
+      ConnectedComponents ↥(distinctSet n) ≃ Equiv.Perm (Fin n)
+  theorem componentsEquivPerm_mk {σ} {x} (hx : x ∈ sectorIn σ) :
+      componentsEquivPerm n (ConnectedComponents.mk x) = σ
+  ```
+
+  (`componentsEquivPerm_mk` pins the bijection to the intended one: sector `σ` ↦
+  component `σ`; every sector is inhabited by `sector_nonempty`, so no permutation
+  indexes a phantom component).  `Nat.card` then comes from
+  `Nat.card_congr` + `Fintype.card_perm`, so no `Fintype (ConnectedComponents …)`
+  instance is needed.  Degenerate sizes need no case split:
+  `sector_eq_univ_of_le_one` (`n ≤ 1` ⇒ the one sector is all of `distinctSet n`),
+  and `numComponents_distinctSet 4` evaluates to `24`, `… 0` to `1`.
+  `#print axioms`: `propext, Classical.choice, Quot.sound`.
+* 2026-11-11 — Statement-level consequence (`Sectors.lean`): the `hcomp`
+  hypothesis of `componentBound_distinctness`, `benOrBound_distinctness` and
+  `elementDistinctHeightBound_of_benOrBound` can now be discharged, and
+  `Sectors.lean` states the improved forms
+
+  ```lean
+  theorem forall_elementDistinctComponents : ∀ n : ℕ, elementDistinctComponents n
+  theorem benOrBound_benOrDistinctness (h : BenOrBound) : ∀ d, BenOrDistinctness d
+  theorem benOrBound_elementDistinctHeightBound (d : ℕ) (h : BenOrBound) :
+      ElementDistinctHeightBound d
+  ```
+
+  So the *only* unproved input of the lane is now Ben-Or's own topological bound
+  `componentBound`/`BenOrBound`; the model, the witnesses, the component count,
+  the Stirling arithmetic and the reductions are all checked.  The landed
+  signatures of the earlier files were **not** changed (their `hcomp` hypothesis
+  stays, with the improved versions beside them).
+* 2026-11-11 — The earlier log entry "not attempted, by design" is superseded for
+  the component count (only `componentBound` remains un-attempted).  Prose in
+  `Components.lean` and `Bound.lean` that said the component count is "not proved"
+  was corrected; no definition or theorem statement was touched.

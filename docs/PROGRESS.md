@@ -152,11 +152,16 @@ non-vacuity witnesses).
 
 ### Open — ordered by what is actually reachable
 
-1. **Domain / word-RAM model** (`Projects/Domain`, *running*): the bound becomes
+1. ~~**Domain / word-RAM model**~~ **DONE** (`Projects/Domain`): `passes_lower`
+   (`2 ≤ b → p < d → ¬∃ P, SortsAllKeys P`), `probes_tight` (`d` probes are necessary
+   *and* sufficient), `wordram_probes` (`w`-bit words: `n` reads necessary and
+   sufficient for `n` digits), and the contrast `radix_cost_le_comparison_cost`: the bound becomes
    `log_b U` instead of `log₂ n!`, and radix attains it exactly — the quantitative
    answer to "does structure buy speed, or is `n log n` inescapable?".
    `log_b U` probes are necessary and `⌈log_b U⌉` suffice, so for `U = n^{O(1)}` and
-   `b = n` integer sorting needs `O(1)` passes versus `Ω(n log n)` comparisons.
+   `b = n` integer sorting needs `O(1)` passes versus `Ω(n log n)` comparisons.  The
+   model's one loophole — encoding the key in *which* digit is read — is closed by the
+   `hfiber` hypothesis on values only; review is auditing exactly that.
 2. **`BenOr` M1** (*running*): the distinctness set has `n!` connected components — the
    topological ingredient of Ben-Or's bound.  **No algebraic geometry needed**: the set
    is a disjoint union of `n!` open convex *sectors* (one per ordering), so each sector is

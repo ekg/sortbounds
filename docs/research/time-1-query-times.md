@@ -91,8 +91,9 @@ So: **`O(m + occ)` at `O(r)` is *not* a GNP result.** At `O(r)` they get
 
   and the size is stated exactly: "Since `R` contains `2r` elements on a universe of size
   `σn`, we can have predecessor searches in time `O(log log_w (nσ/r))` and `O(r)` space."
-  So it is `2r` `⟨BWT position, SA value − 1⟩` pairs, i.e. `4r` words plus the predecessor
-  index — `O(r)` words, not `2r` bits.
+  So it is `2r` `⟨BWT position, SA value − 1⟩` pairs — `4r` words of payload by my
+  arithmetic, plus the predecessor index — still `O(r)` words, and emphatically not `2r`
+  bits. (Bannai–Gagie–I §1.3 halve this payload.)
 
 * **The `log log_w(σ + n/r)` factor.** It is the sum of two independent predecessor/rank
   costs, and the `σ` and `n/r` terms are *different objects*. VERBATIM (proof of Lemma 1):
@@ -116,8 +117,8 @@ So: **`O(m + occ)` at `O(r)` is *not* a GNP result.** At `O(r)` they get
 
 #### Getting to `O(m)` count / `O(m + occ)` locate: two different routes
 
-Route A — **index all the short patterns** (GNP Theorem 3). This is the row the questioner
-cares about: cheap-for-optimal-time. VERBATIM:
+Route A — **index all the short patterns** (GNP Theorem 3). This is the cheapest space at
+which the unconditional optimal bound is available. VERBATIM:
 
 > **Theorem 3.** We can store a text `T [1..n]` in `O(r log(n/r))` words, where `r` is the
 > number of runs in the BWT of `T`, such that later, given a pattern `P [1..m]`, we can
@@ -128,7 +129,11 @@ GNP's Lemma 14), storing at each trie node the triple `⟨occ, i, δ⟩` that le
 interval be read off an array `W` in `O(1)` per entry. Note the accounting: the space is a
 **product** `r · log(n/r)` — `log(n/r)` levels of `O(r)` — which is why optimal time costs
 a factor and not another `log log`. Count is `O(m)` here because `occ = 0` is decidable by
-the trie walk; that is the abstract's "count in optimal time `O(m)`".
+the trie walk; GNP state that separately as Theorem 9 (VERBATIM):
+
+> **Theorem 9.** We can store a text `T [1..n]` in `O(r log(n/r))` words, where `r` is the
+> number of runs in the BWT of `T`, such that later, given a pattern `P [1..m]`, we can count
+> the occurrences of `P` in optimal `O(m)` time.
 
 Route B — **move structure** (OptBWTR, §1.4): `O(r)` words and *no* `n/r` in the loglog,
 at the price of a `log log_w σ`.
@@ -169,6 +174,8 @@ footnote). VERBATIM, the abstract's own summary of what it does:
    > We can simplify and strengthen Policriti and Prezza's result slightly, **storing only
    > the position of the first character of each run** and finding the starting position of
    > the lexicographically first suffix starting with a given pattern.
+   >
+   > (boldface mine)
 
 2. **It is a strengthening, not just a saving:** the returned occurrence is now the
    *lexicographically first* one, which is what makes the dynamic update work.
@@ -202,8 +209,10 @@ improves is space-per-sample (`2r → r`), the proof, and updatability.
 
 ### 1.4 OptBWTR / the move structure: Nishimoto–Tabei (ICALP 2021)
 
-Full text read: **arXiv:2006.05104v3**. This paper *is* "OptBWTR" — the task's items 3 and
-4 name the same work. VERBATIM, the central theorem:
+Full text read: **arXiv:2006.05104v3**. This paper *is* "OptBWTR", so the brief's items 3
+("Nishimoto–Tabei move structure") and 4 ("OptBWTR") are one result, not two. The paper
+calls its gadget a **move data structure**; the later literature (Brown et al. 2024/2026,
+Sanaullah et al. 2025) calls it the **move structure**. VERBATIM, the central theorem:
 
 > **Theorem 9.** OptBWTR requires `O(r)` words, and it supports count and locate queries on
 > a string `T` in `O(m log log_w σ)` and `O(m log log_w σ + occ)` time, respectively. We can
@@ -248,11 +257,18 @@ cleanest statement of the alternatives at larger space:
 | Space (words) | Count | Locate |
 |---|---|---|
 | `O(r log log_w (σ + n/r))` (r-index) | `O(m)` | `O(m + occ)` |
-| `O(rw log_σ log_w n)` (packed r-index) | `O(⌈m log(σ)/w⌉)` | `O(⌈m log(σ)/w⌉ + occ)` |
+| `O(rw log_σ(n/r))` (packed r-index, GNP Thms 4 & 10) | `O(⌈m log(σ)/w⌉)` | `O(⌈m log(σ)/w⌉ + occ)` |
 | `O(r)` (**OptBWTR**) | `O(m log log_w σ)` | `O(m log log_w σ + occ)` |
 
+**Discrepancy, flagged rather than papered over:** NT's Table 1 renders the packed row's
+space as `O(rw log_σ log_w n)`, while GNP's own Theorem 4 and Theorem 10 both say
+`O(rw log_σ(n/r))` words (quoted verbatim in §1.2). These are not the same function. I use
+GNP's expression, since it is the primary statement; NT's rendering is either a
+transcription of a different derivation or a typo. **UNVERIFIED which** — settling it needs
+the ICALP proceedings or journal version, or an author's reply.
+
 Read across: **there is no row that is `O(r)` space and `O(m)` count for unrestricted
-`σ`.** The `O(m)`-count rows either pay `log log_w(σ + n/r)` space or `w log_σ log_w n`
+`σ`.** The `O(m)`-count rows either pay `log log_w(σ + n/r)` space or `rw log_σ(n/r)`
 space. Conversely OptBWTR buys `σ`-independence-of-`n/r` at `O(r)` and pays `log log_w σ`.
 
 Its other queries are genuinely optimal and `σ`-free in the interesting cases:
@@ -269,7 +285,7 @@ words" is right, "`2r` bits" would be wrong.
 
 Everything here is from the arXiv abstract unless marked otherwise, so **treat the
 times as quoted but the surrounding claims as UNVERIFIED** — I read the abstract and, where
-stated, the full text of only one of these (item 2).
+stated, selected sections of the full text of only one of these (item 1).
 
 1. **`OptBWTRL` — adding `LCP`/`PLCP` in `O(1)` at `O(r)` words (Sanaullah–Zhi–Zhang,
    2025, arXiv:2505.15698).** The one post-2021 result I found that **does** tighten a
@@ -287,10 +303,18 @@ stated, the full text of only one of these (item 2).
    > given the matching statistics of `P` with respect to `T`. The underlying index
    > (OptBWTRL) uses `O(r)` space.
 
-   Reconcile with GNP's LCP access (their Lemma 5 / Theorem 7): `O(log log_w(n/r) + s')`
-   time at `O(rs)` words. So `O(1)` at `O(r)` is a real improvement on that cell — the
-   same trick that removed `log log_w(n/r)` from locate also removes it from `LCP`. Note the
-   "expected" and that this is an *augmented* `O(r)`, not the same constant factor.
+   Reconcile against GNP's two prior LCP-access points, quoted VERBATIM:
+   > **Lemma 5.** Let `s > 0`. We can store a data structure of `O(rs)` words such that, given
+   > `SA[p]`, we can compute `LCP[p−i+1]` and `LCP[p+i]`, for `i = 1, …, s0` and any `s0 ≤ s`,
+   > in time `O(log log_w(n/r) + s0)`.
+   >
+   > **Theorem 7.** Let the BWT of a text `T[1..n]` contain `r` runs. Then there exists a data
+   > structure using `O(r log(n/r))` words that can retrieve any `ℓ` consecutive values of its
+   > longest common prefix array in time `O(log(n/r) + ℓ)`.
+
+   So `O(1)` at `O(r)` words is a real improvement on both cells: the same trick that removed
+   `log log_w(n/r)` from locate also removes it from `LCP`. Caveats: the bound is
+   **expected**, and this is an *augmented* `O(r)` (larger constant, same asymptotics).
 
 2. **Below `r` words, at the cost of time (Brown–Gagie–Manzini–Navarro–Sciortino 2024,
    arXiv:2408.04537).** VERBATIM:
@@ -390,13 +414,13 @@ needs beyond `w = Θ(log n)` unit-cost word RAM.
 | structure | space (words / bits) | count | locate | assumptions | citation |
 |---|---|---|---|---|---|
 | rlfm-index | `O(r + n/s)` words | `O(m(log σ/log log r + (log log n)²))` | same `+ occ`-term, `O(s·occ)` factor: `O((m + s·occ)(log σ/log log r + (log log n)²))` | `s ≥ 1`; **not** `O(r)` | Mäkinen–Navarro–Sirén–Valenzuela, JCB 2010 — **UNVERIFIED**, quoted from NT21 Table 1 |
-| **r-index** (GNP Thm 1, `s=1`) | **`O(r)` words** | `O(m log log_w(σ + n/r))` | `O(m log log_w(σ + n/r) + occ·log log_w(n/r))` | `w = Ω(log n)`; prefix `$` not required for the bound | GNP, SODA 2018 / J. ACM 2020, Thm 1 (arXiv:1705.10382v4) |
+| **r-index** (GNP Thm 1, `s=1`) | **`O(r)` words** | `O(m log log_w(σ + n/r))` | `O(m log log_w(σ + n/r) + occ·log log_w(n/r))` | unit-cost word RAM, `w = Ω(log n)` bits; effective alphabet assumed (`σ ≤ r ≤ n`) | GNP, SODA 2018 / J. ACM 2020, Thm 1 (arXiv:1705.10382v4) |
 | r-index, sampled | `O(rs)` words | `O(m log log_w(σ + n/r))` | `O(m log log_w(σ + n/r) + occ·(1 + log log_w(n/r)/s))` | `s > 0`; `s` is **multiplicative** in `r` | GNP Thm 1 |
 | **BGI-refined r-index** | **`O(r)` words** (`r` SA samples, was `2r`) | as r-index | `occ · O(log r)` in their **dynamic** version (balanced-tree `pred_B`); static = GNP | supports prepend-updates; not a time improvement | Bannai–Gagie–I, CPM 2018 / TCS 2020, Lemmas 2–4, §3 (arXiv:1802.05906v6) |
 | **OptBWTR** (move structure) | **`O(r)` words** (five `O(r)`-word components; LF move structure has `k ≤ 2r` intervals) | `O(m log log_w σ)` | `O(m log log_w σ + occ)` | optimal **only for `σ = O(polylog n)`**; `LF`,`φ`,`φ⁻¹` in `O(1)`; `O(1)` per step needs interval-splitting balancing | Nishimoto–Tabei, ICALP 2021, Thm 9 (arXiv:2006.05104v3) |
 | **OptBWTRL** (OptBWTR + `LCP`) | **`O(r)` words** | `O(m log log_w σ)` | `O(m log log_w σ + occ)` | adds `φ` and `PLCP[i]`/`LCP[j]` in **`O(1)`** at `O(r)`; long-LEM query `O(m + occ)` **expected** | Sanaullah–Zhi–Zhang 2025 (arXiv:2505.15698) — abstract + §1/§4 read |
-| r-index + short-pattern trie | `O(r log(n/r))` words | **`O(m)`** | **`O(m + occ)`** | needs `o(r log(n/r))` distinct `log(n/r)`-mers; `occ` **additive** | GNP Thm 3 (+ Lemma 14) |
-| r-index, packed | `O(rw log_σ(n/r))` words | `O(m log(σ)/w)` | `O(m log(σ)/w + occ)` | packed strings; optimal in packed model | GNP Thm 4 |
+| r-index + short-pattern trie | `O(r log(n/r))` words | **`O(m)`** (Thm 9) | **`O(m + occ)`** (Thm 3) | needs all `O(r log(n/r))` distinct `log(n/r)`-mers indexed (Lemma 14); `occ` **additive** | GNP Thm 3 (locate), Thm 9 (count), Lemma 14 |
+| r-index, packed | `O(rw log_σ(n/r))` words | `O(m log(σ)/w)` (Thm 10) | `O(m log(σ)/w + occ)` (Thm 4) | packed strings; optimal in packed model | GNP Thm 4 (locate), Thm 10 (count) |
 | RLCSA (bit-space; **not** the `O(r)`-word column) | `O(r log(n/r) + r log σ + σ)` **bits** | backward step `O(log r_a)` | via ordinary SA sampling; no `r`-bounded locate claim | `r_a` = runs of character `a`; below `r` words, so time is worse | Brown–Gagie–Manzini–Navarro–Sciortino 2024 (arXiv:2408.04537), abstract |
 
 The "current best" depends on the currency, and there are exactly three answers:
@@ -448,20 +472,21 @@ part of it.
    attached to the *switch*, not to the search.)
 5. **`log(n/r)` space for `O(m)` count (GNP Thm 3).** No lower bound exists; it is a
    product of the primary-occurrence depth, i.e. of one particular technique. Note that
-   OptBWTR reaches `m · polyloglog(σ)` at `O(r)` — so the *unconditional* `O(m)` at
+   OptBWTR reaches `O(m log log_w σ)` at `O(r)` — so the *unconditional* `O(m)` at
    `O(r log(n/r))` and the polylog-`σ` `O(m)` at `O(r)` are one `log log` apart, and
    nothing shows which is the true frontier.
 6. **`min(r, n/s)` sample counts and the `r log(n/r)` bits-vs-words gap.** Accounting
    artefacts of word-RAM reporting; the sibling `time-2-tradeoffs.md` §1 (K5 vs K6) shows a
    `log r` bit-gap that the `O`-word notation hides.
-7. **Whether the `O(m log log_w σ)` in OptBWTR can be made `O(m)` while staying at `O(r)`
-   words.** This is the single sharpest open question in the `O(r)` column. Nothing I read
-   rules it out. **What would settle it:** either a rank structure on the length-`O(r)`
-   run-head string with `O(1)` query time in `o(σ)` words — which would contradict the
-   Belazzougui–Navarro-style bound unless it exploits that the string has `O(r)` *distinct
-   run heads* and not `σ` — or a cell-probe lower bound for that specific problem. My
-   judgement: this is where the next result will land, and it will probably be about the
-   *effective* alphabet `σ_eff = min(σ, r)` rather than `σ`.
+7. **Whether the `log log_w σ` in OptBWTR can be driven to `O(1)` at `O(r)` words.** This is
+   the concrete form of (2), listed separately because it is a specific data-structure
+   question and because nothing I read rules it out — my confidence here is *lower* than for
+   the general statement in (2). **What would settle it:** either a rank structure on the
+   length-`O(r)` run-head string with `O(1)` query time in `o(σ)` words — which would
+   contradict the Belazzougui–Navarro-style bound unless it exploits that the string has
+   `O(r)` *distinct run heads* and not `σ` — or a cell-probe lower bound for that specific
+   problem. My judgement: this is where the next result will land, and it will probably be
+   about the *effective* alphabet `σ_eff = min(σ, r)` rather than `σ`.
 
 **One thing that is definitely *not* irreducible and is often misread:** the `O(r)` in
 "`O(r)` space" is `O(r)` **words ≈ `r log n` bits**, not `2r` bits. GNP's own sampled
@@ -489,8 +514,8 @@ structures are `r lg n`-ish bits; the `2r lg r`-bit variants are RLBWT *represen
   sandbox. Author lists and years come from arXiv metadata (reliable); venues come from the
   papers' own text (reliable for BGI's CPM 2018 footnote and for NT's confirmation in
   Brown et al. 2024: "applying a result by Nishimoto and Tabei (ICALP 2021)").
-* **Every 2024+ claim in §1.5–§1.7 rests on abstracts plus, for item 2 of §1.5 only,
-  selected sections of the full text.** I did not re-derive any of their theorems.
+* **Every 2024+ claim in §1.5–§1.7 rests on abstracts plus, for item 1 of §1.5 only,
+  selected sections (§1, §4) of the full text.** I did not re-derive any of their theorems.
 * **Non-overlapping indexing in `r`-space: not found** (§1.6) — this is an absence of
   evidence, not evidence of absence.
 * **`r*`-indexing and `r*`:** I did not check whether `r* ≠ O(r)` can happen on texts where

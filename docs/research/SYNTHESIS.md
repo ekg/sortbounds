@@ -63,18 +63,27 @@ unproven in that direction either way.**
 
 ### The frontier (space in words; `m` pattern length, `occ` output size)
 
-| space | count | locate |
-| --- | --- | --- |
-| `O(r)` (r-index) | `O(m log log_w(σ + n/r))` | `+ occ·log log_w(n/r)` |
-| `O(r)` (dense `move`) | `O(m log log_w σ)` | `O(m log log_w σ + occ)` |
-| `O(r log log_w(σ+n/r))` | **`O(m)`** | **`O(m+occ)`** |
-| `O(r log(n/r))` | `O(m)` | `O(m+occ)` |
-| `O(δ log(n log σ/(δ log n)))` | `O(m + log^{2+ε} n)` | `O(m + (occ+1) log^ε n)` |
+| space | count | locate | status |
+| --- | --- | --- | --- |
+| `O(r)` (r-index, GNP'20) | `O(m log log_w(σ + n/r))` | `+ occ·log log_w(n/r)` | PROVED |
+| `O(r)` (OptBWTR, NT'21 Thm 9) | `O(m log log_w σ)` | `O(m log log_w σ + occ)` | PROVED |
+| `O(r log(n/r))` (GNP Thm 9 + Thm 3) | **`O(m)`** | **`O(m+occ)`** | PROVED |
+| `O(δ log(n log σ/(δ log n)))` (KNO'24) | `O(m + log^{2+ε} n)` | `O(m + (occ+1) log^ε n)` | PROVED |
 
-Two lessons: (i) the `log log` factor in the r-index is *removable* — a `log log` factor
-of **space** buys `O(m)`/`O(m+occ)`; (ii) the small-space end is within polylog of the
-large-space end, which is why "compressed versus fast" is not the dichotomy it sounds
-like.
+**Correction to an earlier draft of this file** (and to what I had said verbally): at
+`O(r)` space there is **no unconditional `O(m)` count**. OptBWTR gives
+`O(m log log_w σ)`, and `O(m)` follows only under `σ = O(polylog n)`. Unconditional
+`O(m)` count / `O(m+occ)` locate costs **`O(r log(n/r))` words** — a `log(n/r)` factor of
+space. That is the precise trade, and it is a good one: at `r/n ≈ 1/488`, `log₂(n/r) ≈ 9`.
+
+Two lessons: (i) what space buys is the `log log` factor, not an asymptotic class —
+`log(n/r)` extra space removes it; (ii) the small-space (`δ`) end is within polylog of the
+large-space end, so "compressed versus fast" is not the dichotomy it sounds like.
+
+*Discrepancy recorded, not resolved:* `space.md` quotes "`O(r log log_w(σ+n/r))` words ⇒
+`O(m)` count" from GNP; `time-1` ties the unconditional `O(m)` row to `O(r log(n/r))`
+words. `log log_w(σ+n/r) ≤ log(n/r)`, so the first is the stronger claim; we use the
+second (primary, GNP Thm 9/Thm 3) and mark the first UNVERIFIED pending the paper text.
 
 ### How to get faster, concretely
 

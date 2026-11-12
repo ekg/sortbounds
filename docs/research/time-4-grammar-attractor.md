@@ -1,27 +1,27 @@
 # T4 — Fast queries at **grammar** and **attractor** space
 
 The small-space end of the frontier: with `δ ≤ γ = O(r)` and `O(m)`/`O(m+occ)`
-queries at `O(r)` words, what survives at `O(γ)` and `O(δ)`?
+queries at `O(r)` words, what survives at `O(γ)`, `O(δ)`?
 
 Labels: **PROVED** = quoted theorem, **OPEN** = quoted open question,
 **MY-INFERENCE** = my reading, **UNVERIFIED** = unchecked. Space is in words
 (`log n` bits) unless a bound says "bits".
 
-## 0. The measure chain, and one correction to the brief
+## 0. The chain, and one correction to the brief
 
 **PROVED** `δ ≤ γ ≤ b ≤ c ≤ z ≤ grl ≤ g` (Kociumaka–Navarro–Prezza,
-*IEEE Trans. Inf. Theory* 2023, §VII: "all the intermediate measures,
+*IEEE Trans. Inf. Theory* 2023, §VI: "all the intermediate measures,
 δ ≤ γ ≤ b ≤ c ≤ z ≤ grl ≤ g"; and "Lemma II.4 ([27, Lemma 5.6]). Every string S
 satisfies δ ≤ γ").
 
-The brief writes `δ ≤ γ ≤ r`; `r` (BWT runs) is **not** in that chain. Only, up to
+The brief writes `δ ≤ γ ≤ r`; `r` (BWT runs) is **not** in that chain. Only up to
 constants: **PROVED** `γ = O(min(b, c, z, z_no, r, grl, g))` (Kempa–Prezza STOC
 2018, quoted in Navarro, *ACM CSUR* 2021, §3.9). So "`O(γ)` space" is an
 *optimisation over the r-index*, not something `γ = O(r)` gives.
 
 Two facts fix the floor:
 
-- **PROVED** δ is a reachable, tight space measure: "there are string families
+- **PROVED** δ-optimal space is tight: "there are string families
   needing `Ω(δ log(n/δ))` space to be encoded, so this space is optimal for every
   `n` and `δ`" (KNP 2023, abstract); in bits, `Ω(δ log(n/δ) log n)`.
 - **OPEN** for `γ`: "we do not know if it is reachable, that is, if we can
@@ -29,8 +29,8 @@ Two facts fix the floor:
   whereas it is unknown if `o(γ log n)` space can always be reached" (Navarro CSUR
   2021, §3.9–3.10).
 
-So the smallest index space anyone can name is `O(δ log(n log σ/(δ log n)))` words
-— **δ-optimal space**. At `δ` the open quantity is therefore **time**; at `γ` both.
+So the smallest named index space is `O(δ log(n log σ/(δ log n)))` words —
+**δ-optimal space**. At `δ` the open quantity is **time**; at `γ` both.
 
 ## 1. The table
 
@@ -39,7 +39,7 @@ right-extensions of maximal repeats. `ra(m)`: grammar random access time for `P`
 
 | Structure | Space | Count | Locate | Citation |
 |---|---|---|---|---|
-| Grammar index, first log-in-grammar bound | `O(N lg u)` bits | — | `O((m²/ε)lg(lg u/lg n) + occ lg n)` | Claude–Navarro, *Improved Grammar-Based Compressed Indexes*, arXiv:1110.4493 |
+| Improved grammar index | `O(N lg u)` bits | — | `O((m²/ε)lg(lg u/lg n) + occ lg n)` | Claude–Navarro, *Improved Grammar-Based Compressed Indexes*, arXiv:1110.4493 |
 | Grammar index | `O(G lg n)` bits | — | `O((m²+occ) lg G)` | Claude–Navarro–Pacheco, *JCSS* 2020, arXiv:2004.01032 |
 | SLP+LZ77 grid index | `O(r + z lg lg n)` | — | `O(m² + occ lg lg n)`; `O(m log m)` Monte Carlo if SLP balanced | Gagie–Gawrychowski–Kärkkäinen–Nekrich–Puglisi, arXiv:1109.3954 |
 | Lyndon-SLP index | `O(g)` | — | `O(m + lg m lg n + occ lg g)` | Tsuruta–Köppl–Nakashima–Inenaga–Bannai–Takeda, arXiv:2004.05309 |
@@ -67,6 +67,7 @@ reaching `O(m log m)` only for balanced SLPs *and* a faulty index. Locally
 consistent parsing removes `m²` — it "requires one to test only `O(log m)`
 partitions of `P`" (survey §7.1) — but parses a run-length grammar of size
 `O(γ log(n/γ))` rather than the given `g`.
+
 Honest grammar row: at a *given* grammar's space the best per-character behaviour
 is `O(m)` plus a `log g`/`log n` correction (Lyndon SLPs), counting is
 `O(m log^{2+ε} n)`, and **no published index gives `O(m + log n)` locate at `O(g)`
@@ -74,7 +75,7 @@ space**. No source found for the brief's "Bille–Gørtz–Landau–Weimann" ind
 
 ## 3. Attractor/δ side, in order
 
-`O(γ)` space is not reachable; `O(γ log(n/γ))` is, and buys
+`O(γ)` space is not known to be reachable; `O(γ log(n/γ))` is, and buys
 `O(m + (occ+1) log^ε n)` locate / `O(m + log^{2+ε} n)` count. Kociumaka–Navarro–
 Olivares 2023 gave the *same* times in the *smaller* δ-optimal space, answering
 "whether the better search time could be supported within the δ-optimal space".
@@ -83,13 +84,13 @@ construction (Kosolobov 2026). **MY-INFERENCE**: via the δ-SA + LCE, pattern
 matching is available there in `O((m+occ) log^{5+ε} n)` — worse in `m` than KNO's,
 so not cited as state of the art.
 
-## 4. The gap, in one line per row
+## 4. The gap, one line per row
 
 - **`O(r)`**: frontier — count `O(m)`, locate `O(m+occ)`, optimal. Pay nothing.
 - **`O(γ log(n/γ))`**: pay `log^ε n` **per occurrence** and an additive
   `log^{2+ε} n` (count) to sit a log factor below `r` — plus `log^ε n`/`log n` in
   *space* to buy back optimal `occ`/`m` terms.
-- **`O(γ)`**: no index exists; even the *representation* is open. Price: unknown.
+- **`O(γ)`**: no index exists; even the *representation* is open. Price unknown.
 - **δ-optimal**: same time as the γ row, provably optimal space; the whole price
   of the space saving is `log^ε n` per occurrence — the only quantitatively clean
   "price of space" in the hierarchy.
@@ -102,13 +103,13 @@ so not cited as state of the art.
 
 ## 5. What would be needed, and what has been conjectured
 
-One explicit statement of the target:
+Target, explicitly:
 **OPEN** "An important open question is whether this final gap can be closed: can
-we search or count in optimal time within δ-optimal space, `O(δ log(n/δ) log σ/(log n))`?
+we search or count in optimal time within δ-optimal space, `O(δ log((n log σ)/(δ log n)))`?
 With our best results, space or time must be multiplied by `O(log^ε n)` or `O(log n)`"
-(KNO 2023, §VII).
+(KNO 2023, Conclusions).
 
-Sharpest change since 2023 — what is now *proved impossible* in δ-ish space:
+What is now *proved impossible* in δ-ish space:
 **PROVED** SA, SA⁻¹, LCP, LCE "all require `Ω(log n/log log n)` time within
 `O(δ(T) log^{O(1)} n)` space", and BWT, PLCP, LF, inverse LF, Φ, Φ⁻¹ "require
 `Ω(log log n)` time", both "matching known upper bounds", even on binary
@@ -145,9 +146,9 @@ trade-off for γ- or δ-space pattern matching** beyond KNO's question.
 - **UNVERIFIED**: an SLP text index by Bille–Gørtz–Landau–Weimann. arXiv shows
   only Bille–Landau–Raman–Sadakane–Satti–Weimann (random access, `O(log N)` time,
   `O(n)` space, arXiv:1001.1565) and Bille–Christiansen–Cording–Gørtz (finger
-  search, arXiv:1507.02853). Likely a garbled reference; I cite the verified lineage.
+  search, arXiv:1507.02853). Likely garbled; I cite the verified lineage.
 - **Units conflict**: arXiv:2604.24080 gives δ-optimal space "in bits" while
   KNP/KNO/KK give the same formula in words and KNP's lower bound is in bits. I
   read the formula as words; the 2026 wording is probably a slip.
-- arXiv:1910.02151's abstract page is truncated ("…we can not only…"); I quoted
-  its PDF (v3, 15 Jan 2021). 2025–2026 items are quoted from abstracts only.
+- arXiv:1910.02151's abstract page is truncated; quoted from its PDF (v3).
+  2025–2026 items are quoted from abstracts only; fraction formulas re-typeset.

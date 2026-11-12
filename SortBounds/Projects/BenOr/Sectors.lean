@@ -281,6 +281,14 @@ theorem numComponents_distinctSet (n : ℕ) :
   refine (Nat.card_congr (componentsEquivPerm n)).trans ?_
   rw [Nat.card_eq_fintype_card, Fintype.card_perm, Fintype.card_fin]
 
+/-- **Sanity check.**  The count is not the vacuous `Nat.card`-of-an-infinite-type `0`:
+at `n = 4` it evaluates to `4! = 24` (and the components are finite, as the bijection
+with `Equiv.Perm (Fin 4)` shows). -/
+theorem numComponents_distinctSet_four :
+    Nat.card (ConnectedComponents ↥(distinctSet 4)) = 24 := by
+  rw [numComponents_distinctSet]
+  decide
+
 /-- The lane's component-count statement, now a theorem: `elementDistinctComponents n`
 holds for every `n`, so every use of `componentBound_distinctness` and
 `elementDistinctHeightBound_of_benOrBound` can discharge its `hcomp` hypothesis. -/

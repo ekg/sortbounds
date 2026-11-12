@@ -38,6 +38,8 @@ in the main results (see [`#print axioms`](#axioms)).
 | `Instances.sortsAll_of_sorts_zeroOne` | the 0-1 principle, stated over `Fin n → Fin 2` so it is **decidable** |
 | `Instances.netTree_correct` | a verified network yields a correct `Tree n` of depth = #comparators |
 | `Instances.radixSort_sorted` / `radixSort_perm` / `radixSort_keys_congr` | radix sort is correct, and its output depends only on the key vectors — hence zero element comparisons |
+| **`Projects.Domain.probes_tight`** | **`log_b U` probes are necessary and `d = log_b U` suffice** for `b`-ary digit access on a domain of `b^d` keys — structure buys speed, and radix attains the bound *exactly* |
+| `Projects.Domain.wordram_probes` | with `w`-bit words: `n` word reads necessary and sufficient for `n` digits, and `log_{2^w}(b^d) = d` |
 | **exact comparison counts** | |
 | **`Projects.FjTree.S_eq_clog`** | **`S n = ⌈log₂ n!⌉` for `4 ≤ n ≤ 11`** — merge-insertion verified optimal; `S_eq_clog_large` the same for `n = 20, 21`; `S_pin` pins `S n` to within one for every `n ≤ 22` |
 | `Projects.FordJohnson.fjCountJ_table` | `F(4..11) = 5,7,10,13,16,19,22,26`, i.e. `⌈log₂ n!⌉` at each; `fjCountJ_attains` says the count is attained by an explicit input |

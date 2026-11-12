@@ -133,8 +133,9 @@ The evidence chain: `kasai_lcp_correct` (the array is right, given `Verified s s
 * `SN` M3 (`S 12 = 30`, the first case where `⌈log₂ 12!⌉ = 29 < 30`) needs a
   genuine adversary/entropy argument, not just counting. Research-level.
 * `XY` M2+ (Fredman's `O(n²)` comparison algorithm) is research-level.
-* `BenOr` M1+ (component count of the distinctness set) needs real algebraic
-  geometry; `M0` only is the committed deliverable.
+* `BenOr` M2 (components ⇒ height, the Milnor–Thom step) is the only open input in
+  that lane; the component count itself is **done** (`numComponents_distinctSet`,
+  and it needed no algebraic geometry — open convex sectors).
 * `SAIS` is queued behind `XY`, which will exercise the same weighted cost model.
 
 ## Queue (take the next item without asking)

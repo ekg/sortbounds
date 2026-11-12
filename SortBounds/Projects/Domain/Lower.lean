@@ -73,6 +73,16 @@ def SortsAllKeys {d b p : ℕ} (P : KeyProc d b p) : Prop :=
   (∀ k k' : Key d b, P.codeOf k ≤ P.codeOf k' → KeyLe d b k k') ∧
     ∀ k k' : Key d b, P.codeOf k = P.codeOf k' → k = k'
 
+/-- **The spec really is a sorting spec (sufficient direction).**  A list sorted by the
+plan's digest is sorted by key: so a `KeyProc` that satisfies `SortsAllKeys` sorts, given
+a sort of its digests.  (The *converse* — that every list algorithm must factor through a
+per-key digest — is model scope, not a theorem; it is the `[a,b]`/`[b,a]` argument, which
+we state in the lane README rather than formalise.) -/
+theorem SortsAllKeys.pairwise {d b p : ℕ} {P : KeyProc d b p} (h : SortsAllKeys P)
+    {l : List (Key d b)} (hl : l.Pairwise (fun a c => P.codeOf a ≤ P.codeOf c)) :
+    l.Pairwise (KeyLe d b) :=
+  hl.imp fun hab => h.1 _ _ hab
+
 /-- The separating clause: a sorting plan's digest is injective on keys. -/
 theorem SortsAllKeys.code_injective {d b p : ℕ} {P : KeyProc d b p} (h : SortsAllKeys P) :
     Function.Injective P.codeOf :=

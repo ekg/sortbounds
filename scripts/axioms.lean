@@ -95,6 +95,7 @@ open SortBounds
 #print axioms SortBounds.Projects.SAIS.checkOn_computed_cost
 #print axioms SortBounds.Projects.Domain.card_le_pow_probes
 #print axioms SortBounds.Projects.Domain.passes_lower
+#print axioms SortBounds.Projects.Domain.SortsAllKeys.pairwise
 #print axioms SortBounds.Projects.Domain.probes_tight
 #print axioms SortBounds.Projects.Domain.wordram_probes
 #print axioms SortBounds.Projects.Domain.radix_sorts_Key

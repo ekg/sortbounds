@@ -313,7 +313,7 @@ Edge cases: `n = 0, 1` need no case split (`sector_eq_univ_of_le_one`: there is 
   `Nat.card_congr` + `Fintype.card_perm`, so no `Fintype (ConnectedComponents …)`
   instance is needed.  Degenerate sizes need no case split:
   `sector_eq_univ_of_le_one` (`n ≤ 1` ⇒ the one sector is all of `distinctSet n`),
-  and `numComponents_distinctSet 4` evaluates to `24`, `… 0` to `1`.
+  and `numComponents_distinctSet_four` records the `n = 4` instance (`24`).
   `#print axioms`: `propext, Classical.choice, Quot.sound`.
 * 2026-11-11 — Statement-level consequence (`Sectors.lean`): the `hcomp`
   hypothesis of `componentBound_distinctness`, `benOrBound_distinctness` and

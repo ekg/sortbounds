@@ -281,9 +281,9 @@ theorem numComponents_distinctSet (n : ℕ) :
   refine (Nat.card_congr (componentsEquivPerm n)).trans ?_
   rw [Nat.card_eq_fintype_card, Fintype.card_perm, Fintype.card_fin]
 
-/-- **Sanity check.**  The count is not the vacuous `Nat.card`-of-an-infinite-type `0`:
-at `n = 4` it evaluates to `4! = 24` (and the components are finite, as the bijection
-with `Equiv.Perm (Fin 4)` shows). -/
+/-- **Concrete instance of the count**: the distinctness set for four coordinates has
+`4! = 24` connected components.  (Finiteness of the component space does not rest on this
+check — it comes from the bijection with `Equiv.Perm (Fin n)` and `Nat.card_congr`.) -/
 theorem numComponents_distinctSet_four :
     Nat.card (ConnectedComponents ↥(distinctSet 4)) = 24 := by
   rw [numComponents_distinctSet]

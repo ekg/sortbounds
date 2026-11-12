@@ -49,6 +49,10 @@ in the main results (see [`#print axioms`](#axioms)).
 | `Projects.SN.S_four` … `S_seven` | `S 4 = 5, S 5 = 7, S 6 = 10, S 7 = 13` by explicit kernel-checked trees — an independent route to the same values; `four_needs_five_comparisons` etc. give the comparison-count reading |
 | `Projects.FjTree.fjCountJ_not_attained` | where the counting bound stops being tight: `fjCountJ 12 = 30 > 29 = ⌈log₂ 12!⌉`, `fjCountJ 22 = 71 > 70` |
 | `Projects.FjTree.S_twelve_le` / `S_twenty_two_le` | **30 comparisons suffice for 12 elements** (Wells 1965) and **71 suffice for 22** (Peczarski), from FJA's tree; the literature's exact values `S 12 = 30`, `S 22 = 71` differ from what is proved here only in the lower bound |
+| **repetitiveness measures** (new thread, `docs/research/`) | |
+| `Projects.Repetitiveness.distinctFactors_card_le_mul_attractor` | for any string attractor `Γ`, a string has at most `k·|Γ|` distinct factors of length `k` (the counting core of `δ ≤ γ`) |
+| `Projects.Repetitiveness.distinctFactors_card_le_mul_slp` | and at most `k·γ` distinct factors of length `k` for a grammar of size `γ` — KNP Lemma II.4, machine-checked |
+| `Projects.Repetitiveness.substringComplexity_le_slp` | hence `δ ≤ γ` in KNP's convention (`δ = max_k d_k/k`) |
 | **the topological ingredient** | |
 | **`Projects.BenOr.numComponents_distinctSet`** | **the distinctness set has exactly `n!` connected components** (`componentsEquivPerm`) — what Ben-Or's bound consumes; the bound itself (components ⇒ height, Milnor–Thom) is still a statement, not a proof |
 | **open lanes (what is *not* proved)** | |

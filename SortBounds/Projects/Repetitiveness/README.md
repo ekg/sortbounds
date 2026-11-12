@@ -95,4 +95,42 @@ attractors, `d_k`, or `δ ≤ γ` in Lean/Coq/Isabelle?)*
 
 ## Log
 
-* (empty)
+* **M0 landed** (`Basic.lean`, `Attractor.lean`).
+  * `distinctFactors (s) (k) : Finset (List α)` — distinct length-`k` factors (only starts
+    with `i + k ≤ s.length`, so `d_0 = {[]}`, `d_k = ∅` for `k > n`; `mem_distinctFactors`).
+  * `IsAttractor (s) (Γ : Finset (Fin s.length)) : Prop` — every nonempty factor `s[i..j)`
+    has an occurrence `s[i'..j')` with some `p ∈ Γ` satisfying `i' ≤ p < j'`.  Non-vacuity
+    and non-triviality are exhibited: `isAttractor_univ`, `ababa_isAttractor` (`{0,1}` for
+    `"ababa"`), `not_isAttractor_singleton` (`{0}` is *not* one), `isAttractor_iff_check`
+    (the condition is a finite check), plus a unary word with a size-`1` attractor.
+  * `distinctFactors_card_le_mul_attractor (hΓ) (k) (hk : 1 ≤ k)`.
+    **Side condition added: `1 ≤ k`** — the `k = 0` case is false (`d_0 = 1 > 0·|Γ|`); no
+    upper bound `k ≤ s.length` is needed.  Same for M1.
+  * Corollaries: `dk_div_le_attractor`, `substringComplexity` (KNP's `δ`),
+    `substringComplexity_le_card_attractor`, `attractors`, `minAttractorSize`,
+    `substringComplexity_le_minAttractorSize` (**`δ ≤` the *minimum attractor size*** —
+    note this is a different fact from `δ ≤ γ`, the grammar size), and the concrete
+    `ababa_substringComplexity` / `ababa_minAttractorSize` (`δ = γ = 2` for `"ababa"`).
+* **M1 landed** (`Grammar.lean`, `Count.lean`).
+  * `SLP` = rules `0..size-1`, each a terminal or `inr (A, B)` with `A, B < i` (acyclicity
+    as a topological order); `SLP.expand` (well-founded recursion),
+    `SLP.expands G s := ∃ root, G.expand root = s`, `SLP.slpWindow`.
+  * `SLP.exists_straddle` — a window of length `k ≥ 2` of an expansion straddles some
+    concatenation point, at an offset `d ∈ [1, k-1]`.
+  * `distinctFactors_card_le_mul_slp (G) (hG) (k) (hk : 1 ≤ k)`; `k = 1` is separate
+    (`distinctFactors_one_card_le_slp`).  Plus `dk_div_le_slp`, `substringComplexity_le_slp`
+    (`δ ≤ g`) and a concrete grammar `ababaSLP` (`size = 5`) with `ababaSLP.expands ababa`.
+  * `dk_div_le_slp` is stated in the **division** form `d_k / k ≤ g` (the contract listed
+    it as a verbatim duplicate of the multiplication form; the multiplication form is the
+    theorem above it).
+* **M2 is not attempted.**  The contract's characterization
+  `min attractor size = max_k d_k/k` has two halves.  The `≤` half is M0 and is landed
+  (`substringComplexity ≤ minAttractorSize`); the `≥` half — "some attractor is no larger
+  than `δ`" — is **not proved here**.
+  *Correction to an earlier draft of this Log:* the `≥` half is **not** refuted by KNP
+  Thm III.3.  That theorem separates `γ` (grammar size) from `δ` — `γ = Ω(δ log(n/δ))` —
+  and says nothing about the size of the *smallest attractor*, which is a different
+  quantity.  Whether `min attractor size = δ` holds in general (and for which strings it
+  fails) is a separate question that needs a source; the integrator has recorded it as an
+  open item rather than a refutation.  What *is* established here: the equality holds for
+  `"ababa"` (`δ = minAttractorSize = 2`), and `δ ≤ minAttractorSize` always.

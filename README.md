@@ -50,9 +50,9 @@ in the main results (see [`#print axioms`](#axioms)).
 | `Projects.FjTree.fjCountJ_not_attained` | where the counting bound stops being tight: `fjCountJ 12 = 30 > 29 = ⌈log₂ 12!⌉`, `fjCountJ 22 = 71 > 70` |
 | `Projects.FjTree.S_twelve_le` / `S_twenty_two_le` | **30 comparisons suffice for 12 elements** (Wells 1965) and **71 suffice for 22** (Peczarski), from FJA's tree; the literature's exact values `S 12 = 30`, `S 22 = 71` differ from what is proved here only in the lower bound |
 | **repetitiveness measures** (new thread, `docs/research/`) | |
-| `Projects.Repetitiveness.distinctFactors_card_le_mul_attractor` | for any string attractor `Γ`, a string has at most `k·|Γ|` distinct factors of length `k` (the counting core of `δ ≤ γ`) |
-| `Projects.Repetitiveness.distinctFactors_card_le_mul_slp` | and at most `k·γ` distinct factors of length `k` for a grammar of size `γ` — KNP Lemma II.4, machine-checked |
-| `Projects.Repetitiveness.substringComplexity_le_slp` | hence `δ ≤ γ` in KNP's convention (`δ = max_k d_k/k`) |
+| `Projects.Repetitiveness.distinctFactors_card_le_mul_attractor` | for any string attractor `Γ`, at most `k·|Γ|` distinct factors of length `k` — KNP Lemma II.4's counting core |
+| `Projects.Repetitiveness.substringComplexity_le_minAttractorSize` | hence **`δ ≤ γ`** (`δ = max_k d_k/k`, `γ` = minimum attractor size), machine-checked |
+| `Projects.Repetitiveness.distinctFactors_card_le_mul_slp` / `substringComplexity_le_slp` | the same counting with a grammar: `δ ≤ g` for an SLP of size `g` |
 | **the topological ingredient** | |
 | **`Projects.BenOr.numComponents_distinctSet`** | **the distinctness set has exactly `n!` connected components** (`componentsEquivPerm`) — what Ben-Or's bound consumes; the bound itself (components ⇒ height, Milnor–Thom) is still a statement, not a proof |
 | **open lanes (what is *not* proved)** | |

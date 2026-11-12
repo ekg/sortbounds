@@ -37,7 +37,7 @@ def IsAttractor (s : List α) (Γ : Finset (Fin s.length)) : Prop
 position is determined by that position and the offset, so there are at most `k · |Γ|`
 of them. -/
 theorem distinctFactors_card_le_mul_attractor {s : List α} {Γ : Finset (Fin s.length)}
-    (hΓ : IsAttractor s Γ) (k : ℕ) : (distinctFactors s k).card ≤ k * Γ.card
+    (hΓ : IsAttractor s Γ) (k : ℕ) (hk : 1 ≤ k) : (distinctFactors s k).card ≤ k * Γ.card
 
 /-- An SLP (straight-line program): `g` rules, each expanding to the concatenation of two
 earlier symbols or a terminal.  `slpSize` is the number of rules. -/
@@ -48,13 +48,14 @@ structure SLP (α : Type*) where
 /-- **Every factor of length `k` is a sub-factor of a rule's expansion or straddles one
 concatenation**, so a grammar of `g` rules has at most `k·g` distinct length-`k`
 factors. -/
-theorem distinctFactors_card_le_mul_slp {s : List α} (G : SLP α) (hG : G.expands s) (k : ℕ) :
-    (distinctFactors s k).card ≤ k * G.size
+theorem distinctFactors_card_le_mul_slp {s : List α} (G : SLP α) (hG : G.expands s) (k : ℕ)
+    (hk : 1 ≤ k) : (distinctFactors s k).card ≤ k * G.size
 
-/-- **`δ ≤ γ`** in the maximization form used by KNP: for every `k`, `d_k/k ≤ γ`, and `δ`
-is the maximum of `d_k/k`. -/
-theorem dk_div_le_slp {s : List α} (G : SLP α) (hG : G.expands s) (k : ℕ) :
-    (distinctFactors s k).card ≤ k * G.size
+/-- **`δ ≤ g`** in the division form KNP use: for every `k ≥ 1`, `d_k/k ≤ g`.  (KNP's
+Lemma II.4 is the *attractor* version, `dk_div_le_attractor`; `g` here is the smallest
+SLP size, a different measure from `γ`.) -/
+theorem dk_div_le_slp {s : List α} (G : SLP α) (hG : G.expands s) {k : ℕ} (hk : 1 ≤ k) :
+    (distinctFactors s k).card / k ≤ G.size
 
 end SortBounds.Projects.Repetitiveness
 ```
@@ -90,8 +91,16 @@ attractor of size 2) as a sanity check.
 
 ## Prior art
 
-*(to be filled after a literature check: is there any formalization of string
-attractors, `d_k`, or `δ ≤ γ` in Lean/Coq/Isabelle?)*
+* Kempa & Prezza, *At the Roots of Dictionary Compression: String Attractors* (STOC
+  2018): the attractor notion and `γ` = size of the smallest attractor.
+* Kociumaka, Navarro & Prezza, *Toward a Definitive Compressibility Measure for
+  Repetitive Sequences* (IEEE TIT 2023 / LATIN 2020): `δ = max_k d_k/k`, `δ ≤ γ`, the
+  separation `γ = Ω(δ log(n/δ))`, and the encoding lower bound — all quoted in
+  `docs/research/space.md`.
+* **Formalization prior art: none found** (searched 2026-11-12 for Lean/Coq/Isabelle
+  treatments of string attractors, `d_k`, or `δ ≤ γ`); this lane appears to be the first
+  machine-checked version of KNP's counting lemma.  Treat that claim as *unverified
+  absence*, not a theorem.
 
 ## Log
 
@@ -108,8 +117,8 @@ attractors, `d_k`, or `δ ≤ γ` in Lean/Coq/Isabelle?)*
     upper bound `k ≤ s.length` is needed.  Same for M1.
   * Corollaries: `dk_div_le_attractor`, `substringComplexity` (KNP's `δ`),
     `substringComplexity_le_card_attractor`, `attractors`, `minAttractorSize`,
-    `substringComplexity_le_minAttractorSize` (**`δ ≤` the *minimum attractor size*** —
-    note this is a different fact from `δ ≤ γ`, the grammar size), and the concrete
+    `substringComplexity_le_minAttractorSize` (**`δ ≤ γ`** — `γ` is the size of the
+    smallest attractor, per Kempa–Prezza's notation), and the concrete
     `ababa_substringComplexity` / `ababa_minAttractorSize` (`δ = γ = 2` for `"ababa"`).
 * **M1 landed** (`Grammar.lean`, `Count.lean`).
   * `SLP` = rules `0..size-1`, each a terminal or `inr (A, B)` with `A, B < i` (acyclicity
@@ -123,14 +132,13 @@ attractors, `d_k`, or `δ ≤ γ` in Lean/Coq/Isabelle?)*
   * `dk_div_le_slp` is stated in the **division** form `d_k / k ≤ g` (the contract listed
     it as a verbatim duplicate of the multiplication form; the multiplication form is the
     theorem above it).
-* **M2 is not attempted.**  The contract's characterization
-  `min attractor size = max_k d_k/k` has two halves.  The `≤` half is M0 and is landed
-  (`substringComplexity ≤ minAttractorSize`); the `≥` half — "some attractor is no larger
-  than `δ`" — is **not proved here**.
-  *Correction to an earlier draft of this Log:* the `≥` half is **not** refuted by KNP
-  Thm III.3.  That theorem separates `γ` (grammar size) from `δ` — `γ = Ω(δ log(n/δ))` —
-  and says nothing about the size of the *smallest attractor*, which is a different
-  quantity.  Whether `min attractor size = δ` holds in general (and for which strings it
-  fails) is a separate question that needs a source; the integrator has recorded it as an
-  open item rather than a refutation.  What *is* established here: the equality holds for
-  `"ababa"` (`δ = minAttractorSize = 2`), and `δ ≤ minAttractorSize` always.
+* **M2: the proposed characterization is false, and the refutation is quotable.**  The
+  contract's `min attractor size = max_k d_k/k` has two halves.  The `≤` half is M0 and is
+  landed (`substringComplexity ≤ minAttractorSize`, i.e. `δ ≤ γ`).  The `≥` half — "some
+  attractor is no larger than `δ`" — is **refuted** by KNP Lemma III.2 / Thm III.3: for
+  `S_n = b a^{2^j−1} b …` (i.e. `b` at powers of two) one has `δ(S_n) ≤ 2` while
+  `γ(S_n) ≥ ½⌊log n⌋`, so the smallest attractor exceeds the substring complexity by a
+  log factor (`docs/research/space.md` §1 and :153-157).  The equality holds only for
+  particular strings — `"ababa"` (`δ = γ = 2`) is one, shown above.
+  *(An earlier integrator edit wrongly claimed this half was unproved-and-possibly-true,
+  by misreading `γ` as the grammar size; `γ` is the attractor size, `g` the grammar.)*

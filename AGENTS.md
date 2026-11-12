@@ -66,6 +66,12 @@ The kernel checks proofs, not claims. For every result, ask:
 * **A statement can be true about the wrong object**: `fjTree_depth_le` held for a tree
   that sorted nothing (`Tree.leaf 1` satisfies any depth bound). Prove correctness before
   believing a cost bound.
+* **Do not "fix" a lane from memory — check the notation in the brief first.** Late in one
+  session the integrator overrode two *correct* lane statements by asserting `γ` was the
+  grammar size; in Kempa–Prezza/KNP `γ` is the **minimum attractor size** (`g` is the
+  grammar), so `δ ≤ γ` is `substringComplexity ≤ minAttractorSize` and the refutation of
+  `γ = δ` stands. A reviewer caught it. Symbol collisions are the cheapest way to publish a
+  false claim about someone else's paper.
 * **Contracts written by the supervisor are the weakest link.** Three of them were false:
   the AFP "reachability" claim, a leaf-counting route to `S 12 ≥ 30`, and the LCP
   min-property over text positions. Each was refuted by a child or reviewer, none by the

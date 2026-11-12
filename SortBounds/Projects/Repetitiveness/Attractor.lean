@@ -166,11 +166,11 @@ theorem minAttractorSize_le {s : List α} {Γ : Finset (Fin s.length)} (hΓ : Is
   classical
   exact Finset.min'_le _ _ (Finset.mem_image.mpr ⟨Γ, mem_attractors.mpr hΓ, rfl⟩)
 
-/-- **`δ ≤` the minimum attractor size**: the substring complexity of `s` is at most the
-size of its smallest attractor.  This is the `≤` half of the characterization
-`min attractor size = max_k d_k / k`; the other half is *not* proved here (and is a
-separate question from the `δ ≤ γ` separation of KNP Thm III.3, which is about grammar
-size, not attractor size). -/
+/-- **`δ ≤ γ`**: the substring complexity of `s` is at most the size of its smallest
+attractor (`γ` = minimum attractor size, Kempa–Prezza's notation).  This is the `≤` half
+of the characterization `min attractor size = max_k d_k / k`; the other half is **false**
+in general — KNP Lemma III.2 / Thm III.3 give strings with `δ ≤ 2` and `γ ≥ ½⌊log n⌋`
+(`docs/research/space.md` :153-157). -/
 theorem substringComplexity_le_minAttractorSize (s : List α) :
     substringComplexity s ≤ minAttractorSize s := by
   obtain ⟨Γ, hΓ, hcard⟩ := exists_attractor_card_eq_minAttractorSize s

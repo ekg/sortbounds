@@ -184,7 +184,7 @@ namespace AttractorCertificate
 
 variable {s : List α}
 
-/-- **The certified lower bound on the interval**: any valid attractor of size `c` gives
+/-- **The certified upper bound on `delta` (lower end of the interval)**: any valid attractor of size `c` gives
 `δ ≤ c`. -/
 theorem delta_le (c : AttractorCertificate s) : delta s ≤ c.pos.card :=
   delta_le_card_attractor c.isAtt

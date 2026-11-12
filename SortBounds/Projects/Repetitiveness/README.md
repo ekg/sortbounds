@@ -91,12 +91,17 @@ attractor of size 2) as a sanity check.
 
 ## M3 target: the certification system (opened 2026-11-12)
 
-**The design constraint** (verified, `docs/research/space.md`): finding a smallest
-attractor is **NP-hard** ("finding the smallest k-attractor is NP-hard", ESA 2018;
-NP-complete for general alphabets and `k ≥ 3`, APX-complete for constant `k ≥ 3`, with an
-`O(log k)` approximation via set cover), whereas **verifying** a candidate attractor is
-`O(n)` and **`δ = max_k d_k/k` is computable exactly in `O(n)`** (KNP's algorithm;
-implemented publicly as `regindex/substring-complexity`).
+**The design constraint.**  Finding a smallest attractor is **NP-hard**: the quoted
+statement is "finding the smallest k-attractor is NP-hard" (ESA 2018, *String Attractors:
+Verification and Optimization*), with NP-completeness for general alphabets and `k ≥ 3` and
+APX-completeness for constant `k ≥ 3` (quoted in the search record for this lane,
+**UNVERIFIED** against the PDF), and a polynomial approximation via set cover — the figure
+`O(log k)` is quoted second-hand and **UNVERIFIED** (set cover over `n` positions would
+suggest `O(log n)`; reconcile against ESA'18 before citing it).  By contrast **verifying** a
+candidate is `O(n)` in that literature, and **`δ = max_k d_k/k` is computable exactly in
+`O(n)`** (KNP's algorithm; implemented publicly as `regindex/substring-complexity`).
+None of those cost claims is formalized here: the `Bool` verifier in `Certify.lean` is
+polynomial but *not* linear, and `delta` is `noncomputable`.
 
 So the system cannot *find* the optimum.  It can do this, which is what an index actually
 needs:
@@ -107,11 +112,12 @@ structure AttractorCertificate (s : List α) where
   pos : Finset (Fin s.length)
   isAtt : IsAttractor s pos
 
-/-- **The certified lower bound**: any valid attractor bounds `δ` from above. -/
+/-- **The certified upper bound on `δ`**: any valid attractor bounds `δ` from above. -/
 theorem AttractorCertificate.delta_le (c : AttractorCertificate s) :
     substringComplexity s ≤ c.pos.card
 
-/-- The `O(n)` verifier, as a program. -/
+/-- The verifier, as a computable `Bool` program (polynomial, *not* linear: it scans all
+`(i,k)` factor occurrences against all `n` positions). -/
 def checkAttractor (s : List α) (Γ : Finset (Fin s.length)) : Bool
 theorem checkAttractor_eq_true_iff {s} {Γ} : checkAttractor s Γ = true ↔ IsAttractor s Γ
 
@@ -120,8 +126,10 @@ cover of all factors, returning positions.  Its correctness, not its size, is th
 def greedyAttractor (s : List α) : Finset (Fin s.length)
 theorem greedyAttractor_isAttractor (s : List α) : IsAttractor s (greedyAttractor s)
 
-/-- **The certified sandwich**: `δ ≤ |Γ_greedy|`, so `|Γ_greedy| / δ` is a *computable*
-approximation ratio (`γ ≥ δ` makes it an upper bound on `|Γ_greedy| / γ`). -/
+/-- **The certified bracket on `γ`**: `δ ≤ |Γ_greedy|` and `γ ≤ |Γ_greedy|`, so
+`[δ, |Γ_greedy|]` brackets the smallest attractor.  **No approximation ratio is proved** —
+the greedy is not an approximation algorithm here; `"aab"` shows `|Γ| = 3` against
+`δ = γ = 2`. -/
 theorem delta_le_greedyAttractor_card (s : List α) :
     substringComplexity s ≤ (greedyAttractor s).card
 ```

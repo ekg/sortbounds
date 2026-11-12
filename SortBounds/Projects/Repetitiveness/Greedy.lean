@@ -19,7 +19,8 @@ scan order.  Termination is built into the scan (`greedyIter`), and the invarian
 
 (`exists_cover_greedyIter`).  Since every occurrence of a nonempty factor lies inside
 `[0, n)`, the final set is an attractor.  The construction is *not* the maximum-coverage
-greedy and it is *not* `univ`; on a nonempty string it is nonempty
+greedy and it is *not* `univ` in general (`greedyAttractor_ababa`); on `"aab"` it does keep all
+three positions (`greedyAttractor_aab_card`); on a nonempty string it is nonempty
 (`greedyAttractor_nonempty`) and on `"ababa"` it is `{0, 1}` of size `2` — the optimum
 `γ = 2` for that word.
 
@@ -152,7 +153,8 @@ theorem greedyAttractor_card_le_length (s : List α) : (greedyAttractor s).card 
 
 /-- **The certified sandwich**: `δ ≤ |Γ_greedy|`, so `|Γ_greedy|` is a *computable* certified
 upper bound on the smallest attractor (`γ ≤ |Γ_greedy|` by `delta_le_gamma`'s companion,
-`minAttractorSize_le`) and `|Γ_greedy| / δ` a computable approximation ratio. -/
+`minAttractorSize_le`), so `[δ, |Γ_greedy|]` brackets `γ`.  No approximation *ratio* is
+claimed: on `"aab"` the greedy attains 3 while `δ = γ = 2`. -/
 theorem delta_le_greedyAttractor_card (s : List α) :
     delta s ≤ (greedyAttractor s).card :=
   delta_le_card_attractor (greedyAttractor_isAttractor s)

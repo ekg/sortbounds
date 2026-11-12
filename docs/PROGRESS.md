@@ -203,6 +203,22 @@ the rest changes no made comparison), `preconnected_comparisonGraph`, and the ed
 6. **`SortTree`'s constant**: `n(⌈log₂ n⌉+1)` vs `⌈log₂ n!⌉` — the gap is a constant;
    only worth doing if someone needs the constant.
 
+## Research threads (opened 2026-11-12)
+
+Compressed text indexing, split into two independent threads with their own briefs in
+`docs/research/` (see the README there):
+
+* **S — space** (`docs/research/space.md`): is `r` the right measure; hierarchy
+  `δ ≤ γ ≤ r` and its separations; is `O(r)` space optimal (any lower bound?); is an
+  `O(γ)`/`O(δ)`-space index with fast queries possible; where `σ` enters.
+* **T — time** (`docs/research/time-{1..5}-*.md`): the state of the art in `O(r)` space,
+  the space-for-time knobs and the Pareto frontier, what is *provably* impossible, the
+  `O(γ)`/`O(δ)`-space end, and where the time actually goes in practice.
+
+Standing rule for these threads (earned the hard way this session): **no contract is
+written from recollection.** Every Lean target must be grounded in a quoted statement in
+one of these briefs, with its verdict (PROVED / CONDITIONAL / OPEN / FOLKLORE) recorded.
+
 ## Changelog
 
 | Date | Change |

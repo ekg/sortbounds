@@ -89,6 +89,53 @@ values) — a reviewer will check exactly that, and the point of the lane is tha
 counting is real.  Exhibit at least one nontrivial instance (e.g. `"ababa"` with an
 attractor of size 2) as a sanity check.
 
+## M3 target: the certification system (opened 2026-11-12)
+
+**The design constraint** (verified, `docs/research/space.md`): finding a smallest
+attractor is **NP-hard** ("finding the smallest k-attractor is NP-hard", ESA 2018;
+NP-complete for general alphabets and `k ≥ 3`, APX-complete for constant `k ≥ 3`, with an
+`O(log k)` approximation via set cover), whereas **verifying** a candidate attractor is
+`O(n)` and **`δ = max_k d_k/k` is computable exactly in `O(n)`** (KNP's algorithm;
+implemented publicly as `regindex/substring-complexity`).
+
+So the system cannot *find* the optimum.  It can do this, which is what an index actually
+needs:
+
+```lean
+/-- A certified attractor: a position set together with a proof that it is one. -/
+structure AttractorCertificate (s : List α) where
+  pos : Finset (Fin s.length)
+  isAtt : IsAttractor s pos
+
+/-- **The certified lower bound**: any valid attractor bounds `δ` from above. -/
+theorem AttractorCertificate.delta_le (c : AttractorCertificate s) :
+    substringComplexity s ≤ c.pos.card
+
+/-- The `O(n)` verifier, as a program. -/
+def checkAttractor (s : List α) (Γ : Finset (Fin s.length)) : Bool
+theorem checkAttractor_eq_true_iff {s} {Γ} : checkAttractor s Γ = true ↔ IsAttractor s Γ
+
+/-- A **computable** attractor construction (not optimal — that is NP-hard): the greedy
+cover of all factors, returning positions.  Its correctness, not its size, is the theorem. -/
+def greedyAttractor (s : List α) : Finset (Fin s.length)
+theorem greedyAttractor_isAttractor (s : List α) : IsAttractor s (greedyAttractor s)
+
+/-- **The certified sandwich**: `δ ≤ |Γ_greedy|`, so `|Γ_greedy| / δ` is a *computable*
+approximation ratio (`γ ≥ δ` makes it an upper bound on `|Γ_greedy| / γ`). -/
+theorem delta_le_greedyAttractor_card (s : List α) :
+    substringComplexity s ≤ (greedyAttractor s).card
+```
+
+And a `Measures.lean` that names the measures once — `gamma := minAttractorSize`,
+`delta := substringComplexity` — with `delta_le_gamma` (proved) as the anchor, so the rest
+of the repository and the research briefs use one vocabulary.
+
+**What this system is for.**  An index's space guarantee comes from *some* measure; if you
+can certify an attractor of size `c` and compute `δ`, you have a *proved* interval
+`[δ, c]` on the smallest attractor, hence on the space any attractor-based index needs —
+without solving an NP-hard problem.  The `γ = Ω(δ log(n/δ))` separation (KNP Thm III.3)
+says the interval can genuinely be wide, which is the honest limitation of the approach.
+
 ## Prior art
 
 * Kempa & Prezza, *At the Roots of Dictionary Compression: String Attractors* (STOC

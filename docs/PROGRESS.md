@@ -22,6 +22,7 @@ other models"** — every open lane is about a model where the answer changes.
 | `Core` | bits per probe | `card_le_pow_of_prefixFree`, `logb_le_of_le_pow`, **`mean_cost_ge_logb`** (Kraft + Gibbs, any `b`) | **DONE** | frame complete |
 | `Comparison` | comparison sorts | `exists_input_cost_ge_quarter`, `avg_cost_ge_log2_factorial` | **DONE** | frozen |
 | `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le`, `factorial_le_two_pow_length_of_sortsAll`, `sortsAll_of_sorts_zeroOne` | **DONE** | frozen |
+| `BestCase` | best case | **`pred_le_cost`** (`n − 1` on every input), `exists_correct_cost_id_eq'` (attained) | **DONE** | — |
 | `FordJohnson` | exact comparison counts, upper bound | `fjCountJ_table` (`F(4..11) = 5,7,10,13,16,19,22,26`), `fjCountJ_eq_sum`, **`fjCountJ_attains`** (the count is *attained*) | **M2/M3/M4 DONE** | list→`Tree` transfer (lane `FjTree`) |
 | `SN` | exact `S(n)`, explicit trees | `S 0..7` (**`S 4=5, S 5=7, S 6=10, S 7=13`**), each in both readings | **M2 for n ≤ 7** | `S 12 = 30` open |
 | `XY` | sorting `X+Y` | `pairSums`, `pairSums_card_le`, `naivePairsSorted_*` | **M1 DONE** | M2 gated |
@@ -151,17 +152,16 @@ bound + 0-1 principle + network→tree; merge sort) · `SAIS` (LCP cost model;
 Kasai `≤ 2n`; verify `n − 1` on computed data) · `BenOr` (model + statement +
 non-vacuity witnesses).
 
-### Running
+### Closed: `BestCase` — the third corner of `Θ`
 
-**`BestCase`** (`Projects/BestCase`): `pred_le_cost` — every correct comparison sort makes
-`≥ n − 1` comparisons on *every* input with distinct values, so the best case is `n − 1`.
-This closes the third corner of the `Θ` picture (best `n − 1`, worst `Ω(n log n)`, average
-`≥ log₂ n!`) and formalises a claim the README currently only asserts — and asserts *less*
-strongly than the truth (it says "the already-sorted input", whereas the bound is
-input-independent).  Argument: if the comparison graph along a path were disconnected, push
-one block of values above the other — every comparison made has the same answer, so the same
-leaf (hence the same output permutation) is reached, but no single permutation sorts both
-orders.
+`pred_le_cost : n − 1 ≤ cost t x` for **every** injective `x` (not just the sorted one),
+plus `exists_correct_cost_id_eq' : ∃ t, Correct t ∧ cost t = n − 1` — so the best case is
+*exactly* `n − 1`.  With `Ω(n log n)` for the optimal worst case and `≥ log₂ n!` for the
+average over random orderings, the `Θ` picture is complete in one model.
+Machinery: `comparedPairs`/`comparisonGraph` along a path, `run_eq_of_agree` (same answers
+on the pairs *made* ⟹ same leaf), `run_eq_of_add_const` (pushing a block of values above
+the rest changes no made comparison), `preconnected_comparisonGraph`, and the edge count
+`n − 1 ≤ #pairs ≤ cost`.
 
 ### Open — ordered by what is actually reachable
 

@@ -30,6 +30,9 @@ in the main results (see [`#print axioms`](#axioms)).
 | `Comparison.avg_cost_ge_log2_factorial` | expected comparisons over a uniform random ordering is `≥ log₂(n!)` |
 | `Comparison.exists_input_cost_ge_of_orderEmb` | the same for **any** linear order with `n` values in increasing order (`ℚ`, `ℝ`, …) |
 | `Comparison.exists_depth_le_of_cost_le` | a tree whose every input costs `≤ d` can be replaced by one of depth `≤ d` — so "least depth" = "fewest comparisons that suffice" |
+| **the best case** | |
+| **`Projects.BestCase.pred_le_cost`** | **`n − 1 ≤ cost t x` for every injective `x`** — the best case is `n − 1`, on *every* input, not just the sorted one |
+| `Projects.BestCase.exists_correct_cost_id_eq'` | and it is attained: a correct tree with `cost = n − 1` on a specific input |
 | **the two halves, in one model** | |
 | `SortTree.sortTree_depth_le` | an explicit `Correct` tree of depth `≤ n(⌈log₂ n⌉+1)` |
 | `SortTree.S_sandwich` | **`⌈log₂ n!⌉ ≤ S n ≤ n(⌈log₂ n⌉+1)`**, both statements about `Tree n` |
@@ -96,13 +99,16 @@ transfer to any other value type is `SortBounds/General.lean`
    so for every instantiation the worst case is `≥ log₂(n!)` by the theorems
    here, hence so is the expected worst case. (Not formalized separately: it is
    a two-line argument over the deterministic statement.)
-3. **"Best case" is not the claim.** The already-sorted input forces `n − 1`
-   comparisons of any correct sort, so no correct comparison sort's best case is
-   below `n − 1`.  What is `Θ(n log n)` is
-   the **optimal worst case** — the minimum over algorithms of the maximum over
-   inputs — and, as proved here, the **average case** over uniformly random
-   orderings. The lower bound is a statement about *all* correct algorithms,
-   not about a particular one's lucky input.
+3. **"Best case" is not the claim — and it is not `n log n`.** The best case is
+   `n − 1`, and that is a theorem about *every* input, not about a lucky one:
+   `BestCase.pred_le_cost` shows every correct comparison sort makes at least
+   `n − 1` comparisons on every input with distinct values (if a comparison were
+   missing, pushing one block of values above the other leaves every answer
+   unchanged but both orders unsortable by the same permutation), and
+   `BestCase.exists_correct_cost_id_eq'` exhibits a correct tree attaining it. So
+   `n − 1` is exactly the best case, `≥ log₂ n!` the average over random orderings,
+   and `Ω(n log n)` the optimal worst case — the three corners of the `Θ` picture,
+   all in one model.
 
 ### Where `log₂(n!)` comes from
 

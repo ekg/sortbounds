@@ -15,6 +15,9 @@ open SortBounds
 #print axioms SortBounds.exists_depth_le_of_cost_le
 #print axioms SortBounds.expected_depth_ge_log2_factorial
 #print axioms SortBounds.expected_worstCase_ge_log2_factorial
+#print axioms SortBounds.Projects.BestCase.pred_le_cost
+#print axioms SortBounds.Projects.BestCase.preconnected_comparisonGraph
+#print axioms SortBounds.Projects.BestCase.exists_correct_cost_id_eq'
 #print axioms SortBounds.run_prune
 #print axioms SortBounds.factorial_le_two_pow_worstCase
 #print axioms SortBounds.exists_input_cost_ge

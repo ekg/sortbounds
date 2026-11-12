@@ -151,6 +151,18 @@ bound + 0-1 principle + network→tree; merge sort) · `SAIS` (LCP cost model;
 Kasai `≤ 2n`; verify `n − 1` on computed data) · `BenOr` (model + statement +
 non-vacuity witnesses).
 
+### Running
+
+**`BestCase`** (`Projects/BestCase`): `pred_le_cost` — every correct comparison sort makes
+`≥ n − 1` comparisons on *every* input with distinct values, so the best case is `n − 1`.
+This closes the third corner of the `Θ` picture (best `n − 1`, worst `Ω(n log n)`, average
+`≥ log₂ n!`) and formalises a claim the README currently only asserts — and asserts *less*
+strongly than the truth (it says "the already-sorted input", whereas the bound is
+input-independent).  Argument: if the comparison graph along a path were disconnected, push
+one block of values above the other — every comparison made has the same answer, so the same
+leaf (hence the same output permutation) is reached, but no single permutation sorts both
+orders.
+
 ### Open — ordered by what is actually reachable
 
 1. ~~**Domain / word-RAM model**~~ **DONE** (`Projects/Domain`): `passes_lower`

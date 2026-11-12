@@ -13,6 +13,7 @@ import SortBounds.Comparison.Bridge
 import SortBounds.Comparison.Randomized
 import SortBounds.Projects.BestCase.Main
 import SortBounds.Projects.BestCase.Sharp
+import SortBounds.Projects.BestCase.General
 import SortBounds.Instances.Radix
 import SortBounds.Instances.MergeSort
 import SortBounds.Instances.Network

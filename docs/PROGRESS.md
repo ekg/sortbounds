@@ -155,8 +155,9 @@ non-vacuity witnesses).
 ### Closed: `BestCase` — the third corner of `Θ`
 
 `pred_le_cost : n − 1 ≤ cost t x` for **every** injective `x` (not just the sorted one),
-plus `exists_correct_cost_id_eq' : ∃ t, Correct t ∧ cost t = n − 1` — so the best case is
-*exactly* `n − 1`.  With `Ω(n log n)` for the optimal worst case and `≥ log₂ n!` for the
+plus `exists_correct_cost_id_eq' : ∃ t, Correct t ∧ cost t (fun i : Fin n => i) = n − 1` —
+so over inputs with distinct values the best case is *exactly* `n − 1`.  `pred_le_cost_of_orderEmb`
+gives the same bound for any value type.  With `Ω(n log n)` for the optimal worst case and `≥ log₂ n!` for the
 average over random orderings, the `Θ` picture is complete in one model.
 Machinery: `comparedPairs`/`comparisonGraph` along a path, `run_eq_of_agree` (same answers
 on the pairs *made* ⟹ same leaf), `run_eq_of_add_const` (pushing a block of values above

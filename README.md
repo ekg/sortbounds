@@ -31,8 +31,8 @@ in the main results (see [`#print axioms`](#axioms)).
 | `Comparison.exists_input_cost_ge_of_orderEmb` | the same for **any** linear order with `n` values in increasing order (`ℚ`, `ℝ`, …) |
 | `Comparison.exists_depth_le_of_cost_le` | a tree whose every input costs `≤ d` can be replaced by one of depth `≤ d` — so "least depth" = "fewest comparisons that suffice" |
 | **the best case** | |
-| **`Projects.BestCase.pred_le_cost`** | **`n − 1 ≤ cost t x` for every injective `x`** — the best case is `n − 1`, on *every* input, not just the sorted one |
-| `Projects.BestCase.exists_correct_cost_id_eq'` | and it is attained: a correct tree with `cost = n − 1` on a specific input |
+| **`Projects.BestCase.pred_le_cost`** | **`n − 1 ≤ cost t x`** for *every* injective `x` — so no correct comparison sort's best case, over inputs with distinct values, is below `n − 1` (`pred_le_cost_of_orderEmb` for any value type) |
+| `Projects.BestCase.exists_correct_cost_id_eq'` | and the bound is attained: a correct tree costing exactly `n − 1` on the sorted input `fun i => i` |
 | **the two halves, in one model** | |
 | `SortTree.sortTree_depth_le` | an explicit `Correct` tree of depth `≤ n(⌈log₂ n⌉+1)` |
 | `SortTree.S_sandwich` | **`⌈log₂ n!⌉ ≤ S n ≤ n(⌈log₂ n⌉+1)`**, both statements about `Tree n` |
@@ -105,8 +105,10 @@ transfer to any other value type is `SortBounds/General.lean`
    `n − 1` comparisons on every input with distinct values (if a comparison were
    missing, pushing one block of values above the other leaves every answer
    unchanged but both orders unsortable by the same permutation), and
-   `BestCase.exists_correct_cost_id_eq'` exhibits a correct tree attaining it. So
-   `n − 1` is exactly the best case, `≥ log₂ n!` the average over random orderings,
+   `BestCase.exists_correct_cost_id_eq'` exhibits a correct tree attaining it. So over
+   inputs with distinct values the best case is exactly `n − 1` (`Correct` constrains only
+   injective inputs, so a correct tree may be cheaper on inputs with ties),
+   `≥ log₂ n!` the average over random orderings,
    and `Ω(n log n)` the optimal worst case — the three corners of the `Θ` picture,
    all in one model.
 

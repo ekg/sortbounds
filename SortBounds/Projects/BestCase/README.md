@@ -218,7 +218,7 @@ With `pred_le_cost` that pins the best case at `n - 1` for every `n`.
 `lake env lean` on each file, in import order, with oleans written to `/tmp`
 (never into the repo): all four compile, no warnings.
 
-### Integrator TODOs
+### Integrator TODOs (all done by the integrator; kept for the record)
 
 1. Add to the umbrella `SortBounds.lean`:
    `import SortBounds.Projects.BestCase.Compared` … `.Connected` … `.Main` …

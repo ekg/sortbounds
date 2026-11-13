@@ -216,6 +216,20 @@ yields an RLSLP of size `O(c log(n/c))`, so a better attractor is a smaller gram
 | `tools/attractor` | any-time search: greedy → irredundant prune → swaps → iterative deepening, with `δ` and a packing bound as certified lower bounds | running |
 | `tools/approx` + `docs/research/attractor-approx.md` | **guaranteed** bounds: `δ ≤ γ ≤ z ≤ 4(δ log(n/δ)+δ)` gives an `O(log n)` approximation *constructively* (LZ77 → attractor), plus the structural theory (interval structure for fixed `k`, LP gap, `σ = 2` hardness) | running |
 
+**First results (anytime lane, verified by re-running the tool):** the bracket *closes* on
+every highly repetitive instance tried — `mississippi` `[4,4]`, `abracadabra` `[5,5]`,
+Thue–Morse `2⁸`/`2¹⁰` `[4,4]`, Fibonacci `F₁₄`/`F₁₈` `[2,2]` (packing witnesses re-checked
+from the text each time) — and stays open on incompressible text (`n = 2048`:
+`[165,179]`).  Two distinct mechanisms close it: on Thue–Morse it is `⌈δ⌉ = 4 = γ`
+(`δ ≈ 3.32`, `γ` an integer); on random text `δ` alone is far too weak (`δ ≈ 140.31` at
+`n = 2048`) and the *packing* bound carries the floor (`γ ≥ 165`).  So the second lower
+bound is not redundant — it is what makes the bracket usable where `δ` is loose.
+
+*(Correction: an earlier commit message of mine claimed the packing bound exceeded `δ` on
+Thue–Morse. It does not — there `δ > packing` and it is `⌈δ⌉` that closes the bracket. The
+packing bound wins on *incompressible* text, which is the opposite regime. The lane's
+README had it right; I misread the table.)*
+
 The open theoretical question, stated sharply: `γ/δ` can be `Θ(log n log log n)`, so any
 algorithm whose *lower bound* is only `δ` cannot beat a `log n` factor — is `O(log n)`
 inherent for `γ`, or does the interval structure admit a constant-factor (or exact on

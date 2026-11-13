@@ -413,6 +413,133 @@ def cmd_hunt(args):
 
 
 # ---------------------------------------------------------------------------
+# families: structured words, cheap to describe and cheap to solve
+# ---------------------------------------------------------------------------
+
+
+def family_words(maxlen=80):
+    """A grid of run-structured and morphic words, with a label each."""
+    out = []
+    for i in range(1, 13):
+        for j in range(1, 13):
+            for k in range(1, 13):
+                for l in (1, 2, 3, 5, 8):
+                    s = "a" * i + "b" * j + "a" * k + "b" * l
+                    if len(s) <= maxlen:
+                        out.append(("a^i b^j a^k b^l", i, j, k, l, s))
+            for t in (2, 3, 4):
+                s = ("a" * i + "b" * j) * t
+                if len(s) <= maxlen:
+                    out.append(("(a^i b^j)^t", i, j, t, 0, s))
+        for j in range(1, 13):
+            s = "a" * i + "b" * j + "a" * i + "b" * j + "a" * i
+            if len(s) <= maxlen:
+                out.append(("a^i b^j a^i b^j a^i", i, j, i, j, s))
+    for i in range(1, 30):
+        for j in range(1, 30):
+            s = "a" * i + "ab" * j
+            if len(s) <= maxlen:
+                out.append(("a^i (ab)^j", i, j, 0, 0, s))
+            s = ("aab" * i + "abb" * j)
+            if len(s) <= maxlen:
+                out.append(("(aab)^i (abb)^j", i, j, 0, 0, s))
+    for k in range(1, 8):
+        for extra in range(0, 20):
+            s = "a" * extra + thue_morse(k)
+            if len(s) <= maxlen:
+                out.append(("a^x + TM_k", k, extra, 0, 0, s))
+            s = thue_morse(k) + "a" * extra
+            if len(s) <= maxlen:
+                out.append(("TM_k + a^x", k, extra, 0, 0, s))
+            s = "a" * extra + fibonacci(2 ** k)
+            if len(s) <= maxlen:
+                out.append(("a^x + Fib", k, extra, 0, 0, s))
+    return out
+
+
+def cmd_families(args):
+    print("== families ==")
+    print("Structured words (run grids and morphic prefixes) up to n = %d." % args.maxlen)
+    rows = []
+    skipped = 0
+    for label, a, b, c, d, s in family_words(args.maxlen):
+        g = gamma_of(s, args.time_cap)
+        if g is None:
+            skipped += 1
+            continue
+        inst = F.Instance(s)
+        delta, _ = F.delta_from_profile(tuple(inst.d_profile[1:]))
+        g2 = F.gamma_k(s, 2)[0]
+        rows.append((str(label), a, b, c, d, s, g, int(ceil(delta)), g2, delta))
+    print("  %d words solved exactly, %d unclosed bracket (excluded)" % (len(rows), skipped))
+    for name, idx in (("gamma - ceil(delta)", 0), ("gamma - gamma_2", 1)):
+        key = (lambda r: (r[6] - (r[7] if idx == 0 else r[8]), r[6]))
+        best = max(rows, key=key)
+        print("  max %-20s = %d at %r %s (gamma=%d ceil(delta)=%d gamma2=%d delta=%s)"
+              % (name, key(best)[0], best[5], (best[0], best[1], best[2], best[3], best[4]),
+                 best[6], best[7], best[8], best[9]))
+        bylen = defaultdict(int)
+        for r in rows:
+            bylen[len(r[5])] = max(bylen[len(r[5])], key(r)[0])
+        print("    max by |s|: " + " ".join("%d:%d" % (k, v) for k, v in sorted(bylen.items())))
+    return None
+
+
+# ---------------------------------------------------------------------------
+# bruijn: the one family where gamma - gamma_2 is PROVABLY unbounded
+# ---------------------------------------------------------------------------
+
+
+def de_bruijn(k):
+    """A binary de Bruijn word of order k (length 2^k + k - 1, all 2^k k-mers)."""
+    nodes = ["".join(p) for p in itertools.product("01", repeat=k - 1)]
+    it = {u: iter("01") for u in nodes}
+    stack, circuit = [nodes[0]], []
+    while stack:
+        u = stack[-1]
+        b = next(it[u], None)
+        if b is None:
+            circuit.append(stack.pop())
+        else:
+            stack.append((u + b)[-(k - 1):])
+    circuit.reverse()
+    s = circuit[0] + "".join(u[-1] for u in circuit[1:])
+    assert len(s) == 2 ** k + k - 1, "de Bruijn length for k=%d is %d" % (k, len(s))
+    assert len({s[i:i + k] for i in range(len(s) - k + 1)}) == 2 ** k, "not de Bruijn"
+    return s.translate(str.maketrans("01", "ab"))
+
+
+def cmd_bruijn(args):
+    print("== bruijn ==")
+    print("B_k = a binary de Bruijn word of order k: |B_k| = 2^k + k - 1 and every k-mer")
+    print("occurs in it exactly once, so d_k = 2^k and delta >= 2^k/k  (PROVED, elementary).")
+    print("With gamma >= delta and gamma_2 = 2 measured, gamma - gamma_2 -> infinity:")
+    print("gamma <= gamma_2 + c fails for every constant c.")
+    print("%3s %5s %8s %9s %6s %7s %7s %7s %6s" %
+          ("k", "n", "d_k", "delta", "ceil", "gamma", "gamma_2", "g-g2", "g-cd"))
+    for k in range(2, args.kmax + 1):
+        s = de_bruijn(k)
+        inst = F.Instance(s)
+        prof = tuple(inst.d_profile[1:])
+        delta, _ = F.delta_from_profile(prof)
+        assert prof[k - 1] == 2 ** k, "d_k != 2^k for B_%d" % k
+        g2 = F.gamma_k(s, 2)[0]
+        try:
+            g, lb, _sol = F.gamma_certified(s, time_cap=args.time_cap)
+        except NotClosed:
+            lbmax = max(int(ceil(delta)), inst.packing_bound(seed=0, restarts=24)[0])
+            _sol, lb = F.anytime.exact_gamma(inst, deadline=None, node_cap=200000, lb=lbmax)
+            print("%3d %5d %8d %-9s %6d %7s %7d %7s %6s   (open bracket: lb = %d)"
+                  % (k, len(s), prof[k - 1], str(delta), ceil(delta), "-", g2, "-", "-", lb))
+            continue
+        print("%3d %5d %8d %-9s %6d %7d %7d %7d %6d"
+              % (k, len(s), prof[k - 1], str(delta), ceil(delta), g, g2, g - g2,
+                 g - int(ceil(delta))))
+        sys.stdout.flush()
+    return None
+
+
+# ---------------------------------------------------------------------------
 
 
 def main(argv=None):
@@ -449,6 +576,16 @@ def main(argv=None):
     h.add_argument("--seed", type=int, default=0)
     h.set_defaults(fn=cmd_hunt)
 
+    b = sub.add_parser("bruijn")
+    b.add_argument("--kmax", type=int, default=6)
+    b.add_argument("--time-cap", type=float, default=150.0)
+    b.set_defaults(fn=cmd_bruijn)
+
+    f = sub.add_parser("families")
+    f.add_argument("--maxlen", type=int, default=80)
+    f.add_argument("--time-cap", type=float, default=10.0)
+    f.set_defaults(fn=cmd_families)
+
     a = sub.add_parser("all")
     a.add_argument("--quick", action="store_true")
     a.set_defaults(fn=None)
@@ -469,6 +606,8 @@ def main(argv=None):
         args2 = p.parse_args(["hunt", "--ns", "16,20,24" if args.quick else "16,20,24,28,32",
                               "--rounds", "8" if args.quick else "20"])
         cmd_hunt(args2)
+        args2 = p.parse_args(["families", "--maxlen", "40" if args.quick else "80"])
+        cmd_families(args2)
         return 0
     return args.fn(args)
 

@@ -25,3 +25,4 @@
 [1010.3s] n=192 seed=0 evaluated=25 315.7s rows=1  NEW BEST
 [1186.4s] n=192 seed=1 evaluated=25 315.6s rows=1  NEW BEST
 [1469.3s] n=256 seed=0 evaluated=24 573.2s rows=1  NEW BEST
+[1674.0s] n=256 seed=1 evaluated=24 663.7s rows=1

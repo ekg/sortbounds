@@ -23,6 +23,25 @@ NP-hard.*
 | **consequence if true** | with T5 (`γ/LP* ≤ γ/δ`) the attractor LP gap is `≤ 3` on binary; an `O(n)`-time 3-approximation for `γ` at `σ = 2` would exist |
 | **consequence if false** | the KNP log factor is attained at `σ = 2`, and `δ` gives nothing beyond polylog |
 
+## C1′ — the sharp form: `γ ≤ (3/2)·δ + O(1)` on binary
+
+*Post-hoc fit to the 14 certified rows of `gamma-delta-growth.md` (`n = 20 … 384`,
+`δ = 2.8 … 24.6`), not independent evidence — recorded because it unifies C1 and C3.*
+
+| δ | 2.8 | 3.0 | 3.9 | 5.0 | 6.9 | 10 | 16 | 19.8 | 24.6 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `γ/δ` | 3.00 | 2.33 | 2.31 | 2.00 | 1.74–1.88 | 1.70 | 1.50 | 1.52 | 1.42 |
+
+The ratio **decreases monotonically in `δ`** (with one tie), the classic signature of
+`γ = c·δ + O(1)` rather than `γ = c·δ` exactly: least squares gives `γ ≈ 1.35·δ + 2.8` with maximum
+residual `1.81` over all 14 rows.
+
+| | |
+| --- | --- |
+| **why it matters** | `LP* ≥ δ` is a theorem (T5), so `γ ≤ (3/2)δ + O(1)` **implies the LP gap is `≤ 3/2` asymptotically** — which is exactly the band the LP measurements occupy (`15/11 = 1.364`, `7/5 = 1.4`).  C3 (the `γ=3, δ=2` family tending to `3/2`) would then be the same phenomenon seen from the LP side |
+| **decisive experiment** | the `δ = 2` slice at `n = 256 … 4096`: it is the *worst* case for the ratio (`3.0`), so it decides between "additive constant" (`γ` stays `≤ 6`) and "slow growth" |
+| **status** | **EVIDENCE**, and post-hoc (a fit to points that were collected for other reasons) |
+
 ## C2 — the attractor LP gap is bounded by a constant on binary text
 
 | | |

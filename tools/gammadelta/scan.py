@@ -181,8 +181,24 @@ def _fib_word(n):
     return gen_text("fibonacci:%d" % 20)[:n]
 
 
+def _pd_word(n):
+    """Period-doubling word (0 -> 01, 1 -> 00): delta = 2 at the lengths we sample."""
+    s = [0]
+    while len(s) < n:
+        s = [y for c in s for y in ((0, 1) if c == 0 else (0, 0))]
+    return s[:n]
+
+
+def _rs_word(n):
+    """Rudin-Shapiro parity word (0 -> 00, 1 -> 01): delta = 2 at the lengths we sample."""
+    s = [0, 0, 0, 1]
+    while len(s) < n:
+        s = [y for c in s for y in ((0, 0) if c == 0 else (0, 1))]
+    return s[:n]
+
+
 def _tm_word(n):
-    return gen_text("thue-morse:%d" % 10)[:n]
+    return gen_text("thue-morse:%d" % max(10, n.bit_length() + 1))[:n]
 
 
 def fam_extend(rng, n, base):
@@ -191,6 +207,11 @@ def fam_extend(rng, n, base):
     while len(sym) < n:
         sym.append(rng.getrandbits(1))
     return sym[:n]
+
+
+def _lowdelta_templates(n):
+    """Templates for the delta-bounded walk: Fibonacci, Thue-Morse, and known winners."""
+    return [_fib_word(n), _tm_word(n), _pd_word(n), _rs_word(n), S64, S32]
 
 
 class DeltaWalk:
@@ -255,26 +276,43 @@ class DeltaWalk:
         return best
 
 
-def fam_lowdelta(n, rng, dmax, samples, max_steps=None):
-    """Texts of length n with ceil(delta) <= dmax, sampled by the walk above."""
+def fam_lowdelta(n, rng, dmax, samples, templates=(), dev=0.15, max_steps=None):
+    """Texts of length n with ceil(delta) <= dmax, sampled by the walk above.
+
+    A purely random order of symbols almost never survives the `delta <= 2` bound past
+    n = 100 (the class is a thin neighbourhood of the Sturmian words), so each step copies
+    a `template` symbol with probability `1 - dev` before trying the other one; a template
+    longer than n is truncated and a shorter one is padded at random.  Templates are the
+    Fibonacci word, the Thue-Morse word, and the winners stored in results.json, so the
+    sampler explores neighbourhoods of very different low-`delta` texts.
+    """
     max_steps = max_steps or 200 * n
     out = []
     attempts = 0
-    while len(out) < samples and attempts < 20 * samples:
+    while len(out) < samples and attempts < 50 * samples:
         attempts += 1
         walk = DeltaWalk(dmax)
+        template = templates[rng.randrange(len(templates))] if templates else []
         steps = 0
         while len(walk.buf) < n:
             steps += 1
             if steps > max_steps:
                 break
-            first = rng.getrandbits(1)
-            if not walk.push(first):
+            m = len(walk.buf)
+            want = template[m] if m < len(template) else rng.getrandbits(1)
+            if rng.random() > dev:
+                opts = (want, 1 - want)
+            else:
+                opts = (1 - want, want)
+            placed = False
+            for c in opts:
+                if walk.push(c):
+                    placed = True
+                    break
                 walk.pop()
-                if not walk.push(1 - first):
+            if not placed:
+                for _ in range(rng.randint(1, 5)):
                     walk.pop()
-                    for _ in range(rng.randint(1, 6)):
-                        walk.pop()
             assert walk.ok(), "the walk left the delta class"
         if len(walk.buf) == n:
             out.append(walk.sym())
@@ -586,7 +624,8 @@ def task_local(task):
     if delta_max is not None:
         # inside one delta class, random family seeds are almost never in it; sample the
         # class directly instead (DeltaWalk keeps every prefix inside it).
-        pool.extend(fam_lowdelta(n, rng, delta_max, task.get("samples") or 40))
+        pool.extend(fam_lowdelta(n, rng, delta_max, task.get("samples") or 40,
+                                 templates=_lowdelta_templates(n)))
     best = None
     out = []
     for sym in pool:
@@ -625,7 +664,8 @@ def task_sample(task):
     t0 = time.monotonic()
     texts = []
     if delta_max is not None:
-        texts = fam_lowdelta(n, rng, delta_max, samples)
+        texts = fam_lowdelta(n, rng, delta_max, samples,
+                             templates=_lowdelta_templates(n))
     else:
         while len(texts) < samples:
             before = len(texts)

@@ -18,3 +18,8 @@
 [ 342.5s] n=80 seed=1 evaluated=28  91.0s rows=1
 [ 450.6s] n=96 seed=0 evaluated=28 175.1s rows=1  NEW BEST
 [ 534.8s] n=96 seed=1 evaluated=28 208.0s rows=1
+[ 613.6s] n=128 seed=0 evaluated=27 271.1s rows=1
+[ 694.6s] n=128 seed=1 evaluated=27 244.0s rows=1
+[ 870.8s] n=160 seed=0 evaluated=26 336.0s rows=1
+[ 896.1s] n=160 seed=1 evaluated=26 282.4s rows=1  NEW BEST
+[1010.3s] n=192 seed=0 evaluated=25 315.7s rows=1  NEW BEST

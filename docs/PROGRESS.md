@@ -315,11 +315,21 @@ packing: 0000000001100000000, 000000001100000001100000000, 1000000001,
 ```
 
 So `γ − ⌈δ⌉ = 4` on binary, improving the previous record of 3 (`Packing.s32_*`, kernel-checked at
-`n = 32`).  The search's curve at `δ = 2` is `2, 3, 3, 3, 4, 3, 4, 3` over `n = 20 … 192`
-(`tools/gammadelta/`, brackets closed in every row) — roughly `+1` per doubling, i.e. consistent
-with `Θ(log n)` and **not** with `γ − δ = O(1)` on binary.  This is a measurement, not a theorem;
-it is the evidence that open problem 2 of `RESULTS.md` (is `γ/δ` bounded on binary?) has a
-*negative* answer, which would put the LP gap back in play.
+`n = 32`).  **Correction to the reading I gave this measurement one turn earlier.**  I wrote that the `δ = 2`
+curve is "consistent with `Θ(log n)` and not with `γ − δ = O(1)` on binary".  The full sweep
+(`docs/research/gamma-delta-growth.md`, 49/49 rows re-verified by `check.py`) separates the two
+quantities and reverses that reading:
+
+* the **gap** `γ − ⌈δ⌉` grows: `2` (n=20) → `10` (n=256);
+* the **ratio** `γ/δ` does *not*: it oscillates in `1.42 … 2.33` over `n = 20 … 384`, with the
+  *largest* values at the *small* end (`n = 48`: 2.33) and the largest `n` having the smallest
+  ratio (1.42).  At fixed `δ = 2` the ratio goes `2.0 → 3.0` by `n = 96` and then stays at 2.5–3.0.
+
+The gap grows only because `δ` grows — which is exactly what proportional growth looks like and is
+**not** evidence for the KNP log separation (that needs `γ/δ → ∞`).  The data therefore support
+the *opposite* conjecture: **`γ ≤ 3·δ` on binary text**, i.e. `δ` is a 3-approximation of `γ` at
+`σ = 2` — which by `gamma_div_primal_le` would bound the LP gap by 3.  Exhaustive at `n = 20, 21,
+22` (1M / 2M / 1M strings) the maximum gap is `3`, attained with `γ = 5`, `δ = 2`.
 
 ### Answers (2026-11-13)
 

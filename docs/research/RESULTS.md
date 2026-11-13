@@ -115,7 +115,8 @@ the universal form is false, the all-ones vector refutes it.)
 | --- | --- | --- |
 | LP gap, exhaustive | `1` (n≤6), `6/5` (7), `9/7` (8–11), `4/3` (12), `15/11` (13), `4/3` (14–16), 89–92 % integral | **all** binary strings, `n ≤ 16` |
 | LP gap, searched | `7/5 = 1.4` at `n = 31`; `25/18` (n=30); `18/13` (n=21, 27) | beam/structured search to `n = 40`, **not** exhaustive |
-| `γ − ⌈δ⌉` | max `2` for all binary `n ≤ 18`; `3` at `n = 32` | exhaustive to 18 (`2^19−1` strings), witness at 32 |
+| `γ − ⌈δ⌉` | max `2` for all binary `n ≤ 18`; `3` exhaustive at `n = 20, 21, 22`; `4` at `n = 40, 48`; `10` at `n = 256` | exhaustive to 22, searched (closed brackets) above |
+| `γ/δ` (binary) | **`≤ 2.33` over `n = 20 … 384`**, no upward trend; `3.0` in the `δ = 2` slice | searched, all brackets closed, 49/49 re-verified |
 | `γ − γ₂` | `3` at `n = 17` | exhaustive to 17 |
 | `γ` vs `d`-profile | not a function of it (41 of 123 classes split) | exhaustive, binary `n ≤ 12` |
 | Σ=2 gadget attempts | 3 explicit polynomial reductions, all **refuted** | exhaustive equivalence checks |
@@ -131,8 +132,11 @@ independently (`tools/gap/check.py`: 142 347 checks; `tools/attractor/check.py`:
    `hardness-related-binary.md`, including one **UNVERIFIED** 2026 preprint claiming binary SLP
    hardness).  Surviving necessary condition for any reduction: `γ(T_G)` must depend only on the
    isomorphism class of `G` (`sigma2-gadget.md`).
-2. **Is `γ/δ` bounded on binary text?**  All measurements have `γ − ⌈δ⌉ ≤ 3`; `δ ≤ γ` is a theorem.
-   Together with T5 this decides the LP-gap question: bounded `γ/δ` ⇒ bounded LP gap.
+2. **Is `γ/δ` bounded on binary text?**  The evidence now points *yes*: `γ/δ ≤ 2.33` across
+   `n = 20 … 384` with no upward trend (`gamma-delta-growth.md`), while the *gap* grows only because
+   `δ` does.  The conjecture this supports is `γ ≤ 3δ` at `σ = 2` — which, with T5
+   (`γ/LP* ≤ γ/δ`), would bound the LP gap by `3`.  A proof is wide open: it would have to turn
+   "few distinct factors" into "few hitting positions" without paying a log factor.
 3. **Round the attractor LP with ratio `O(1)`.**  T3 says the LP is not integral, T5 says its gap
    is capped by the `δ`-gap, T6 says the bracket is valid for `LP*`.  What is missing is a
    rounding rule, and no integrality argument can supply it.

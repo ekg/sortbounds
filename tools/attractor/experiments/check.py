@@ -280,28 +280,36 @@ def test_row_endpoints(rows, quick):
 
 
 def test_exhaustive_rows(rows, quick):
-    print("[3] rows with gamma exact from a complete DFS reproduce the same size")
+    """Every row short enough gets a complete DFS here, and it must agree with ub.
+
+    For n <= EXACT_GAMMA_N the brute-force answer is the ground truth for gamma, so a
+    closed bracket that disagrees with it (or a DFS that does not finish) is a real error,
+    not a budget artifact.
+    """
+    print("[3] rows with n <= %d: a fresh complete DFS reproduces the reported gamma"
+          % RF.EXACT_GAMMA_N)
     if quick:
         print("    skipped (--quick)")
         return
     t0 = time.time()
+    n_rows = 0
     for row in rows:
-        if row["status"] != "computed" or row["gamma_exact"] is None:
+        if row["status"] != "computed" or row["n"] > RF.EXACT_GAMMA_N:
             continue
-        if "complete DFS" not in row["gamma_exact_how"]:
-            continue
+        n_rows += 1
         inst = Instance(RF.build_text(row["spec"]))
-        sol, _proved = anytime.exact_gamma(inst, node_cap=RF.BIG_NODE_CAP,
-                                          lb=row["lb"])
-        check(sol is not None, "%s: the complete DFS did not finish"
-              % row["label"])
-        if sol is not None:
-            check(inst.verify(sol), "%s: DFS solution fails the definition"
-                  % row["label"])
-            check(len(sol) == row["gamma_exact"],
-                  "%s: DFS gamma %d != recorded %d"
-                  % (row["label"], len(sol), row["gamma_exact"]))
-    print("    %d checks, %.1fs" % (CHECKS[0], time.time() - t0))
+        sol, _proved = anytime.exact_gamma(inst, node_cap=RF.BIG_NODE_CAP, lb=row["lb"])
+        check(sol is not None, "%s: the complete DFS did not finish" % row["label"])
+        if sol is None:
+            continue
+        check(inst.verify(sol), "%s: DFS solution fails the definition" % row["label"])
+        check(len(sol) == row["ub"], "%s: DFS gamma %d != recorded ub %d"
+              % (row["label"], len(sol), row["ub"]))
+        check(len(sol) == row["gamma_exact"],
+              "%s: DFS gamma %d != recorded gamma_exact %s"
+              % (row["label"], len(sol), row["gamma_exact"]))
+    check(n_rows > 0, "no row is short enough for the complete DFS: block 3 is vacuous")
+    print("    %d rows, %d checks, %.1fs" % (n_rows, CHECKS[0], time.time() - t0))
 
 
 # --------------------------------------------------------------------------
@@ -378,6 +386,63 @@ def test_summary_counts(rows, payload):
     print("    %d checks" % CHECKS[0])
 
 
+# --------------------------------------------------------------------------
+# [6] the rows the note's prose quotes by name
+# --------------------------------------------------------------------------
+
+# (family, label, delta numerator, delta denominator, ceil(delta), lb, gamma or None).
+# These are the rows the note's prose quotes by name, pinned so that a re-run which moves
+# one of them fails here instead of silently contradicting the prose.  `ub` is deliberately
+# absent: it is the one endpoint a time budget can move.
+QUOTED_ROWS = [
+    ("unary a^n", "a^256", 1, 1, 1, 1, 1),
+    ("periodic (ab)^n", "(ab)^128", 2, 1, 2, 2, 2),
+    ("Fibonacci (Sturmian)", "F_7", 2, 1, 2, 2, 2),
+    ("Fibonacci (Sturmian)", "F_20", 2, 1, 2, 2, 2),
+    ("balanced periodic p/q", "3/7 n=210", 2, 1, 2, 2, 2),
+    ("run-length (a^L b^L)^m", "L=16 m=64 n=2048", 2, 1, 2, 2, 2),
+    ("Thue-Morse", "t_3", 2, 1, 2, 3, 3),
+    ("Thue-Morse", "t_4", 5, 2, 3, 4, 4),
+    ("Thue-Morse", "t_5", 20, 7, 3, 4, 4),
+    ("Thue-Morse", "t_6", 40, 13, 4, 4, 4),
+    ("Thue-Morse", "t_13", 5120, 1537, 4, 4, 4),
+    ("de Bruijn sigma=2", "k=2 n=4", 2, 1, 2, 2, 2),
+    ("de Bruijn sigma=2", "k=4 n=16", 13, 4, 4, 4, 4),
+    ("de Bruijn sigma=2", "k=7 n=128", 122, 7, 18, 19, 19),
+    ("de Bruijn sigma=2", "k=8 n=256", 249, 8, 32, 32, None),
+    ("de Bruijn sigma=3", "k=2 n=9", 4, 1, 4, 4, 4),
+    ("de Bruijn sigma=4", "k=2 n=16", 15, 2, 8, 8, 8),
+    ("random sigma=2", "n=128 s=11", 99, 8, 13, 15, 15),
+    ("random sigma=2", "n=256 s=11", 113, 5, 23, 28, None),
+    ("random sigma=2", "n=1024 s=11", 917, 12, 77, 91, None),
+    ("random sigma=4", "n=512 s=11", 80, 1, 80, 94, None),
+    ("square S S", "m=32 s=1 n=64", 24, 5, 5, 5, 5),
+    ("square S S", "m=32 s=2 n=64", 9, 2, 5, 6, 6),
+    ("square S S", "m=256 s=1 n=512", 45, 2, 23, 24, None),
+    ("reverse square S S^R", "m=256 s=1 n=512", 430, 11, 40, 49, None),
+]
+
+
+def test_quoted_rows(rows):
+    print("[6] the rows the note quotes still have the numbers the note quotes")
+    index = {(r["family"], r["label"]): r for r in rows if r["status"] == "computed"}
+    for (family, label, num, den, cd, lb, gamma) in QUOTED_ROWS:
+        row = index.get((family, label))
+        if not check(row is not None, "quoted row %r/%r is missing from results.json"
+                     % (family, label)):
+            continue
+        check((row["delta_num"], row["delta_den"]) == (num, den),
+              "%s/%s: delta %d/%d != quoted %d/%d"
+              % (family, label, row["delta_num"], row["delta_den"], num, den))
+        check(row["delta_ceil"] == cd, "%s/%s: ceil(delta) %d != quoted %d"
+              % (family, label, row["delta_ceil"], cd))
+        check(row["lb"] == lb, "%s/%s: lb %d != quoted %d"
+              % (family, label, row["lb"], lb))
+        check(row["gamma_exact"] == gamma, "%s/%s: gamma_exact %r != quoted %r"
+              % (family, label, row["gamma_exact"], gamma))
+    print("    %d quoted rows, %d checks" % (len(QUOTED_ROWS), CHECKS[0]))
+
+
 def main(argv=None):
     faulthandler.dump_traceback_later(1800, exit=True)     # never hang
     ap = argparse.ArgumentParser(description="re-verify every bracket in results.json")
@@ -405,6 +470,7 @@ def main(argv=None):
     test_exhaustive_rows(rows, args.quick)
     test_note_matches_results(rows, payload, args.allow_doc_drift)
     test_summary_counts(rows, payload)
+    test_quoted_rows(rows)
 
     print("\n%d checks, %d failures, %.1fs" % (CHECKS[0], len(FAILURES),
                                               time.time() - t0))

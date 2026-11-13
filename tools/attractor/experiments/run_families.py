@@ -475,40 +475,19 @@ def family_gap_trends(rows, min_points=3):
             if len(by_family[family]) >= min_points]
 
 
-def fit_exponent(points):
-    """Least-squares slope of log(gap) against log(n) -- an eyeball made repeatable.
-
-    Uses the certified lower end of the gap (gap_lo = lb - ceil(delta)), because only that
-    end is a proved statement about gamma: gap_lo > 0 is itself a proof that the gap is at
-    least that large.  Points with gap_lo <= 0 are dropped (log of 0 is not a rate).
-    """
-    pts = [(log(n), log(g)) for (n, g) in points if g > 0]
-    if len(pts) < 2:
-        return None
-    mx = sum(p[0] for p in pts) / len(pts)
-    my = sum(p[1] for p in pts) / len(pts)
-    num = sum((x - mx) * (y - my) for (x, y) in pts)
-    den = sum((x - mx) ** 2 for (x, _y) in pts)
-    return num / den if den else None
-
-
 def gap_series(rows):
-    """Per family: {n: min gap_lo, max gap_lo, max gap_hi} over the seeds computed.
+    """Per family: {n: min gap_lo over the seeds computed}.
 
-    The *minimum* lower end at each n is a certified statement ("some computed text of
-    this family at this n has gap at least this large"), which is what a trend in n can
-    rest on without averaging bounds of different strength.  The max columns show the
-    seed-to-seed spread, so the spread and the trend can be compared.
+    The *minimum* lower end at each n is a certified statement ("some computed text of this
+    family at this n has a gap at least this large"), which is what a trend in n can rest on
+    without averaging bounds of different strength.
     """
     series = {}
     for family, fam in family_gap_trends(rows, min_points=1):
         for row in fam:
-            slot = series.setdefault(family, {}).setdefault(
-                row["n"], {"lo": row["gap_lo"], "lo_max": row["gap_lo"],
-                           "hi_max": row["gap_hi"]})
-            slot["lo"] = min(slot["lo"], row["gap_lo"])
-            slot["lo_max"] = max(slot["lo_max"], row["gap_lo"])
-            slot["hi_max"] = max(slot["hi_max"], row["gap_hi"])
+            current = series.setdefault(family, {}).get(row["n"])
+            if current is None or row["gap_lo"] < current:
+                series[family][row["n"]] = row["gap_lo"]
     return series
 
 
@@ -555,17 +534,17 @@ def render_rates(rows):
     trend; it is not a theorem, and the seed-to-seed spread in block 2 is comparable to
     the effect on the S S / S S^R families.
     """
-    out = ["| family | n range | gap at n_min | gap at n_max | gap grew by | "
-           + " | ".join(SHAPES) + " | closest shape | n values |",
-           "| " + " | ".join(["---"] * (6 + len(SHAPES) + 1)) + " |"]
+    out = ["| family | n range | gap at n_min | gap at n_max | gap grew by | log-log "
+           "exponent | " + " | ".join(SHAPES) + " | closest shape | n values |",
+           "| " + " | ".join(["---"] * (7 + len(SHAPES) + 1)) + " |"]
     series = gap_series(rows)
     for family in sorted(series):
-        pts = sorted((n, s) for n, s in series[family].items() if s["lo"] > 0)
+        pts = sorted((n, gap) for n, gap in series[family].items() if gap > 0)
         if len(pts) < 2:
             continue
-        n0, s0 = pts[0]
-        n1, s1 = pts[-1]
-        grew = s1["lo"] / s0["lo"]
+        n0, g0 = pts[0]
+        n1, g1 = pts[-1]
+        grew = g1 / g0
         here = [r for r in rows if r["status"] == "computed" and r["family"] == family]
         d0 = min(r["delta_num"] / r["delta_den"] for r in here if r["n"] == n0)
         d1 = max(r["delta_num"] / r["delta_den"] for r in here if r["n"] == n1)
@@ -573,9 +552,10 @@ def render_rates(rows):
         best = min(SHAPES, key=lambda name: abs(log(grew) - log(factors[name])))
         cells = ["x%.2f%s" % (factors[name], " *" if name == best else "")
                  for name in SHAPES]
-        out.append("| %s | %d..%d | %d | %d | x%.2f | %s | %s | %s |"
-                   % (family, n0, n1, s0["lo"], s1["lo"], grew, " | ".join(cells),
-                      best, ", ".join(str(n) for n, _s in pts)))
+        exponent = log(grew) / log(n1 / n0) if n1 > n0 else 0.0
+        out.append("| %s | %d..%d | %d | %d | x%.2f | %.2f | %s | %s | %s |"
+                   % (family, n0, n1, g0, g1, grew, exponent,
+                      " | ".join(cells), best, ", ".join(str(n) for n, _g in pts)))
     return "\n".join(out)
 
 
@@ -616,6 +596,14 @@ def render_summary(rows):
           and r["gamma_exact"] > r["delta_ceil"]]
     exact = [r for r in computed if r["gamma_exact"] is not None]
     fallback = [r for r in computed if r["path"] != "search"]
+
+    def over_delta(row, key):
+        return row[key] * row["delta_den"] / row["delta_num"]
+
+    worst_lo = max(computed, key=lambda r: over_delta(r, "gap_lo"))
+    worst_hi = max(computed, key=lambda r: over_delta(r, "gap_hi"))
+    positive = [r for r in computed if r["gap_lo"] > 0]
+    tightest = min(positive, key=lambda r: over_delta(r, "gap_lo")) if positive else None
     lines = [
         "rows listed: %d, computed: %d, not computed: %d"
         % (len(rows), len(computed), len(rows) - len(computed)),
@@ -625,6 +613,12 @@ def render_summary(rows):
         % (len(eq), len(gt)),
         "rows measured through the primitives fallback: %d (%s)"
         % (len(fallback), sorted({r["spec"]["kind"] for r in fallback})),
+        "largest gap/delta in this table: %.2f at the certified lower ends (%s), "
+        "%.2f at the upper ends (%s)"
+        % (over_delta(worst_lo, "gap_lo"), worst_lo["label"],
+           over_delta(worst_hi, "gap_hi"), worst_hi["label"]),
+        "smallest gap/delta among the rows with a proved positive gap: %.2f (%s)"
+        % (over_delta(tightest, "gap_lo"), tightest["label"]),
     ]
     return "\n".join(lines)
 

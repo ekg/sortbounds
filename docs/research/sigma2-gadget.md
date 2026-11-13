@@ -21,7 +21,8 @@ repo's research notes, not re-read in the primary sources here.
 I built three explicitly stated polynomial reductions from VERTEX COVER to
 "binary word of length `O((n+m) log n)`, decision question `γ(T_G) ≤ B`", and tested
 the equivalence exhaustively with exact `γ`. **All three are refuted, and they are
-refuted for *every* threshold function `B`, not just for the ledger's `B = m + q`**
+refuted for every threshold `B(q)` that is instance-independent (up to the monotone bands of
+`q`), not just for the ledger's `B = m + q`**
 (§6.2): there are instance pairs `G1, G2` with `τ(G1) < τ(G2)` but `γ(T_G1) > γ(T_G2)`,
 which no monotone threshold can separate.
 
@@ -196,15 +197,20 @@ CLAIM as stated uses `B(q) = m + q`. A weaker, `B`-free claim is
 > `γ(T_G) ≤ B(q) ⟺ τ(G) ≤ q` for every graph `G`.
 
 CLAIM ⟹ CLAIM′. CLAIM′ is refuted by a single *inversion pair*: `τ(G₁) < τ(G₂)` yet
-`γ(T_{G₁}) > γ(T_{G₂})`, because `B` must satisfy
-`γ(T_{G₂}) ≤ B(τ(G₂)−1) < γ(T_{G₁})` — impossible. (COMPUTATIONALLY-CHECKED,
-`τ(G)` and `γ(T_G)` both exact; texts verified by two solvers.)
+`γ(T_{G₁}) > γ(T_{G₂})`, both queried at the **same** `q = τ(G₂)−1` (so no monotonicity of `B`
+is needed): instantiating CLAIM′ at `G₂` gives `γ(T_{G₂}) > B(q)` (the left side `τ(G₂) ≤ q`
+fails), and at `G₁` gives `γ(T_{G₁}) ≤ B(q)` (since `τ(G₁) < τ(G₂)` and `B` is monotone in `q`),
+so `γ(T_{G₁}) ≤ B(q) < γ(T_{G₂}) < γ(T_{G₁})` — impossible.
+(COMPUTATIONALLY-CHECKED: `τ(G)` and `γ(T_G)` both exact.  The cross-check by two solvers
+covers only texts with `|T| ≤ 40`: 68/75 `tags` instances, 32/75 `tags_sep`, 4/22 `hubs`; the
+remainder are certified by the suffix-tree solver alone, whose rule R1 is proved in
+`tools/attractor/instance.py`.)
 
 | variant | `G₁` (low `τ`, high `γ`) | `γ(T_{G₁})` | `G₂` (high `τ`, low `γ`) | `γ(T_{G₂})` |
 |---|---|---|---|---|
 | tags | `{(0,2),(0,3)}`, `n=4`, `τ=1`, `m=2`, `|T|=24` | **5** | `{(0,1),(2,3)}`, `n=4`, `τ=2`, `m=2`, `|T|=24` | **3** |
-| tags_sep | `{(0,1),(1,2),(1,3)}`, `n=4`, `τ=1`, `m=3`, `|T|=50` | **6** | `{(0,1),(0,2),(1,2)}`, `n=3`, `τ=2`, `m=3`, `|T|=45` | **4** |
-| hubs | `{(1,3)}`, `n=4`, `τ=1`, `m=1`, `|T|=54` | **9** | `{(0,1),(0,2),(1,2)}`, `n=3`, `τ=2`, `m=3`, `|T|=63` | **8** |
+| tags_sep *(contrast only: different `n`, so a different `B`; not an instance of CLAIM′)* | `{(0,1),(1,2),(1,3)}`, `n=4`, `τ=1`, `m=3`, `|T|=50` | **6** | `{(0,1),(0,2),(1,2)}`, `n=3`, `τ=2`, `m=3`, `|T|=45` | **4** |
+| hubs *(contrast only: different `n`, so a different `B`; not an instance of CLAIM′)* | `{(1,3)}`, `n=4`, `τ=1`, `m=1`, `|T|=54` | **9** | `{(0,1),(0,2),(1,2)}`, `n=3`, `τ=2`, `m=3`, `|T|=63` | **8** |
 
 The `tags` pair is the cleanest: **two graphs with the same `n` and the same `m`,
 the `τ=2` one gets a strictly smaller `γ` than the `τ=1` one.**
@@ -234,8 +240,8 @@ relevant range (e.g. `B(q) = m + q`, the ledger's threshold), then
 left-hand sides agree for every `q`. If `γ(T_G) < γ(T_H)` and `B` is injective,
 choose `q` with `γ(T_G) ≤ B(q) < γ(T_H)`, contradiction. ∎
 
-**The three constructions violate it** (COMPUTATIONALLY-CHECKED, exact `γ`, texts
-`≤ 48` chars, all solvers cross-checked; reproduce with
+**The three constructions violate it** (COMPUTATIONALLY-CHECKED, exact `γ`; the two-solver cross-check covers the
+texts with `|T| ≤ 40` only, the rest rely on the single suffix-tree solver; reproduce with
 `python3 check.py --variant tags --nmax 4 --labels --relabels 0`).
 `tags`, all 24 relabellings of each isomorphism class on 4 vertices (and all 6 of
 each class on 3 vertices, where the empty graph gives `{2:2, 3:4}` and `P₃` gives

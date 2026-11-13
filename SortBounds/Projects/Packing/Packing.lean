@@ -39,6 +39,14 @@ factor of the universe (402 rows × 32 positions) — `s32_covers`, decided belo
 elaboration.  That row check needs `maxHeartbeats` raised (at the default 200 000 the `decide`
 fails) and `maxRecDepth` raised as in `AttractorLP/Witness.lean`; both values below were measured
 to suffice.
+
+**`n = 48`: the same refutation one constant higher (sections M6–M10).**  The tail of the file
+repeats the construction for `s48` (`README2.md`), where a seven-factor packing gives `γ ≥ 7`, an
+exhibited attractor gives `γ ≤ 7`, and `δ = 3` — hence `gamma_delta_add_three_false`.  The proof
+shape is `s32`'s unchanged; only `s48_covers` is dearer: 894 rows × 48 positions is ~5× the
+reduction of `s32_covers` (measured 8 m 53 s and **37 GB** peak RSS, versus ~95 s at `n = 32`).
+If that memory becomes a problem for a parallel `lake build`, split the row check by factor
+length — `factorUniverse_eq_biUnion` turns it into `s.length` independent `decide`s.
 -/
 import Mathlib
 import SortBounds.Projects.AttractorLP.Gap
@@ -316,7 +324,7 @@ theorem exists_primalValue_le_minAttractorSize (s : List α) :
     obtain ⟨hpC, hpG⟩ := Finset.mem_inter.1 hp
     have hsingle : x p ≤ ∑ q ∈ coverageSet s f, x q :=
       Finset.single_le_sum (f := x) (fun q _ => hnonneg q) hpC
-    have : x p = 1 := by simp only [hxdef]; rw [if_pos hpG]
+    have : x p = 1 := by simp only [hxdef]; rw [ite_eq_left hpG]
     rw [this] at hsingle
     exact hsingle
   refine ⟨x, ⟨hnonneg, hcover⟩, ?_⟩
@@ -326,5 +334,186 @@ theorem exists_primalValue_le_minAttractorSize (s : List α) :
     rw [← Finset.sum_filter]
     rw [h1, Finset.sum_const, nsmul_eq_mul, mul_one, Nat.cast_inj]
   rw [hsum, hcard]
+
+end SortBounds.Projects.Packing
+/-! ### M6 — the instance `s48` (`n = 48`): `γ = 7`, `δ = 3`
+
+`README2.md`'s upgrade of the refutation.  `s48` has a **seven**-factor packing whose coverage
+sets *partition* the 48 positions (so `γ ≥ 7`), an attractor of size 7 (so `γ ≤ 7`), and
+`δ = 3` — hence `γ = δ + 4` and `γ ≤ ⌈δ⌉ + 3` fails.  The proofs are the `s32` proofs with the
+data changed; only the cost of the two large checks changed (see the timings in
+`README2.md`'s log). -/
+
+namespace SortBounds.Projects.Packing
+
+open SortBounds.Projects.Repetitiveness SortBounds.Projects.AttractorLP
+
+-- `s48_covers` decides `coverageSet` for all 894 factors of a length-48 text: ~5× the work of
+-- `s32_covers`, which needed 200 000 heartbeats exceeded (~95 s).  Measured below.
+set_option maxHeartbeats 8000000
+
+/-- The witness text of `README2.md`, written `0/1` there:
+`010011011100110000001100000000000011000001100001` (`n = 48`, `1 = true`, `0 = false`). -/
+def s48 : List Bool :=
+  [false, true, false, false, true, true, false, true, true, true, false, false,
+   true, true, false, false, false, false, false, false, true, true, false, false,
+   false, false, false, false, false, false, false, false, false, false, true, true,
+   false, false, false, false, false, true, true, false, false, false, false, true]
+
+theorem s48_length : s48.length = 48 := by decide
+
+/-- The attractor `{0, 7, 12, 15, 27, 40, 42}` of `s48`. -/
+def s48Attractor : Finset (Fin s48.length) :=
+  {⟨0, by decide⟩, ⟨7, by decide⟩, ⟨12, by decide⟩, ⟨15, by decide⟩, ⟨27, by decide⟩,
+    ⟨40, by decide⟩, ⟨42, by decide⟩}
+
+theorem s48Attractor_card : s48Attractor.card = 7 := by decide
+
+/-- **`{0,7,12,15,27,40,42}` meets the coverage set of every factor of `s48`**: the covering
+condition row by row (`isAttractor_iff_coverageSet`), one nonemptiness test per factor of
+`factorUniverse s48` (894 rows × 48 positions) — the expensive check of this file. -/
+theorem s48_covers :
+    ∀ f ∈ factorUniverse s48, (coverageSet s48 f ∩ s48Attractor).Nonempty := by
+  decide
+
+theorem s48_attractor : IsAttractor s48 s48Attractor :=
+  (isAttractor_iff_coverageSet s48Attractor).mpr s48_covers
+
+/-! ### M7 — the seven-factor packing -/
+
+/-- The seven factors of the packing: `"010"`, `"01101"`, `"11001"`, `"10000001"`,
+`"10000000"`, `"0000011000001"`, `"100001"`. -/
+def s48Packing : Finset (List Bool) :=
+  {[false, true, false], [false, true, true, false, true], [true, true, false, false, true],
+    [true, false, false, false, false, false, false, true],
+    [true, false, false, false, false, false, false, false],
+    [false, false, false, false, false, true, true, false, false, false, false, false, true],
+    [true, false, false, false, false, true]}
+
+theorem s48Packing_card : s48Packing.card = 7 := by decide
+
+theorem s48_coverageSet_010 :
+    coverageSet s48 [false, true, false] =
+      {⟨0, by decide⟩, ⟨1, by decide⟩, ⟨2, by decide⟩} := by
+  decide
+
+theorem s48_coverageSet_01101 :
+    coverageSet s48 [false, true, true, false, true] =
+      {⟨3, by decide⟩, ⟨4, by decide⟩, ⟨5, by decide⟩, ⟨6, by decide⟩, ⟨7, by decide⟩} := by
+  decide
+
+theorem s48_coverageSet_11001 :
+    coverageSet s48 [true, true, false, false, true] =
+      {⟨8, by decide⟩, ⟨9, by decide⟩, ⟨10, by decide⟩, ⟨11, by decide⟩, ⟨12, by decide⟩} := by
+  decide
+
+theorem s48_coverageSet_10000001 :
+    coverageSet s48 [true, false, false, false, false, false, false, true] =
+      {⟨13, by decide⟩, ⟨14, by decide⟩, ⟨15, by decide⟩, ⟨16, by decide⟩, ⟨17, by decide⟩,
+        ⟨18, by decide⟩, ⟨19, by decide⟩, ⟨20, by decide⟩} := by
+  decide
+
+theorem s48_coverageSet_10000000 :
+    coverageSet s48 [true, false, false, false, false, false, false, false] =
+      {⟨21, by decide⟩, ⟨22, by decide⟩, ⟨23, by decide⟩, ⟨24, by decide⟩, ⟨25, by decide⟩,
+        ⟨26, by decide⟩, ⟨27, by decide⟩, ⟨28, by decide⟩} := by
+  decide
+
+theorem s48_coverageSet_0000011000001 :
+    coverageSet s48
+        [false, false, false, false, false, true, true, false, false, false, false, false, true] =
+      {⟨29, by decide⟩, ⟨30, by decide⟩, ⟨31, by decide⟩, ⟨32, by decide⟩, ⟨33, by decide⟩,
+        ⟨34, by decide⟩, ⟨35, by decide⟩, ⟨36, by decide⟩, ⟨37, by decide⟩, ⟨38, by decide⟩,
+        ⟨39, by decide⟩, ⟨40, by decide⟩, ⟨41, by decide⟩} := by
+  decide
+
+theorem s48_coverageSet_100001 :
+    coverageSet s48 [true, false, false, false, false, true] =
+      {⟨42, by decide⟩, ⟨43, by decide⟩, ⟨44, by decide⟩, ⟨45, by decide⟩, ⟨46, by decide⟩,
+        ⟨47, by decide⟩} := by
+  decide
+
+/-- Each of the seven factors is a factor of `s48` (its `factorOcc` interval is exhibited), hence
+a row of the constraint system `factorUniverse s48`. -/
+theorem s48Packing_subset : s48Packing ⊆ factorUniverse s48 := by
+  intro f hf
+  simp only [s48Packing, Finset.mem_insert, Finset.mem_singleton] at hf
+  rcases hf with rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact mem_factorUniverse.mpr ⟨0, 3, by decide, by decide, by decide⟩
+  · exact mem_factorUniverse.mpr ⟨3, 8, by decide, by decide, by decide⟩
+  · exact mem_factorUniverse.mpr ⟨8, 13, by decide, by decide, by decide⟩
+  · exact mem_factorUniverse.mpr ⟨13, 21, by decide, by decide, by decide⟩
+  · exact mem_factorUniverse.mpr ⟨21, 29, by decide, by decide, by decide⟩
+  · exact mem_factorUniverse.mpr ⟨29, 42, by decide, by decide, by decide⟩
+  · exact mem_factorUniverse.mpr ⟨42, 48, by decide, by decide, by decide⟩
+
+/-- The seven coverage sets are pairwise disjoint.  Checked against `coverageSet` itself, not
+against the seven transcriptions above. -/
+theorem s48Packing_pairwiseDisjoint :
+    ∀ f ∈ s48Packing, ∀ g ∈ s48Packing, f ≠ g →
+      Disjoint (coverageSet s48 f) (coverageSet s48 g) := by
+  decide
+
+/-- **`γ ≥ 7`** for the witness: the packing lemma applied to the seven disjoint coverage sets. -/
+theorem s48_gamma_ge : 7 ≤ minAttractorSize s48 := by
+  have h := card_le_minAttractorSize_of_pairwiseDisjoint s48Packing s48Packing_subset
+    s48Packing_pairwiseDisjoint
+  rwa [s48Packing_card] at h
+
+/-! ### M8 — `γ = 7` -/
+
+/-- **`γ = 7`**: `{0,7,12,15,27,40,42}` is an attractor (`≤`) and no attractor is smaller
+(`s48_gamma_ge`), so `γ = P = 7` — the packing is optimal here too. -/
+theorem s48_gamma : minAttractorSize s48 = 7 := by
+  refine le_antisymm ?_ s48_gamma_ge
+  calc minAttractorSize s48 ≤ s48Attractor.card := minAttractorSize_le s48_attractor
+    _ = 7 := s48Attractor_card
+
+/-! ### M9 — `δ = 3`
+
+The same two halves as for `s32`: `d_k ≤ 3k` for every `k` (here `k ≤ 12` decided, `k ≥ 13` from
+the position count `48 - k + 1 ≤ 3k`), and `3 ≤ δ` from `d_4 = 12`. -/
+
+/-- **`d_k ≤ 3k` for every `k ≥ 1`** on `s48`.  `k ≤ 12` is decided; for `k ≥ 13` the position
+count `48 - k + 1 ≤ 3k` suffices (`4k ≥ 49`). -/
+theorem s48_dk_le {k : ℕ} (hk1 : 1 ≤ k) : (distinctFactors s48 k).card ≤ 3 * k := by
+  by_cases hk : k ≤ 12
+  · interval_cases k <;> decide
+  · have h1 := card_distinctFactors_le_length s48 k
+    rw [s48_length] at h1
+    omega
+
+/-- `d_4 = 12` on the witness — the source of the lower bound `3 ≤ δ`. -/
+theorem s48_d4 : (distinctFactors s48 4).card = 12 := by decide
+
+theorem s48_delta_ge : 3 ≤ deltaQ s48 := by
+  rw [deltaQ_eq_sup' (by decide : 1 ≤ s48.length)]
+  refine Finset.le_sup'_of_le (f := fun k => ((distinctFactors s48 k).card : ℚ) / (k : ℚ))
+    (b := 4) ?_ ?_
+  · rw [s48_length]; decide
+  · rw [s48_d4]; norm_num
+
+theorem s48_delta_le : deltaQ s48 ≤ 3 := by
+  rw [deltaQ_eq_sup' (by decide : 1 ≤ s48.length)]
+  refine Finset.sup'_le _ _ fun k hk => ?_
+  obtain ⟨hk1, -⟩ := Finset.mem_Icc.mp hk
+  rw [div_le_iff₀ (by exact_mod_cast hk1 : (0 : ℚ) < (k : ℚ))]
+  have h := s48_dk_le hk1
+  exact_mod_cast h
+
+/-- **`δ = 3`** for the witness. -/
+theorem s48_delta : deltaQ s48 = 3 := le_antisymm s48_delta_le s48_delta_ge
+
+/-! ### M10 — the refutation of `γ ≤ ⌈δ⌉ + 3` -/
+
+/-- **`γ ≤ ⌈δ⌉ + 3` is false**, witnessed at `n = 48`: there `γ = 7` and `δ = 3`, so the
+inequality would read `7 ≤ 6`.  `δ` is an integer at this witness, so the statement needs no
+ceiling convention.  (Supersedes `gamma_delta_add_two_false`: same conclusion, larger constant.) -/
+theorem gamma_delta_add_three_false : ¬ ∀ s : List Bool,
+    (minAttractorSize s : ℚ) ≤ deltaQ s + 3 := by
+  intro h
+  have h48 := h s48
+  rw [s48_gamma, s48_delta] at h48
+  norm_num at h48
 
 end SortBounds.Projects.Packing

@@ -9,7 +9,45 @@ Labels: **OPEN** (no attempt), **EVIDENCE** (data, no proof), **REFUTED** (witne
 
 ---
 
-## C1 — `γ ≤ 3·δ` on binary text
+## ⛔ C1 and C1′ are REFUTED — see "The powers-of-two family" below
+
+`C1 (γ ≤ 3δ on binary)` and `C1′ (γ ≤ 1.5δ + O(1))` are **both dead**, refuted by an explicit
+family with `δ = 2` for every length, computed with closed brackets:
+
+| n | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 8192 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `γ` | 3 | 3 | 4 | 4 | 5 | 5 | 6 | 6 | 7 | 7 | 8 |
+| `γ/δ` | 1.5 | 1.5 | 2.0 | 2.0 | 2.5 | 2.5 | 3.0 | 3.0 | **3.5** | 3.5 | **4.0** |
+
+for `T_n` = the binary string with `1` exactly at positions `2^0, 2^1, 2^2, …` (i.e.
+`t = {t_i = 1 iff i+1 is a power of two}`).  `δ(T_n) = 2` for every `n`, while
+`γ(T_n) = ⌈log₂ n / 2⌉ + 1` on all eleven computed lengths (`n = 2^3 … 2^13`), so
+`γ/δ → ∞` on **binary** text.  KNP's `γ = Ω(δ log(n/δ))` is therefore attained at `σ = 2`, and the
+"binary is δ-tight" picture of the measurements to `n = 384` was an artefact of the search not
+finding this family.
+
+Consequences, which replace C1/C1′ and C2:
+
+| claim | new status |
+| --- | --- |
+| `γ ≤ 3δ` on binary (C1) | **REFUTED**, `γ/δ = 3.5` at `n = 2048`, `4.0` at `n = 8192` |
+| `γ ≤ 1.5δ + O(1)` on binary (C1′) | **REFUTED** |
+| `δ` is a constant-factor approximation at `σ = 2` | **REFUTED** (it is a `Θ(log n)`-factor one) |
+| LP gap bounded on binary (C2) | **OPEN again** — `γ/LP* ≤ γ/δ` no longer bounds it by a constant |
+| `γ(T_n) = ⌈log₂ n/2⌉ + 1` | **NEW CONJECTURE** (11 exact values, both ends certified) — see below |
+
+### C-new — `γ(T_n) = ⌈log₂ n / 2⌉ + 1` exactly
+
+*`T_n` as above.*
+
+| | |
+| --- | --- |
+| **evidence** | 11 values, `n = 8 … 8192`, every bracket closed (packing LB = attractor UB) |
+| **why it is plausible** | pairs of consecutive powers of two interleave; each scale contributes one position, and the parity of `log₂ n` explains the ceiling |
+| **decisive experiment** | one more scale (`n = 16384, 32768`) to confirm `9`, or a proof: an explicit packing of `⌈j/2⌉+1` disjoint coverage sets (lower bound) and an explicit attractor of that size (upper bound) |
+| **status** | **EVIDENCE**, and the natural Lean target — both directions are constructive and scale-free |
+
+## C1 (original text, kept for the record) — `γ ≤ 3·δ` on binary text
 
 *Equivalently: `δ` is a 3-approximation of `γ` at `σ = 2`.  `δ` is computable in `O(n)`; `γ` is
 NP-hard.*

@@ -248,6 +248,19 @@ a swarmed lane with its own independent review:
 | **B** (implementer) | What is the **LP integrality gap** of the attractor cover? | if `O(1)`, a constant-factor approximation is within reach; if `Θ(log n)`, LP-based methods are stuck at the log factor. Nobody has measured it — requires an exact rational simplex, plus the *fixed-`k`* gap where consecutive-ones structure should force gap 1 |
 | **C** (theorist + experimenter) | When is `γ = ⌈δ⌉`? | the anytime search found *closed* brackets on every repetitive family tried. If that pattern is structural, `γ` is computable in `O(n)` exactly where it matters; if not, the gap's growth rate is the quantity to know |
 
+**Lane A, hard mode** (`workflows/sigma2-hard.js`, running): since `σ = 2` is *open* — no source
+proves hardness, none gives an algorithm — treat it as a research problem rather than a
+footnote. Three angles in parallel: (a) **build and exhaustively test** a reduction from a known
+NP-hard problem to a binary string, with the equivalence claim checked on every small source
+instance (a hand-built gadget is not credible otherwise); (b) the opposite bet — hunt for
+structure that makes binary instances tractable, by computing exact `γ` for binary strings
+together with `δ`, the `d_k` profile, `γ_1`, `γ_2`, run structure, period, packing bound, and
+testing whether `γ` is a function of them or admits a DP; (c) **mine the neighbour reductions**
+(minimum SLP, minimum LZ77 phrases — `γ ≤ g`, `γ ≤ z`) for binary-alphabet gadget technique,
+quoting the sentence that fixes each alphabet. Then a synthesis claim-register and an
+adversarial review whose mandate is: *does anything actually answer the question, or is it a
+gadget sketch dressed as a theorem?*
+
 **Lane B first data (exact, rational LP):** over all 510 binary strings `n ≤ 8`, the maximum
 integrality gap is **9/7 ≈ 1.2857** (`01101001` and `10010110`: `γ = 3`, `LP* = 7/3`),
 the median is exactly 1, and 490/510 have gap 1.  That is nowhere near `Θ(log n)` — if the

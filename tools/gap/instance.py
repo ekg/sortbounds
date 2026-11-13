@@ -55,6 +55,10 @@ for _p in (_ATTRACTOR, _REPMETER):
 import simplex                                            # noqa: E402
 
 
+class BudgetExhausted(RuntimeError):
+    """An exact search hit its node cap: nothing is known, so no number is reported."""
+
+
 def _load_module(path, name):
     """Load a .py file under its own module name, bypassing sys.path.
 
@@ -199,7 +203,8 @@ class Cover:
         def rec(chosen_pos, hit, k):
             nodes[0] += 1
             if nodes[0] > node_cap:
-                raise RuntimeError("exact_min_cover hit its node cap (%d)" % node_cap)
+                raise BudgetExhausted("exact_min_cover hit its node cap (%d)"
+                                      % node_cap)
             if hit == all_rows:
                 if k < best[0]:
                     best[0] = k

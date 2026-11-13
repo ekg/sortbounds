@@ -12,7 +12,7 @@ found.
 "Thm. 8"). **KPRR18** Kempa–Policriti–Prezza–Rotenberg, ESA 2018, LIPIcs 112,
 doi:10.4230/LIPIcs.ESA.2018.52, arXiv:1803.01695. **FW24** Fuchs–Whittington, STACS 2024,
 doi:10.4230/LIPIcs.STACS.2024.41, arXiv:2304.06523. **MRRRS19** arXiv:1907.04660 (venue
-unverified). **P21** Prezza, arXiv:2004.02781 (survey). **CFGGS21** Casel et al., Theory Comput.
+unverified). **N21** Navarro, *ACM Computing Surveys* 54(2), 2021, doi:10.1145/3434399, arXiv:2004.02781 (survey). **CFGGS21** Casel et al., Theory Comput.
 Syst. 65(2):344–409, 2021, doi:10.1007/s00224-020-10013-w.
 
 ## 1. The proved statements, verbatim
@@ -27,7 +27,10 @@ Here a `k`-attractor covers all factors of length **at most** `k` (KP18 Def. 4.1
 > (i.e., the case `k = n`)."
 
 The lift from constant `k` to `k = n` is a **monotonicity gadget** on the same string `T_C`:
-`γ*_k(T_C) = γ*_{k'}(T_C)` for every `k < k' ≤ |T_C|`, so hardness at `k = 3` transfers to `k = n`.
+`γ*_k(T_C) = γ*_{k'}(T_C)` for every `k < k' ≤ |T_C|`, so hardness at `k = 3` transfers to `k = n`
+(**MY-INFERENCE**, locator: KP18's proofs of Thm 4.2 and Cor 4.4 as read in
+`docs/research/attractor-approx.md:56-59`; the `k = n` conclusion itself is carried by the quoted
+KP18 sentence above).
 KP18 footnote 3 admits non-constant `k = f(n)` when `f(n) → ∞` and `f` is non-decreasing, which
 `k = n` satisfies.
 
@@ -41,8 +44,8 @@ about one fixed `k`, not `k = n`.
 > approximate MINIMUM-`k`-ATTRACTOR within factor `11809/11808 − ǫ`."
 
 The brief writes "~`1 + 1/11809`"; the paper's ratio is `11809/11808 = 1 + 1/11808`
-(MY-COMPUTATION: `2k³+4k²−3k+1 = 82` at `k=3`, and `144·82 = 11808`, from Berman–Karpinski's
-`145/144` for 3-vertex-cover). As non-constant `k`, including `k = n`, is admissible, this covers
+(MY-COMPUTATION: `2k³+4k²−3k+1 = 82` at `k=3`, and `144·82 = 11808`; the connection to
+Berman–Karpinski's `145/144` for 3-vertex-cover is **MY-HYPOTHESIS**, not derived in the text read). As non-constant `k`, including `k = n`, is admissible, this covers
 the **full** attractor: no PTAS (MY-INFERENCE — the corollary does not spell out `k = n`).
 
 **(e) `k = 2` — the 2018 open case, closed in 2024.** KPRR18: "Note that such a result is not known
@@ -84,7 +87,7 @@ is **also** large-alphabet.
 **KPRR18**, same fact stated twice: "The problem remains NP-hard even under the restriction that
 only substrings of length at most `k` are captured by `Γ`, for any `k ≥ 3` **and on large
 alphabets**"; and for their sharp-`k` reduction, "Note also that our reduction requires large
-alphabet." MRRRS19's abstract and P21 then repeat it unqualified — true when `Σ` is part of the
+alphabet." MRRRS19's abstract and N21's survey then repeat it unqualified — true when `Σ` is part of the
 input, not a claim about fixed `σ`.
 
 **Why no constant-`σ`/constant-`k` hardness can exist.** KPRR18 **Thm 29**: "A minimum `k`-attractor
@@ -95,12 +98,14 @@ can be found in `O(n) + exp(O(σ^k log σ^k))` time"; **Cor. 7**: "For constant 
 
 ## 3. What is actually known for `σ = 2`
 
-* **`k = 1`**: `γ_1 = σ` (KP18 Ex. 3.3: "any attractor `Γ` must satisfy `|Γ| ≥ σ`"), so `γ_1 = 2`.
+* **`k = 1`**: `γ_1 = σ` — KP18 Ex. 3.3 gives `≥` ("any attractor `Γ` must satisfy `|Γ| ≥ σ`"),
+  and `≤` is one position per distinct character — so at `σ = 2` it is `2`.
 * **every fixed `k`**: exact minimum `k`-attractor in `O(n)` (KPRR18 Cor. 7; also Thm 29 with
   `σ = 2`). **MY-INFERENCE, loud version: on binary strings the 2-attractor problem — the one FW24
   proves NP-complete — is solvable in `O(n)`.** No contradiction: FW24's instances have
   `σ = Θ(n)`. So the known hardness is purely an alphabet phenomenon.
-* **`k` growing, `σ = 2`**: still in P while `σ^k log σ^k ∈ O(log n)` (Cor. 6), i.e.
+* **`k` growing, `σ = 2`**: still in `n^{O(1)}` (not `O(n)`) while `σ^k log σ^k ∈ O(log n)` — the
+  condition is as reported in §3 (Cor. 6 itself is **not re-quoted here**), i.e.
   `2^k·k·ln2 ≤ c·log n`, roughly `k ≲ log₂log n − log₂log₂log n` (MY-COMPUTATION: largest admissible
   `k` is `3` at `log₂n = 40`, `4` at `log₂n = 100`). Past that, `σ = 2` buys nothing: the KPRR18
   Lemma 13 class bound `min{n, σ^{2k−1} + 2k − 2}` equals `n` once `k ≈ ½log n`.

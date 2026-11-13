@@ -56,7 +56,8 @@ import sys
 import time
 from fractions import Fraction
 
-from instance import TextInstance, binary_strings, ternary_strings, text_str
+from instance import (BudgetExhausted, TextInstance, binary_strings, ternary_strings,
+                      text_str)
 from measure import gen_text
 from simplex import LPError
 
@@ -68,7 +69,8 @@ HIST_TOP = 12          # distinct gap values kept in the printed histogram
 # --------------------------------------------------------------------------
 
 
-def measure(sym, universe="nodes", k=None, max_seconds=None, cross_check=False):
+def measure(sym, universe="nodes", k=None, max_seconds=None, cross_check=False,
+            fast=False):
     """gamma, LP*, gap and delta of one text in one universe, all certified.
 
     max_seconds bounds the LP solve: the exact simplex is slow on long texts, and on
@@ -121,12 +123,15 @@ def measure(sym, universe="nodes", k=None, max_seconds=None, cross_check=False):
         "delta": str(delta),
         "lp_bound": str(lb),
         "pivots": lp.pivots,
-        "lp_primal_crosscheck": str(cov.lp_primal(deadline=deadline)),
         "seconds": round(time.monotonic() - t0, 3),
     })
-    if rec["lp_primal_crosscheck"] != rec["lp"]:
-        raise AssertionError("the two LP routes disagree on %r: %s vs %s"
-                             % (rec["text"], rec["lp"], rec["lp_primal_crosscheck"]))
+    if not fast:
+        # the second LP route (two-phase simplex on the primal): every sweep in check.py
+        # runs it, the big scans skip it because the pair certificate already pins LP*
+        rec["lp_primal_crosscheck"] = str(cov.lp_primal(deadline=deadline))
+        if rec["lp_primal_crosscheck"] != rec["lp"]:
+            raise AssertionError("the two LP routes disagree on %r: %s vs %s"
+                                 % (rec["text"], rec["lp"], rec["lp_primal_crosscheck"]))
     if max_seconds is not None and time.monotonic() > deadline:
         raise LPError("instance budget exhausted after the measurement")
     if cross_check:
@@ -142,18 +147,20 @@ def measure(sym, universe="nodes", k=None, max_seconds=None, cross_check=False):
     return rec
 
 
-def measure_full(sym, ks=(1, 2, 3), max_seconds=None, le_k=False, factors=False):
+def measure_full(sym, ks=(1, 2, 3), max_seconds=None, le_k=False, factors=False,
+                 fast=False):
     """One text: the full-universe record plus the single-k records as sub-records."""
-    out = measure(sym, "nodes", None, max_seconds)
+    out = measure(sym, "nodes", None, max_seconds, fast=fast)
     out["sub"] = {}
     if factors and out["n"]:
-        out["sub"]["factors"] = measure(sym, "factors", None, max_seconds)
+        out["sub"]["factors"] = measure(sym, "factors", None, max_seconds, fast=fast)
     for k in ks:
         if out["n"] and k <= out["n"]:
-            out["sub"]["factors_%d" % k] = measure(sym, "factors_k", k, max_seconds)
+            out["sub"]["factors_%d" % k] = measure(sym, "factors_k", k, max_seconds,
+                                                   fast=fast)
             if le_k:
                 out["sub"]["factors_le_%d" % k] = measure(sym, "factors_le_k", k,
-                                                          max_seconds)
+                                                          max_seconds, fast=fast)
     return out
 
 
@@ -348,8 +355,8 @@ def run_corpus(items, args, title):
     for i, (label, sym) in enumerate(items):
         try:
             rec = measure_full(sym, ks=args.ks, max_seconds=args.max_seconds,
-                               le_k=args.le_k, factors=args.factors)
-        except LPError as exc:                     # a budget ran out: no number, no claim
+                               le_k=args.le_k, factors=args.factors, fast=args.fast)
+        except (LPError, BudgetExhausted) as exc:   # a budget ran out: no number, no claim
             skipped += 1
             print("     %s: not computed (%s)" % (label, exc), file=sys.stderr)
             continue
@@ -391,13 +398,21 @@ def main(argv=None):
     ap.add_argument("--hunt-seconds", type=float, default=60.0, help="budget per length")
     ap.add_argument("--hunt-k", type=int, default=0,
                     help="hunt in the single-k universe instead of the full one")
+    ap.add_argument("--fast", action="store_true",
+                    help="skip the second (primal) LP route; the pair certificate still "
+                         "pins LP*, and check.py runs both routes on everything small")
+    ap.add_argument("--growth", type=int, default=0,
+                    help="per-length table: max gap over all binary strings of length n, "
+                         "n <= N, with the argmax text")
+    ap.add_argument("--growth-ternary", type=int, default=0,
+                    help="the same for ternary strings")
     ap.add_argument("--progress", type=int, default=500)
     ap.add_argument("--json", default="", help="one JSON record per line here")
     ap.add_argument("--out", default="", help="write the markdown report here")
     args = ap.parse_args(argv)
     args.ks = tuple(int(t) for t in args.ks.split(",") if t.strip())
     if not (args.binary or args.ternary or args.family or args.all or args.unary
-            or args.hunt):
+            or args.hunt or args.growth or args.growth_ternary):
         ap.error("nothing to do: pass --all, --binary N, --ternary N, --family X, --unary")
 
     lines = []
@@ -426,6 +441,13 @@ def main(argv=None):
                 per.setdefault(r["label"].split()[0], []).append(r)
             for fam in sorted(per):
                 _emit(lines, "family %s, full universe" % fam, per[fam], args)
+
+    if args.growth:
+        lines.append(growth_table(corpus_binary(args.growth, 1), args, "binary",
+                                  args.growth))
+    if args.growth_ternary:
+        lines.append(growth_table(corpus_ternary(args.growth_ternary, 1), args, "ternary",
+                                  args.growth_ternary))
 
     if args.hunt:
         for n in [int(t) for t in args.hunt.split(",") if t.strip()]:
@@ -464,6 +486,53 @@ def main(argv=None):
             for r in everything:
                 f.write(json.dumps(r) + "\n")
     return 0
+
+
+def growth_table(items, args, alphabet, max_n):
+    """Per length: max gap, the text attaining it, and how many texts exceed 1.
+
+    This is the shape of the answer to "O(1) or Theta(log n)": a bounded maximum at every
+    length is evidence for a bounded gap; a maximum that climbs like log n is evidence the
+    other way.  Empirical, and labelled as such -- n <= 12 proves nothing by itself.
+    """
+    t0 = time.monotonic()
+    by_n = {}
+    for i, (label, sym) in enumerate(items):
+        try:
+            rec = measure_full(sym, ks=args.ks, max_seconds=args.max_seconds, fast=True)
+        except (LPError, BudgetExhausted) as exc:
+            print("     %s: not computed (%s)" % (label, exc), file=sys.stderr)
+            continue
+        rec["label"] = label
+        rec["corpus"] = "%s growth" % alphabet
+        by_n.setdefault(rec["n"], []).append(rec)
+        if (i + 1) % args.progress == 0:
+            print("     growth %s: %d/%d, %.1fs" % (alphabet, i + 1, len(items),
+                                                    time.monotonic() - t0),
+                  file=sys.stderr)
+    lines = ["**growth of the max gap over all %s strings of length n**\n" % alphabet,
+             "| n | texts | max gap | # with gap > 1 | argmax text (gamma, LP*) "
+             "| max single-k gap k=1,2,3 |",
+             "| --- | --- | --- | --- | --- | --- |"]
+    data = []
+    for n in sorted(by_n):
+        recs = by_n[n]
+        s = summarise(recs)
+        arg = s["argmax"][0]
+        ks = []
+        for k in args.ks:
+            subs = sub_records(recs, "factors_%d" % k)
+            ks.append(str(summarise(subs)["max"]) if subs else "-")
+        lines.append("| %d | %d | **%s** (%s) | %d | `%s` (%s, %s) | %s |"
+                     % (n, s["count"], s["max"], fmt_float(s["max"]), s["num_gt_one"],
+                        arg["text"], arg["gamma"], arg["lp"], ", ".join(ks)))
+        data.append({"n": n, "max_gap": str(s["max"]), "argmax": arg["text"],
+                     "gamma": arg["gamma"], "lp": arg["lp"],
+                     "num_gt_one": s["num_gt_one"], "count": s["count"],
+                     "single_k": list(ks)})
+    lines.append("")
+    args.growth_data = data
+    return "\n".join(lines)
 
 
 def _emit(lines, title, recs, args):

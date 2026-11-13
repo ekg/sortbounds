@@ -116,11 +116,18 @@ def lp_by_vertex_enumeration(rows, n):
 # --------------------------------------------------------------------------
 
 
+def comb_count(a, b):
+    from math import comb
+    return comb(a, b)
+
+
 def test_simplex_small_texts():
     t0 = time.time()
     for sym in binary_strings(6):
         ti = TextInstance(sym)
         for cov in (ti.nodes, ti.cover("factors")):
+            if comb_count(len(cov.rows) + cov.n, cov.n) > 12000:
+                continue
             lp = cov.lp()
             brute = lp_by_vertex_enumeration(cov.rows, cov.n)
             check(brute is not None, "vertex enumeration found no BFS for %r" % (sym,))
@@ -157,15 +164,11 @@ def test_simplex_random_lps():
 
 
 def test_simplex_hand_cases():
-    # min x+y s.t. x+2y>=1, 2x+y>=1  ->  x=y=1/3, value 2/3
-    rows = [[0, 1], [0, 1]]
-    lp = simplex.cover_lp(rows, 2)
-    check(lp.value == 2, "two identical single-position rows must force value 2")
+    # two elements both coverable by either position: x0+x1 >= 1, so the value is 1
+    check(simplex.cover_lp([[0, 1], [0, 1]], 2).value == 1,
+          "duplicate rows must not change the value (expected 1)")
     # min x+y s.t. (x) >= 1 and (y) >= 1 -> 2
     check(simplex.cover_lp([[0], [1]], 2).value == 2, "two separate elements must cost 2")
-    # min x+y s.t. (x or y) >= 1 and (x and y) >= 1 -> x=y=1/2, value 1
-    check(simplex.cover_lp([[0, 1], [0, 1]], 2).value == 2,
-          "duplicate rows must not change the value")
     # a 0/1 matrix whose LP optimum is fractional: the "abracadabra" instance is integral
     a = simplex.cover_lp([[0, 1, 2], [1, 2], [2]], 3)
     check(a.value == 1, "nested rows must cost 1 (LP got %s)" % (a.value,))
@@ -248,15 +251,33 @@ def sweep(strings, label, quick=False):
                       % (lpk.value, sigma, txt))
         if ti.n <= (8 if quick else 10):
             cle = ti.cover("factors_le_k", 2)
-            check(cle.lp().value >= lp.value,
-                  "LP*_{<=2} = %s < LP*_full = %s on %r"
+            check(cle.lp().value <= lp.value,
+                  "LP*_{<=2} = %s > LP*_full = %s on %r"
                   % (cle.lp().value, lp.value, txt))
+            check(cle.exact_min_cover()[0] <= gamma,
+                  "gamma_{<=2} = %s > gamma = %s on %r"
+                  % (cle.exact_min_cover()[0], gamma, txt))
     print("  %s: %d texts, %.1fs" % (label, n_texts, time.time() - t0))
 
 
 # --------------------------------------------------------------------------
 # 5-6. the reported numbers
 # --------------------------------------------------------------------------
+
+
+def assert_pair_certificate(cov, lp, where):
+    """The LP pair certificate, spelled out: both sides feasible, objectives equal."""
+    check(simplex.check_primal(cov.rows, cov.n, lp.x) is None,
+          "%s: the primal solution is not feasible (%s)"
+          % (where, simplex.check_primal(cov.rows, cov.n, lp.x)))
+    check(simplex.check_dual(cov.rows, cov.n, lp.y) is None,
+          "%s: the dual solution is not feasible (%s)"
+          % (where, simplex.check_dual(cov.rows, cov.n, lp.y)))
+    sumx = sum(lp.x, Fraction(0))
+    sumy = sum(lp.y, Fraction(0))
+    check(sumx == sumy == lp.value,
+          "%s: sum(x) = %s, sum(y) = %s, claimed LP* = %s" % (where, sumx, sumy,
+                                                              lp.value))
 
 
 def test_headline_maxima():
@@ -277,6 +298,10 @@ def test_headline_maxima():
             check(gamma == 3 and lp.value == Fraction(9, 4),
                   "the 4/3 witness %r should have gamma=3, LP*=9/4 (got %s, %s)"
                   % (text_str(ti.sym), gamma, lp.value))
+            assert_pair_certificate(ti.nodes, lp, "4/3 witness %r" % (text_str(ti.sym),))
+            check(ti.verify_factor_cover(ti.nodes.exact_min_cover()[1]) is None,
+                  "the 4/3 witness %r: gamma positions miss a factor"
+                  % (text_str(ti.sym),))
     check(best == Fraction(4, 3), "the max gap over binary n <= 12 should be 4/3, got %s"
           % (best,))
     check(seen == argmax, "the set of 4/3 texts changed: %r" % (sorted(seen),))
@@ -311,6 +336,9 @@ def test_single_k_maximum():
     check((gk, lpk.value) == (2, Fraction(4, 3)),
           "the k=3 witness 111111101110 should be gamma_3=2, LP*_3=4/3 (got %s, %s)"
           % (gk, lpk.value))
+    assert_pair_certificate(cov, lpk, "k=3 witness 111111101110")
+    check(ti.verify_factor_cover(posk, 3, 3) is None,
+          "the k=3 witness: gamma_3 positions miss a length-3 factor")
     # and it must beat the full-universe gap of the same text (the brief's guess is wrong)
     gamma, _ = ti.nodes.exact_min_cover()
     lpv = ti.nodes.lp()

@@ -23,6 +23,7 @@ import SortBounds.Projects.DeBruijn.AttractorK
 import SortBounds.Projects.AttractorLP.Gap
 import SortBounds.Projects.AttractorLP.Witness
 import SortBounds.Projects.AttractorLP.DeltaBound
+import SortBounds.Projects.Packing.Packing
 import SortBounds.Projects.Algorithms.Measure
 import SortBounds.Instances.Radix
 import SortBounds.Instances.MergeSort

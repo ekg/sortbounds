@@ -153,7 +153,10 @@ the `make trust` audit (136 theorems, all on `propext`/`Classical.choice`/`Quot.
 | T2 | `γ(B_m) ≥ 2^m/m` and `γ_k(B_m) ≤ 2^k`, hence **`γ/γ_k ≥ 2^m/(m·2^k) → ∞` for every fixed `k`** | `DeBruijn` + `AttractorK` | kills *all* bounded-length relaxations of `γ` — the `k`-attractor family, the natural polynomial object at `σ = 2`, is unbounded away from `γ`. This is why the only hardness question that matters is `k = n` |
 | T3 | the attractor set-cover LP is **not integral**: `γ = 3`, `LP* = 11/5`, gap `15/11` on `0110101101110` | `AttractorLP` | the LP route cannot be "the LP is essentially integral"; any `O(1)`-ratio algorithm must **round**, and rounding is the remaining open problem |
 
-T2 and T3 are, as far as our surveys go, unstated in the literature: the `k`-attractor hierarchy is
+| T4 | **`γ ≤ ⌈δ⌉ + 2` is FALSE**: `γ = 6`, `δ = 3` at `n = 32` | `Packing` | kills the last "δ plus a small constant" hope; proved with the **packing certificate** `γ ≥ F.card` for pairwise disjoint coverage sets — the lemma every bracket in `tools/attractor` rests on, now formal |
+| T5 | **`LP* ≥ δ`** for every fractional cover, hence `γ/LP* ≤ γ/δ` | `AttractorLP/DeltaBound.lean` | the LP gap is *not an independent quantity*: it is capped by the `δ`-gap. With `γ − ⌈δ⌉ ≤ 3` measured, the LP gap is forced toward `1` at scale, and the measured `1.36–1.40` band is unsurprising |
+
+T2–T5 are, as far as our surveys go, unstated in the literature: the `k`-attractor hierarchy is
 defined in KP18 but its ratios are not analysed, and no integrality gap for the attractor LP has
 been published.
 
@@ -163,8 +166,13 @@ been published.
   "iterative deepening over `k`", and any argument that confines the difficulty to short factors.
 * T3 rules out: "the LP is near-integral, so `γ` is approximable via LP + minor fix-up" as an
   *integrality* claim — the slack is real, so the algorithm must construct a rounding.
+* T4 rules out: any bound of the form `γ ≤ ⌈δ⌉ + c` with `c ≤ 2`; with `γ − ⌈δ⌉` growing (`2` at
+  `n ≤ 18`, `3` at `n = 32`) the additive route is dead entirely.
+* T5 rules out: treating the LP gap as a free parameter — it is bounded by `γ/δ`, so LP work must
+  first settle whether `γ/δ` grows on binary text.
 * Together they narrow the open problem to: **round the attractor LP with ratio `O(1)`, or prove
-  `σ = 2, k = n` hardness.**
+  `σ = 2, k = n` hardness** — plus, now, **decide whether `γ/δ` is bounded on binary text**,
+  which the exhaustive data (`γ − ⌈δ⌉ ≤ 3`) suggests it may be.
 
 ### What they do *not* do
 

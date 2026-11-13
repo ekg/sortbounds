@@ -287,6 +287,20 @@ Corollary `gamma_div_primal_le`: `γ/Σx ≤ γ/δ`.  So the LP gap **cannot exc
 `γ − ⌈δ⌉ ≤ 3` in every measurement, the LP gap is forced toward `1` at scale.  `make trust`:
 141 theorems.
 
+### `γ ≤ ⌈δ⌉ + 2` is false, and the packing certificate is formal (2026-11-13)
+
+`SortBounds/Projects/Packing/Packing.lean`:
+
+| theorem | statement |
+| --- | --- |
+| `card_le_minAttractorSize_of_pairwiseDisjoint` | **the packing bound**: `F.card ≤ γ` when the coverage sets of `F` are pairwise disjoint (general over `List α`) |
+| `s32_gamma_ge` / `s32_gamma` | `γ(s32) = 6`, with `s32 = bbbaaaabbabbaaabbaaaabbaabbaabaa` |
+| `s32_delta` | `δ(s32) = 3` |
+| `gamma_delta_add_two_false` | **`¬ ∀ s : List Bool, γ ≤ δ + 2`** |
+
+Every closed bracket in `tools/attractor` rests on that packing lemma; it is now a theorem, not a
+Python routine.  `make trust`: 145 theorems.
+
 ### Answers (2026-11-13)
 
 | lane | verdict |

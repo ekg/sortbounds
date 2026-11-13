@@ -382,6 +382,66 @@ theorem minAttractorKSize_two_le_four {s : List Bool} {m : ℕ} (hm : 2 ≤ m) (
 
 /-! ### M3: the separation `2^m/(m·2^k) ≤ γ/γ_k` -/
 
+/-! ### The lower bound `d_k / k ≤ γ_k`, dual to `γ_k ≤ d_k` -/
+
+/-- A `k`-attractor covers every factor of length `k`, so the cover argument of
+`Repetitiveness.exists_cover_of_isAttractor` applies verbatim: main content of the lower bound. -/
+theorem exists_cover_of_isAttractorK {s : List α} {Γ : Finset (Fin s.length)} {k : ℕ}
+    (hΓ : IsAttractorK s k Γ) (hk : 1 ≤ k) {f : List α} (hf : f ∈ distinctFactors s k) :
+    ∃ (p : Fin s.length) (d : ℕ), p ∈ Γ ∧ d < k ∧ (s.drop ((p : ℕ) - d)).take k = f := by
+  obtain ⟨i, hik, hf'⟩ := mem_distinctFactors.mp hf
+  obtain ⟨i', j', -, hj', heq, p, hp, h1, h2⟩ :=
+    hΓ i (i + k) (by omega) hik (by omega)
+  have hlen1 : (factorOcc s i' j').length = j' - i' := factorOcc_length hj'
+  have hlen2 : (factorOcc s i (i + k)).length = k := by
+    rw [factorOcc_self, List.length_take, List.length_drop]
+    omega
+  rw [heq, hlen2] at hlen1
+  have hj'k : j' = i' + k := by omega
+  refine ⟨p, (p : ℕ) - i', hp, by omega, ?_⟩
+  have hstart : (p : ℕ) - ((p : ℕ) - i') = i' := by omega
+  rw [hstart]
+  have hleft : (s.drop i').take k = factorOcc s i' j' := by
+    rw [factorOcc, ← hlen1]
+  rw [hleft, heq, ← hf', factorOcc_self]
+
+/-- **`d_k ≤ k · γ_k`**: a position of a `k`-attractor lies in at most `k` windows of length
+`k`, hence covers at most `k` distinct `k`-grams. -/
+theorem distinctFactors_card_le_mul_attractorK {s : List α} {Γ : Finset (Fin s.length)} {k : ℕ}
+    (hΓ : IsAttractorK s k Γ) (hk : 1 ≤ k) :
+    (distinctFactors s k).card ≤ k * Γ.card := by
+  classical
+  set D : Finset (Fin s.length × ℕ) := Γ.product (Finset.range k) with hD
+  have hDcard : D.card = Γ.card * k := by simp [hD]
+  have hsub : distinctFactors s k ⊆
+      D.image (fun x : Fin s.length × ℕ => (s.drop ((x.1 : ℕ) - x.2)).take k) := by
+    intro f hf
+    obtain ⟨p, d, hp, hdk, hfd⟩ := exists_cover_of_isAttractorK hΓ hk hf
+    exact Finset.mem_image.mpr
+      ⟨(p, d), Finset.mem_product.mpr ⟨hp, Finset.mem_range.mpr hdk⟩, hfd⟩
+  calc (distinctFactors s k).card
+      ≤ (D.image (fun x : Fin s.length × ℕ => (s.drop ((x.1 : ℕ) - x.2)).take k)).card :=
+        Finset.card_le_card hsub
+    _ ≤ D.card := Finset.card_image_le
+    _ = Γ.card * k := hDcard
+    _ = k * Γ.card := Nat.mul_comm _ _
+
+/-- **`d_k / k ≤ γ_k`**: the `k`-truncated form of KNP's `δ ≤ γ`, against the minimum. -/
+theorem dk_div_le_minAttractorKSize {s : List α} {k : ℕ} (hk : 1 ≤ k) :
+    (distinctFactors s k).card / k ≤ minAttractorKSize s k := by
+  obtain ⟨Γ, hΓ, hcard⟩ := exists_attractorK_card_eq_minAttractorKSize s k
+  rw [← hcard]
+  exact Nat.div_le_of_le_mul (distinctFactors_card_le_mul_attractorK hΓ hk)
+
+/-- **On de Bruijn words `γ_k = Θ(2^k / k)`**: `2^k/k ≤ γ_k(B_m) ≤ 2^k` for `1 ≤ k ≤ m`.  With
+lane 1 this pins all three levels at once — `γ ≥ 2^m/m`, `γ_k ≥ 2^k/k`, `γ_k ≤ 2^k` — so the
+hierarchy is exponential at every level while its ratios are unbounded (`gamma_ratio_ge_isDeBruijn`). -/
+theorem minAttractorKSize_bracket_isDeBruijn {s : List Bool} {m k : ℕ} (hk : 1 ≤ k) (hkm : k ≤ m)
+    (h : IsDeBruijn s m) :
+    (distinctFactors s k).card / k ≤ minAttractorKSize s k ∧
+      minAttractorKSize s k ≤ 2 ^ k :=
+  ⟨dk_div_le_minAttractorKSize hk, minAttractorKSize_le_two_pow hk hkm h⟩
+
 /-- **The general separation for binary de Bruijn words.**  `γ(B_m) ≥ 2^m/m` is lane 1's
 `gamma_ge_of_isDeBruijn` (`δ ≤ γ` at `δ(B_m) = 2^m/m`) and `γ_k(B_m) ≤ 2^k` is
 `minAttractorKSize_le_two_pow`, so dividing gives `γ/γ_k ≥ 2^m/(m·2^k)`.  For fixed `k` the

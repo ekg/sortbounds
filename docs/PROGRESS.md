@@ -263,6 +263,22 @@ a swarmed lane with its own independent review:
 | why it matters | the LP route to an approximate `γ` is *not* an integrality argument: the relaxation genuinely falls below the integer optimum, so any `O(1)`-ratio algorithm must round, and the rounding question is now the only question |
 | what is *not* claimed | that `15/11` is the supremum (that is the computation to `n ≤ 16`), nor that the gap is bounded |
 
+### The LP gap is not `15/11`: `7/5` at `n = 31` (2026-11-13)
+
+Searched to `n = 40` (beam over extensions of the `n = 13` witnesses, plus structured families),
+every record re-verified independently with exact rationals:
+
+| n | γ | LP* | gap | δ |
+| --- | --- | --- | --- | --- |
+| 21, 27 | 3 | 13/6 | 18/13 = 1.3846 | 2 |
+| 30 | 5 | 18/5 | 25/18 = 1.3889 | 3 |
+| 31 | 5 | 25/7 | **7/5 = 1.4** | 3 |
+
+So `15/11` is the exhaustive maximum only for `n ≤ 16`; it is refuted as a maximum over all
+lengths.  `γ/LP* ≤ γ/δ` always (since `LP* ≥ δ`), so the LP gap can only grow by growing the
+`δ`-gap — and every measurement has `γ − ⌈δ⌉ ≤ 3`, which would force the LP gap `→ 1` at scale.
+Exhaustive `n = 17` was **not** completed.  `docs/research/lp-gap-growth.md`.
+
 ### Answers (2026-11-13)
 
 | lane | verdict |

@@ -135,6 +135,8 @@ open SortBounds
 #print axioms SortBounds.Projects.DeBruijn.card_distinctFactors_of_coversAllWords
 #print axioms SortBounds.Projects.DeBruijn.deltaQ_isDeBruijn
 #print axioms SortBounds.Projects.DeBruijn.gamma_ge_of_isDeBruijn
+#print axioms SortBounds.Projects.DeBruijn.dk_div_le_minAttractorKSize
+#print axioms SortBounds.Projects.DeBruijn.minAttractorKSize_bracket_isDeBruijn
 #print axioms SortBounds.Projects.DeBruijn.minAttractorKSize_le_two_pow
 #print axioms SortBounds.Projects.DeBruijn.isAttractorK_self_iff
 #print axioms SortBounds.Projects.DeBruijn.minAttractorKSize_anti

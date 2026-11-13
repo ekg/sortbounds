@@ -101,8 +101,27 @@ theorem gamma_ge_of_isDeBruijn {s : List Bool} {k : ℕ} (hk : 2 ≤ k) (h : IsD
 with `IsDeBruijn s k` = "`|s| = 2^k + k − 1` and every binary `k`-gram occurs in `s`".  The
 hypothesis is not vacuous: `isDeBruijn_two` (`00110`) and `isDeBruijn_three` (`0001011100`) are
 discharged by `decide`, and `gamma_ge_of_isDeBruijn` instantiated at `k = 3` gives `8/3 ≤ γ`.
-All five theorems are in the axiom audit (`make trust`: 127 theorems, only
-`propext`/`Classical.choice`/`Quot.sound`).
+All five theorems are in the axiom audit.
+
+The corollary above is also a theorem, in `SortBounds/Projects/DeBruijn/AttractorK.lean` (462
+lines), where `γ_k` finally exists as a Lean object:
+
+```lean
+def IsAttractorK (s : List α) (k : ℕ) (Γ : Finset (Fin s.length)) : Prop
+noncomputable def minAttractorKSize (s : List α) (k : ℕ) : ℕ
+theorem isAttractorK_self_iff (s) (Γ) : IsAttractorK s s.length Γ ↔ IsAttractor s Γ
+theorem minAttractorKSize_anti : k' ≤ k → minAttractorKSize s k' ≤ minAttractorKSize s k
+theorem minAttractorKSize_le_two_pow (hk : 1 ≤ k) (hkm : k ≤ m) (h : IsDeBruijn s m) :
+    minAttractorKSize s k ≤ 2 ^ k
+theorem gamma_ratio_ge_isDeBruijn (hm : 2 ≤ m) (hk : 1 ≤ k) (hkm : k ≤ m)
+    (h : IsDeBruijn s m) :
+    (2 ^ m : ℚ) / (m * 2 ^ k) ≤ (minAttractorSize s : ℚ) / (minAttractorKSize s k : ℚ)
+```
+
+`isAttractorK_self_iff` pins `γ_k` to the existing `γ` at `k = n` (so the hierarchy is not a
+parallel definition), `minAttractorKSize_anti` is the monotonicity the name suggests, and
+`gamma_ratio_ge_isDeBruijn` is the general statement.  `make trust`: **131 theorems**, only
+`propext`/`Classical.choice`/`Quot.sound`.
 
 The step `δ ≤ γ` used above is `deltaQ_le_minAttractorSize`, proved in the same commit: the
 existing `deltaQ_le_card_attractor` bounded `δ` by the size of a *given* attractor; the theorem

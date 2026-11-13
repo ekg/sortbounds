@@ -249,7 +249,8 @@ a swarmed lane with its own independent review:
 | proof | `d_i = 2^i` (`i ≤ k`, pad to a `k`-gram) ⇒ `δ = 2^k/k` (`2^i/i` nondecreasing) ⇒ `δ ≤ γ`; and 4 positions cover the four 2-grams |
 | machine-checked | `SortBounds.Projects.DeBruijn.gamma_ge_of_isDeBruijn`, `deltaQ_isDeBruijn`, `card_distinctFactors_of_coversAllWords`, plus `decide` witnesses at `k = 2, 3`; `deltaQ_le_minAttractorSize` supplies `δ ≤ γ` for the minimum |
 | exact confirmation | `γ₂(B_k) = 2` for every `k ≤ 7` (so the ratio is `≥ 2^{k-1}/k`); `δ(B_k) = 2^k/k` to `k = 13` |
-| kills | "compute `γ₂` (polynomial at `σ = 2`) and you are within a constant of `γ`" — the best structural route in `sigma2-algorithm.md`; also explains that lane's measured `k* ≈ n/2` |
+| strengthened | **every fixed `k` fails**: `γ_k(B_m) ≤ 2^k` so `γ/γ_k ≥ 2^m/(m·2^k) → ∞`; machine-checked as `gamma_ratio_ge_isDeBruijn` over a real `γ_k` (`IsAttractorK`, `minAttractorKSize`, with `isAttractorK_self_iff` pinning `γ_n = γ`) |
+| kills | "compute `γ₂` (polynomial at `σ = 2`) and you are within a constant of `γ`" — the best structural route in `sigma2-algorithm.md`; the stronger corollary kills **all** bounded-length relaxations, and explains that lane's measured `k* ≈ n/2` |
 
 `docs/research/gamma-vs-gamma2.md`.
 

@@ -237,6 +237,21 @@ inherent for `γ`, or does the interval structure admit a constant-factor (or ex
 restricted families) algorithm?  A failed constant-factor attempt is as informative as a
 success here, which is why the note is required to state falsifiable conjectures.
 
+## Three questions (opened 2026-11-13) — `workflows/three-questions.js`
+
+Whether a *guaranteed* small-attractor algorithm exists reduces to three questions, each now
+a swarmed lane with its own independent review:
+
+| lane | question | why it decides something |
+| --- | --- | --- |
+| **A** (2 researchers) | Is minimum-attractor NP-hard on a **binary** alphabet? | every published reduction uses a *growing* alphabet; `σ = 2` is where corpora live. If binary is not hard, exact-on-binary is not fantasy; if it is, say which gadgets make it so |
+| **B** (implementer) | What is the **LP integrality gap** of the attractor cover? | if `O(1)`, a constant-factor approximation is within reach; if `Θ(log n)`, LP-based methods are stuck at the log factor. Nobody has measured it — requires an exact rational simplex, plus the *fixed-`k`* gap where consecutive-ones structure should force gap 1 |
+| **C** (theorist + experimenter) | When is `γ = ⌈δ⌉`? | the anytime search found *closed* brackets on every repetitive family tried. If that pattern is structural, `γ` is computable in `O(n)` exactly where it matters; if not, the gap's growth rate is the quantity to know |
+
+Standing rules carried into all three: no fabricated number, `timeout` on every run, progress
+assertion in every loop, every "γ" backed by a *closed* bracket rather than an upper bound,
+and an independent reviewer per lane.
+
 ## Research threads (opened 2026-11-12)
 
 Compressed text indexing, split into two independent threads with their own briefs in

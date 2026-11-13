@@ -205,6 +205,23 @@ the rest changes no made comparison), `preconnected_comparisonGraph`, and the ed
 6. **`SortTree`'s constant**: `n(⌈log₂ n⌉+1)` vs `⌈log₂ n!⌉` — the gap is a constant;
    only worth doing if someone needs the constant.
 
+## Attractor programme (opened 2026-11-13)
+
+The measure worth optimising is `γ` (smallest attractor), not `r`: an attractor of size `c`
+yields an RLSLP of size `O(c log(n/c))`, so a better attractor is a smaller grammar.
+`γ` is NP-hard, so the interface is a certified bracket, never an answer.
+
+| lane | what | state |
+| --- | --- | --- |
+| `tools/attractor` | any-time search: greedy → irredundant prune → swaps → iterative deepening, with `δ` and a packing bound as certified lower bounds | running |
+| `tools/approx` + `docs/research/attractor-approx.md` | **guaranteed** bounds: `δ ≤ γ ≤ z ≤ 4(δ log(n/δ)+δ)` gives an `O(log n)` approximation *constructively* (LZ77 → attractor), plus the structural theory (interval structure for fixed `k`, LP gap, `σ = 2` hardness) | running |
+
+The open theoretical question, stated sharply: `γ/δ` can be `Θ(log n log log n)`, so any
+algorithm whose *lower bound* is only `δ` cannot beat a `log n` factor — is `O(log n)`
+inherent for `γ`, or does the interval structure admit a constant-factor (or exact on
+restricted families) algorithm?  A failed constant-factor attempt is as informative as a
+success here, which is why the note is required to state falsifiable conjectures.
+
 ## Research threads (opened 2026-11-12)
 
 Compressed text indexing, split into two independent threads with their own briefs in

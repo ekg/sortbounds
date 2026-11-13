@@ -533,8 +533,50 @@ def growth_table(items, args, alphabet, max_n, sink=None):
                      "num_gt_one": s["num_gt_one"], "count": s["count"],
                      "single_k": list(ks)})
     lines.append("")
+    if data:
+        lines.append(fit_growth(data))
     args.growth_data = data
     return "\n".join(lines)
+
+
+def fit_growth(data, models=None):
+    """Least-squares fit of `gap(n) - 1 = c / f(n)` for the candidate shapes.
+
+    Floats appear ONLY here: a fit is a description of the trend, and no bound in this
+    file is derived from it.  Candidate shapes: a bounded constant, `1 + c/log2 n`,
+    `1 + c/sqrt(n)`, `1 + c/n^(1/3)`.  All four are fitted through the origin on
+    `y = gap - 1` with the single parameter `c`, so the comparison is a single number per
+    model: the residual sum of squares relative to the total.
+    """
+    import math
+    pts = [(d["n"], float(Fraction(d["max_gap"]))) for d in data if d["n"] >= 3]
+    if len(pts) < 3:
+        return ""
+    shapes = models or [
+        ("constant 4/3", None),
+        ("1 + c/log2 n", lambda n: math.log2(n)),
+        ("1 + c/sqrt(n)", lambda n: math.sqrt(n)),
+        ("1 + c/n^(1/3)", lambda n: n ** (1.0 / 3.0)),
+    ]
+    ys = [g - 1.0 for _, g in pts]
+    tot = sum(y * y for y in ys)
+    out = ["fits of the per-length maximum, `gap - 1` against one parameter "
+           "(`n >= 3`, %d points; empirical, floats used here and nowhere else):" % len(pts),
+           "", "| model | c | residual SS / total SS | max abs residual |", "| --- | --- | --- | --- |"]
+    for name, f in shapes:
+        if f is None:
+            c = sum(ys) / len(ys)  # least-squares constant on gap itself
+            pred = [c for _ in ys]
+            cc = c
+        else:
+            xs = [1.0 / f(n) for n, _ in pts]
+            cc = sum(x * y for x, y in zip(xs, ys)) / sum(x * x for x in xs)
+            pred = [cc * x for x in xs]
+        res = sum((y - p) ** 2 for y, p in zip(ys, pred))
+        mx = max(abs(y - p) for y, p in zip(ys, pred))
+        out.append("| %s | %.4f | %.3f | %.4f |" % (name, cc, res / tot if tot else 0.0, mx))
+    out.append("")
+    return "\n".join(out)
 
 
 def _emit(lines, title, recs, args):

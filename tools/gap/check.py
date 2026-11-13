@@ -292,32 +292,44 @@ def assert_pair_certificate(cov, lp, where):
 
 
 def test_headline_maxima():
-    """The max gap over all binary n <= 12 is 4/3, at exactly these four texts."""
+    """The exhaustive maxima.  n <= 12: 4/3 at four texts.  n <= 13: 15/11 at four texts."""
     t0 = time.time()
-    argmax = {"001010010001", "011101101011", "100010010100", "110101101110"}
-    best = Fraction(0)
-    seen = set()
-    for sym in binary_strings(12):
+    at_4_3 = {"001010010001", "011101101011", "100010010100", "110101101110"}
+    at_15_11 = {"0110101101110", "0111011010110", "1000100101001", "1001010010001"}
+    best12 = best13 = Fraction(0)
+    seen12, seen13 = set(), set()
+    for sym in binary_strings(13):
         ti = TextInstance(sym)
-        gamma, _ = ti.nodes.exact_min_cover()
+        gamma, positions = ti.nodes.exact_min_cover()
         lp = ti.nodes.lp()
         gap = Fraction(gamma) / lp.value
-        if gap > best:
-            best = gap
-        if gap == Fraction(4, 3):
-            seen.add(text_str(ti.sym))
-            check(gamma == 3 and lp.value == Fraction(9, 4),
-                  "the 4/3 witness %r should have gamma=3, LP*=9/4 (got %s, %s)"
-                  % (text_str(ti.sym), gamma, lp.value))
-            assert_pair_certificate(ti.nodes, lp, "4/3 witness %r" % (text_str(ti.sym),))
-            check(ti.verify_factor_cover(ti.nodes.exact_min_cover()[1]) is None,
-                  "the 4/3 witness %r: gamma positions miss a factor"
-                  % (text_str(ti.sym),))
-    check(best == Fraction(4, 3), "the max gap over binary n <= 12 should be 4/3, got %s"
-          % (best,))
-    check(seen == argmax, "the set of 4/3 texts changed: %r" % (sorted(seen),))
-    print("  max gap over all binary n <= 12 = %s at %d texts; %.1fs"
-          % (best, len(seen), time.time() - t0))
+        txt = text_str(ti.sym)
+        if ti.n <= 12:
+            best12 = max(best12, gap)
+            if gap == Fraction(4, 3):
+                seen12.add(txt)
+        best13 = max(best13, gap)
+        if gap > Fraction(4, 3):
+            seen13.add(txt)
+            check(gamma == 3 and lp.value == Fraction(11, 5),
+                  "the 15/11 witness %r should have gamma=3, LP*=11/5 (got %s, %s)"
+                  % (txt, gamma, lp.value))
+            assert_pair_certificate(ti.nodes, lp, "15/11 witness %r" % (txt,))
+            check(ti.verify_factor_cover(positions) is None,
+                  "the 15/11 witness %r: its gamma positions miss a factor" % (txt,))
+            check(ti.nodes.lp_primal() == lp.value,
+                  "the 15/11 witness %r: the two LP routes disagree" % (txt,))
+            cov2 = ti.cover("factors")
+            check((cov2.exact_min_cover()[0], cov2.lp().value) == (gamma, lp.value),
+                  "the 15/11 witness %r: the factor universe disagrees" % (txt,))
+    check(best12 == Fraction(4, 3),
+          "the max gap over binary n <= 12 should be 4/3, got %s" % (best12,))
+    check(seen12 == at_4_3, "the set of n <= 12 4/3 texts changed: %r" % (sorted(seen12),))
+    check(best13 == Fraction(15, 11),
+          "the max gap over all binary n <= 13 should be 15/11, got %s" % (best13,))
+    check(seen13 == at_15_11, "the set of texts with gap > 4/3 changed: %r" % (sorted(seen13),))
+    print("  max gap: binary n <= 12 = %s at %d texts, binary n <= 13 = %s at %d texts; %.1fs"
+          % (best12, len(seen12), best13, len(seen13), time.time() - t0))
 
 
 def test_single_k_maximum():
@@ -413,7 +425,7 @@ def main(argv=None):
           quick=quick)
     print("5. the single-k universes")
     test_single_k_maximum()
-    print("6. the headline maximum")
+    print("6. the headline maxima (n <= 13 exhaustive)")
     test_headline_maxima()
     print("7. families")
     test_families()

@@ -339,6 +339,10 @@ def cover_lp(rows, n, pivot_cap=PIVOT_CAP, deadline=None):
     bad = check_primal(rows, n, x)
     if bad is not None:
         raise LPCertificateError("recovered primal solution rejected: " + bad)
+    if sum(y, Fraction(0)) != value:
+        raise LPCertificateError(
+            "dual objective does not match the reported value: %s vs %s"
+            % (sum(y, Fraction(0)), value))
     if sum(x, Fraction(0)) != value:
         raise LPCertificateError(
             "primal and dual objectives differ: %s vs %s" % (sum(x, Fraction(0)), value))

@@ -89,9 +89,10 @@ Run on this machine; every number below is produced by `gap.py` and re-checked b
 
 ### (a)+(b) Growth of the maximum gap, per length (exhaustive)
 
-`gap.py --growth 12 --growth-ternary 8 --ks 1,2,3 --fast`, 40 s.  "max gap" is the maximum
-over **all** `2^n` binary (`3^n` ternary) texts of that length; the last column is the maximum
-gap of the single-`k` universes at that length.
+`gap.py --growth 16 --ks 1 --fast` (15 min, 131 070 binary texts) plus
+`--growth-ternary 8 --ks 1,2,3` (40 s).  "max gap" is the maximum over **all** `2^n` binary
+(`3^n` ternary) texts of that length — not an estimate; the last column is the maximum gap of
+the single-`k` universes at that length (computed for `n <= 12` only, hence `–` above).
 
 | n | binary: texts | max gap | # with gap > 1 | argmax (gamma, LP*) | single-k max k=1,2,3 |
 | --- | --- | --- | --- | --- | --- |
@@ -107,6 +108,10 @@ gap of the single-`k` universes at that length.
 | 10 | 1024 | 9/7 | 110 | `0010011010` (3, 7/3) | 1, 4/3, 3/2 |
 | 11 | 2048 | 9/7 | 200 | `00100110100` (3, 7/3) | 1, 4/3, 3/2 |
 | 12 | 4096 | **4/3** | 408 | `001010010001` (3, 9/4) | 1, 4/3, 3/2 |
+| 13 | 8192 | **15/11** | 808 | `0110101101110` (3, 11/5) | – |
+| 14 | 16384 | **4/3** | 1668 | `00110111101001` (4, 3) | – |
+| 15 | 32768 | **4/3** | 3424 | `001000010110011` (4, 3) | – |
+| 16 | 65536 | **4/3** | 7312 | `0001000010110011` (4, 3) | – |
 
 | n | ternary: texts | max gap | # with gap > 1 | argmax (gamma, LP*) |
 | --- | --- | --- | --- | --- |
@@ -118,6 +123,11 @@ gap of the single-`k` universes at that length.
 | 6 | 729 | 4/3 | 18 | `010212` (4, 3) |
 | 7 | 2187 | 6/5 | 162 | `0010110` (3, 5/2) |
 | 8 | 6561 | 4/3 | 576 | `01021201` (4, 3) |
+
+The number of non-integral texts doubles every length (4, 16, 36, 110, 200, 408, 808, 1668,
+3424, 7312 for `n = 7..16`), i.e. a constant fraction of about 11 %; 7312/65536 = 11.2 % at
+`n = 16`.  So a bounded gap is approached by a constant *fraction* of instances, not by a
+growing maximum.
 
 Over all 8190 binary texts with `n <= 12` the gap takes exactly nine values —
 `1, 6/5, 9/7, 9/8, 5/4, 15/13, 4/3, 21/17, 12/11` — with `1` in 7416 of 8190 (90.55 %),
@@ -133,17 +143,28 @@ Over all 8190 binary texts with `n <= 12` the gap takes exactly nine values —
 | `100010010100` | 12 | 3 | 1, 4, 7 | 9/4 | 4/3 |
 | `110101101110` | 12 | 3 | 2, 7, 8 | 9/4 | 4/3 |
 
+**The maximum over all binary strings with `n <= 16` is `15/11 = 1.3636`, at `n = 13`**, and it
+is attained by exactly four texts — `0110101101110`, `0111011010110`, `1000100101001`,
+`1001010010001`, each with `gamma = 3` at positions `(3,8,9)` or `(1,4,7)` and `LP* = 11/5`.
+They are one-symbol extensions of the `n = 12` `4/3` witnesses, and `check.py` re-derives the
+pair certificate for each.  A weaker but natural conjecture — `gamma/LP* <= 4/3` for **every**
+binary string — is therefore **refuted** at `n = 13`; the surviving bound from this measurement
+is `15/11`, verified exhaustively for `n <= 16` and unrefuted by any search above it.
+
 The LP solution of the first is fractional (`x_4 = 3/4, x_8 = x_9 = 1/2, x_2 = x_5 = 1/4`;
 dual `y = 3/4` on factor `000`, `1/2` on `00101`, `1/4` on `0010, 001, 01001, 1001`): the
 integrality gap comes from fractional *coverage of repeated short factors*, not from a big
 gadget.
 
-**Shape of the growth.**  The per-length maximum is `1` up to `n = 6`, then `6/5` at `n = 7`,
-`9/7 = 1.2857` at `n = 8..11`, and `4/3 = 1.3333` at `n = 12`.  The number of instances with
-gap `> 1` grows by roughly `2x` per step (4, 16, 36, 110, 200, 408 — i.e. ~10 % of all
-texts).  Over this range the maximum is **bounded by 4/3 and drifts up slowly**; it is
-certainly not climbing like `log n` (`log2 12 = 3.58`).  Twelve is far too small to
-distinguish `O(1)` from `Theta(log n)` asymptotically — see *What would settle it*.
+**Shape of the growth.**  The per-length maximum is `1` up to `n = 6`, `6/5` at `n = 7`,
+`9/7 = 1.2857` at `n = 8..11`, `4/3` at `n = 12`, `15/11 = 1.3636` at `n = 13`, and `4/3` again
+at `n = 14, 15, 16` — a bounded plateau, **not** a climb like `log n` (`log2 16 = 4`).  A
+one-parameter fit of `gap - 1` (`gap.py` prints it) prefers a **bounded constant** (residual
+SS/total SS 0.30) over `1 + c/log2 n` (0.56), `1 + c/sqrt(n)` (0.54) and `1 + c/n^(1/3)` (0.46),
+and among the decaying shapes the *faster*-decaying one fits best — the opposite of log-driven
+growth.  Sixteen lengths cannot separate `O(1)` from `Theta(log n)` asymptotically: the best log
+fit (`c = 0.47`) predicts `1.94` at `n = 128`, which `--hunt` can test.  See *What would settle
+it*.
 
 ### (c)+(d) Families and random texts
 
@@ -167,10 +188,13 @@ Details that matter:
 * **Random binary:** 33 of 36 instances are exactly integral; the worst is `15/13 = 1.1538`
   at `n = 24` (`gamma = 5`, `LP* = 13/3`), i.e. the gap on incompressible text is *small*.
   Search over random text at `n` up to 128 never produced a gap above `4/3`.
-* A **hill-climb over texts** (`--hunt`, single-symbol mutations, many restarts) at
-  `n = 13, 16, 20, 24` found `4/3` at `n = 13` (`1100110100010`, `gamma = 4, LP* = 3`), `9/7`
-  at `n = 16`, and `4/3` again at `n = 20` and `n = 24` — never more.  This is a search, not
-  a bound: it says the maximum did not grow, not that it cannot.
+* A **hill-climb over texts** (`--hunt`, single-symbol mutations, random restarts, 150 s per
+  length) at `n = 13, 16, 20, 24, 32, 48, 64`: `4/3` at `n = 13, 20, 24`, `9/7` at `n = 16`,
+  then `6/5` (n = 32), `21/19` (n = 48), `12/11` (n = 64) — never more, and *less* once `n`
+  passes ~24, because random-ish long texts are nearly integral.  In the `k = 3` universe
+  (`--hunt-k 3`) the same search found `3/2` — the largest gap anywhere in this lane — at
+  `n = 10` and `n = 14`, then `9/7` (n = 20), `5/4` (n = 28), `6/5` (n = 40).  These are
+  searches, not bounds: they say the maximum did not grow, not that it cannot.
 
 ### (d) The single-`k` universes — where the difficulty actually is
 
@@ -184,21 +208,22 @@ Details that matter:
 | `k <= 2` | **1** (binary only) | — | all 8188 binary texts `n <= 12` are exactly integral; ternary already has `4/3` (`010212`) |
 | `k <= 3` | **4/3** | n = 11 | `00100110100`: `gamma_{<=3} = 3`, `LP*_{<=3} = 9/4` |
 | `k <= 4` | **4/3** | n = 12 | `001010010001`: `gamma = 3`, `LP* = 9/4` |
-| all factors | **4/3** | n = 12 | `001010010001`: `gamma = 3`, `LP* = 9/4` |
+| all factors | **4/3** at `n = 13`; **15/11** over `n <= 16` | n = 13 | `0110101101110`: `gamma = 3`, `LP* = 11/5` |
 
 Note the length-2-only universe (`4/3`) versus the {1,2} universe (`1` on every binary text
 `n <= 12`): adding the single-symbol rows removes the fractional optimum, so it is *which*
-lengths that matters, not how many.  So: the fixed-`k` gap is 1 only for `k = 1`; at `k = 2, 3` it already exceeds the full
-instance's maximum (`3/2 > 4/3 > 9/7`).  **The brief's localisation is inverted**: the
+lengths that matters, not how many.  So: the fixed-`k` gap is 1 only for `k = 1`; at `k = 2, 3`
+it already exceeds the full instance's maximum at `n <= 12` (`3/2 > 4/3 > 9/7`).  **The brief's localisation is inverted**: the
 difficulty is present at a *single* fixed length, and mixing lengths *reduces* the gap,
 because the longer factors' constraints raise `LP*` faster than they raise `gamma`.
 
 ### The answer to Question B, stated as evidence rather than theorem
 
-* The measured integrality gap is **at most 4/3** on all 8190 binary strings `n <= 12`, all
-  9840 ternary strings `n <= 8`, 59 morphic/random texts up to `n = 987`, and a hill-climb at
-  `n <= 64`.  Most instances are exactly integral (90.6 % of binary `n <= 12`, 33/36 random
-  texts, all 15 Fibonacci words).
+* The measured integrality gap is **at most 15/11 = 1.3636** on all 131 070 binary strings
+  `n <= 16` (exhaustive, so it *is* the maximum for those lengths), all 9840 ternary strings
+  `n <= 8`, 59 morphic/random texts up to `n = 987`, and a hill-climb at `n <= 64`.  Most
+  instances are exactly integral (89.3 % of binary `n <= 16`, 33/36 random texts, all 15
+  Fibonacci words).
 * There is **no evidence of a growing gap**, and in particular none of a `Theta(log n)` gap on
   these families: at the lengths where an LP-based method would already be losing a constant
   factor 2–3, the LP is either exactly tight or off by at most 4/3.
@@ -206,12 +231,10 @@ because the longer factors' constraints raise `LP*` faster than they raise `gamm
   among the natural ones sampled here, and `n <= 12` cannot see asymptotics.  What the data
   does rule out is the *cheap* hypothesis "the attractor LP has the generic `Theta(log n)`
   set-cover gap on ordinary texts": on ordinary texts it is `1` or `1 + O(1/log n)`-ish.
-* Consequence for the strategy in the brief: an `O(1)`-gap conjecture survives every test
-  here (best measured: `4/3`), so LP-rounding is **not obviously blocked**; but LP rounding
-  of a `4/3`-gap LP would still only give a `4/3`-factor algorithm if one could solve the LP
-  and round *constructively* — the gap being small says nothing about the rounding step.
-  With `OPT_LP >= gamma * 3/4` one gets `gamma <= 4/3 OPT_LP`; rounding a fractional solution
-  to an integral one with `O(1)` blow-up is a separate (unresolved here) problem.
+* Consequence for the strategy in the brief: an `O(1)`-gap conjecture survives every test here
+  (best measured: `15/11`), so LP-rounding is **not obviously blocked**; but a small gap is not
+  an algorithm — rounding a fractional solution of these `C`-set instances to an integral one
+  with `O(1)` blow-up is a separate, unresolved problem, and nothing here attacks it.
 
 ### What would settle it
 
@@ -240,6 +263,7 @@ because the longer factors' constraints raise `LP*` faster than they raise `gamm
 ```sh
 timeout 120 python3 instance.py                     # sanity: a few texts, all universes
 timeout 900 python3 gap.py --all --max-seconds 60   # the tables (long)
+timeout 1800 python3 gap.py --growth 16 --ks 1 --fast        # the growth table, 15 min
 timeout 900 python3 gap.py --growth 12 --growth-ternary 8 --ks 1,2,3 --fast
 timeout 600 python3 gap.py --family all --ks 1,2,3 --fast --max-seconds 180
 timeout 900 python3 check.py                       # the acceptance tests
@@ -278,13 +302,13 @@ timeout 900 python3 check.py                       # the acceptance tests
 
 ## Self-tests
 
-`timeout 900 python3 check.py` — 41 171 checks, 0 failures, ~75 s:
+`timeout 900 python3 check.py` — 142 347 checks, 0 failures, ~138 s:
 
 | test | what it pins down |
 | --- | --- |
 | 1 | the simplex equals exhaustive **vertex enumeration** on all binary `n <= 6` (both universes) and 200 random covering LPs; its two routes always agree; hand cases including a fractional optimum (`3/2`) and an infeasible instance |
 | 2-4 | on every binary `n <= 10` and ternary `n <= 7`: `LP* <= gamma`, `LP* >= delta`, `gamma` = exhaustive subset enumeration = `gamma_bruteforce`, the reported `Gamma` passes two independent verifiers, `nodes` and `factors` give the same `gamma` and the same `LP*`, and `gamma_k <= gamma`, `LP*_k <= LP*_full` |
 | 5 | the single-`k` maxima (`4/3` at `k=2`, `3/2` at `k=3`), with the full primal/dual certificate printed for the witness, plus the fact that the `k=3` gap *exceeds* the full gap of the same text |
-| 6 | the headline maximum: `4/3` over all binary `n <= 12`, at exactly the four texts listed, each with `gamma = 3`, `LP* = 9/4` and a closed certificate |
+| 6 | the headline maxima: `4/3` over all binary `n <= 12` and `15/11` over all binary `n <= 13`, each at exactly four texts, each with `gamma = 3`, the exact `LP*`, a closed primal/dual pair, both LP routes and the factor-universe agreement |
 | 7 | the family spot checks (`thue-morse` 16/64, `fibonacci` 55/144, random 32/64) |
 | 8 | the certificate plumbing itself: an overloaded dual and an under-covering primal are rejected, valid ones accepted |

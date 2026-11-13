@@ -263,6 +263,85 @@ def gamma_certified(text, **kw):
 
 
 # --------------------------------------------------------------------------
+# ledger breakdown: where exactly the designed ledger stops matching gamma
+# --------------------------------------------------------------------------
+
+
+def block_layout(variant, n, edges):
+    """The regions of T_G as [(cell_name, lo, hi)], matching the constructions."""
+    L = R.label_bits(n)
+    tl = L + 1
+    sep = 2
+    out = []
+    cur = 0
+    if variant == "tags":
+        for v in range(n):
+            out.append(("tag(%d)" % v, cur, cur + tl))
+            cur += tl
+        for (u, v) in R.edges_in_order(n, edges):
+            out.append(("block(%d,%d).%d" % (u, v, u), cur, cur + tl))
+            out.append(("block(%d,%d).%d" % (u, v, v), cur + tl, cur + 2 * tl))
+            cur += 2 * tl
+    elif variant == "tags_sep":
+        for v in range(n):
+            out.append(("tag(%d)" % v, cur, cur + tl))
+            cur += tl + sep
+        for (u, v) in R.edges_in_order(n, edges):
+            out.append(("block(%d,%d).%d" % (u, v, u), cur, cur + tl))
+            out.append(("block(%d,%d).%d" % (u, v, v), cur + tl + sep, cur + 2 * tl + sep))
+            cur += 2 * tl + 2 * sep
+    elif variant == "hubs":
+        for v in range(n):
+            out.append(("hub(%d)" % v, cur, cur + 3 * tl))
+            cur += 3 * tl + sep
+        for (u, v) in R.edges_in_order(n, edges):
+            out.append(("block(%d,%d).%d" % (u, v, u), cur, cur + tl))
+            out.append(("block(%d,%d).%d" % (u, v, v), cur + tl + sep, cur + 2 * tl + sep))
+            cur += 2 * tl + 2 * sep
+    else:
+        raise KeyError(variant)
+    assert cur == len(R.build(variant, n, edges)), (cur, len(R.build(variant, n, edges)))
+    return out
+
+
+def cell_of(layout, p):
+    """The layout cell owning position p, or '-' for a separator position."""
+    for (name, lo, hi) in layout:
+        if lo <= p < hi:
+            return name
+    return "-"
+
+
+def ledger_breakdown(variant, n, edges, time_cap=DEFAULT_TIME_CAP):
+    """Exact gamma, the optimal charges, and every class that ties two blocks.
+
+    A class with occurrences in two different block cells is a *fusion*: it lets
+    one charge serve two blocks, which is exactly what the ledger forbids.
+    """
+    T = R.build(variant, n, edges)
+    g, pos, how = gamma_certified(T, time_cap=time_cap)
+    layout = block_layout(variant, n, edges)
+    charges = {name: [p for p in pos if lo <= p < hi] for (name, lo, hi) in layout}
+    fusions = []
+    for f, _mask in distinct_factor_covers(T):
+        starts = [i for i in range(len(T) - len(f) + 1) if T[i:i + len(f)] == f]
+        cells = {cell_of(layout, i) for i in starts}
+        block_cells = {c for c in cells if c.startswith("block")}
+        if len(block_cells) >= 2:
+            covered_by = [p for p in pos
+                          if any(i <= p < i + len(f) for i in starts)]
+            fusions.append({"factor": f, "len": len(f), "starts": starts,
+                            "cells": sorted(cells), "covered_by": covered_by})
+    fusions.sort(key=lambda x: (-x["len"], x["factor"]))
+    return {"variant": variant, "n": n, "m": len(edges),
+            "edges": [list(e) for e in R.edges_in_order(n, edges)],
+            "tau": R.tau(n, edges), "gamma": g, "ledger": len(edges) + R.tau(n, edges),
+            "text": T, "positions": pos, "charges_per_cell": charges,
+            "n_fusion_classes": len(fusions),
+            "fusions": fusions[:12], "certificate": how}
+
+
+# --------------------------------------------------------------------------
 # enumeration of source instances
 # --------------------------------------------------------------------------
 
@@ -273,7 +352,7 @@ def all_graphs(n, mmax=None):
         edges = [pairs[k] for k in range(len(pairs)) if (mask >> k) & 1]
         if mmax is not None and len(edges) > mmax:
             continue
-        yield R.edges_in_order(n, edges)
+        yield tuple(R.edges_in_order(n, edges))
 
 
 # --------------------------------------------------------------------------
@@ -345,9 +424,15 @@ def run_variant(variant, nmax, mmax=None, node_cap=DEFAULT_NODE_CAP,
 
 def label_variance(variant, n, edges, relabels=12, seed=0, node_cap=DEFAULT_NODE_CAP,
                    time_cap=DEFAULT_TIME_CAP):
-    """gamma over several relabellings of one abstract graph."""
+    """gamma over several relabellings of one abstract graph.
+
+    relabels = 0 means *every* permutation of the n labels (affordable for n <= 5),
+    otherwise `relabels` random ones including the identity.
+    """
+    perms = (list(itertools.permutations(range(n))) if relabels == 0
+             else R.random_relabelings(n, relabels, seed))
     vals = []
-    for perm in R.random_relabelings(n, relabels, seed):
+    for perm in perms:
         T = R.build(variant, n, edges, relabel=perm)
         try:
             g, _pos, _how = gamma_certified(T, node_cap=node_cap, time_cap=time_cap)
@@ -375,12 +460,16 @@ def monotonicity_scan(variant, n, node_cap=DEFAULT_NODE_CAP,
         cache[G] = gG
         for k in range(0, len(G)):
             for H in itertools.combinations(G, k):
-                TH = R.build(variant, n, H)
-                try:
-                    gH, _p, _h = gamma_certified(TH, node_cap=node_cap,
-                                                 time_cap=time_cap)
-                except SearchIncomplete:
-                    continue
+                if H in cache:
+                    gH = cache[H]
+                else:
+                    TH = R.build(variant, n, H)
+                    try:
+                        gH, _p, _h = gamma_certified(TH, node_cap=node_cap,
+                                                     time_cap=time_cap)
+                    except SearchIncomplete:
+                        continue
+                    cache[H] = gH
                 if gH > gG:
                     bad.append({"G": [list(e) for e in G], "gamma_G": gG,
                                 "H": [list(e) for e in H], "gamma_H": gH,
@@ -388,6 +477,67 @@ def monotonicity_scan(variant, n, node_cap=DEFAULT_NODE_CAP,
                     if len(bad) >= 5:
                         return bad
     return bad
+
+
+def correlations(rows, variant):
+    """Pearson correlation of gamma with delta(T), |T|, m and tau over `rows`.
+
+    delta = max_l d_l / l, computed by ../repmeter/measure.py, so the table in the
+    report's section 6.2 can be reproduced instead of taken on trust.
+    """
+    _REP = os.path.normpath(os.path.join(_HERE, os.pardir, "repmeter"))
+    if _REP not in sys.path:
+        sys.path.insert(0, _REP)
+    from measure import dk_profile, lcp_array, suffix_array, delta_exact
+
+    def pearson(xs, ys):
+        if len(xs) < 2:
+            return float("nan")
+        mx = sum(xs) / len(xs)
+        my = sum(ys) / len(ys)
+        num = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
+        den = (sum((x - mx) ** 2 for x in xs) * sum((y - my) ** 2 for y in ys)) ** 0.5
+        return num / den if den else float("nan")
+
+    gammas, deltas, lens, ms, taus = [], [], [], [], []
+    for r in rows:
+        T = R.build(variant, r["n"], [tuple(e) for e in r["edges"]])
+        sym = list(T.encode())
+        sa = suffix_array(sym)
+        lcp = lcp_array(sym, sa)
+        num, den = delta_exact(dk_profile(len(T), lcp, sa))
+        gammas.append(r["gamma"])
+        deltas.append(num / den)
+        lens.append(r["len"])
+        ms.append(r["m"])
+        taus.append(r["tau"])
+    return {"instances": len(rows),
+            "corr_gamma_delta": round(pearson(gammas, deltas), 3),
+            "corr_gamma_len": round(pearson(gammas, lens), 3),
+            "corr_gamma_m": round(pearson(gammas, ms), 3),
+            "corr_gamma_tau": round(pearson(gammas, taus), 3)}
+
+
+def check_ledger_identity(nmax):
+    """Verify Lemma 4.1 (the ledger arithmetic) exhaustively:
+    m + min_H (|H| + #{e : e meets H is empty}) == m + tau(G) for every graph."""
+    bad = []
+    checked = 0
+    for n in range(1, nmax + 1):
+        for edges in all_graphs(n):
+            t = R.tau(n, edges)
+            best = None
+            for k in range(n + 1):
+                for H in itertools.combinations(range(n), k):
+                    Hset = set(H)
+                    v = k + sum(1 for (u, w) in edges if u not in Hset and w not in Hset)
+                    if best is None or v < best:
+                        best = v
+            checked += 1
+            if best != t:
+                bad.append({"n": n, "edges": [list(e) for e in edges],
+                            "tau": t, "ledger": best})
+    return {"instances": checked, "violations": bad}
 
 
 # --------------------------------------------------------------------------
@@ -406,8 +556,25 @@ def main(argv=None):
     ap.add_argument("--labels", action="store_true", help="also run the label-variance test")
     ap.add_argument("--relabels", type=int, default=8)
     ap.add_argument("--monotone", action="store_true")
+    ap.add_argument("--correlate", action="store_true",
+                    help="also report corr(gamma, delta), corr(gamma, |T|), "
+                         "corr(gamma, m), corr(gamma, tau) over the checked rows")
+    ap.add_argument("--ledger-check", type=int, default=None, metavar="NMAX",
+                    help="verify the ledger arithmetic (Lemma 4.1) on all graphs up to NMAX")
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--witness", nargs=2, metavar=("N", "EDGES"), default=None,
+                    help="print the ledger breakdown of one instance, e.g. "
+                         "--witness 3 0-1,0-2,1-2")
     args = ap.parse_args(argv)
+
+    if args.witness is not None:
+        n = int(args.witness[0])
+        spec = args.witness[1].strip()
+        edges = [] if spec in ("", "-") else \
+            [tuple(int(x) for x in pair.split("-")) for pair in spec.split(",")]
+        br = ledger_breakdown(args.variant, n, edges, time_cap=args.time_cap)
+        print(json.dumps(br, indent=1))
+        return 0
 
     t0 = time.time()
     res = run_variant(args.variant, args.nmax, args.mmax,
@@ -451,6 +618,12 @@ def main(argv=None):
         out["monotonicity_violations"] = monotonicity_scan(
             args.variant, min(args.nmax, 4), node_cap=args.node_cap,
             time_cap=args.time_cap)
+
+    if args.ledger_check is not None:
+        out["ledger_identity"] = check_ledger_identity(args.ledger_check)
+
+    if args.correlate:
+        out["correlations"] = correlations(res["rows"], args.variant)
 
     print(json.dumps(out, indent=1)[:6000])
     if args.json:

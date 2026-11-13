@@ -7,9 +7,9 @@ log-factor bounds are essentially inherent for LP-based methods.  Nobody had mea
     gap(S) = gamma(S) / LP*(S)   >= 1
 
 with `gamma` the minimum attractor and `LP*` the LP relaxation of the exact set-cover
-formulation, **both computed exactly in rational arithmetic** (`fractions.Fraction`; there is
-no floating point anywhere in a bound reported here — floats appear only as an extra
-"≈" column for orientation).  This note is the contract for `tools/gap/`; every number in it
+formulation, **both computed exactly in rational arithmetic** (`fractions.Fraction`; no bound reported here
+uses floating point — floats appear only in a parenthetical "≈" column for orientation and in
+the trend fit of §3.1, which is a description and not a bound).  This note is the contract for `tools/gap/`; every number in it
 is reproduced by `python3 gap.py` and re-checked by `python3 check.py`.
 
 **Verdicts.** PROVED = read in a primary source or derived here with the derivation given;
@@ -41,26 +41,33 @@ theorem).
 
 ## 0. The answer, in one paragraph
 
-Over **all** binary strings with `n <= 12` (8190 texts), all ternary strings with `n <= 8`
+Over **all** binary strings with `n <= 16` (131 070 texts), all ternary strings with `n <= 8`
 (9840 texts), and 59 morphic/random texts up to `n = 987`, the measured gap is **at most
-`4/3`**, attained first at `n = 12`; 90.6 % of binary and 92.3 % of ternary instances are
-**exactly integral** (`gap = 1`), and on the Fibonacci words the LP is exactly integral at
-every length measured (`gamma = LP* = 2` for `n` up to 987).  The per-length maximum over all
-binary strings grows only from `1` (n <= 6) to `6/5` (n = 7) to `9/7` (n = 8..11) to `4/3`
-(n = 12) — a slow drift, not a `log` climb.  **On this evidence the `O(1)`-gap hypothesis
-survives and the `Theta(log n)` hypothesis is unsupported** — but `n <= 12` is far too small
+`15/11 = 1.3636`**, attained by exactly four binary texts at `n = 13`; 89.3 % of the binary and
+92.3 % of the ternary instances are **exactly integral** (`gap = 1`), and on the Fibonacci words
+the LP is exactly integral at every length measured (`gamma = LP* = 2` for `n` up to 987).
+The per-length maximum over all binary strings is `1` (n <= 6), `6/5` (n = 7), `9/7`
+(n = 8..11), `4/3` (n = 12), **`15/11` (n = 13)**, `4/3` (n = 14, 15, 16) — a bounded, slightly
+wobbling plateau, not a `log` climb (`log2 16 = 4`).  **On this evidence the `O(1)`-gap hypothesis
+survives and the `Theta(log n)` hypothesis is unsupported** — but `n <= 16` is far too small
 to prove asymptotics, and no adversarial family with a growing gap was found.  So: *no
 evidence of a growing gap; a `Theta(log n)` family, if it exists, is not among the natural
 ones; a constant-factor LP-based approximation is not obviously blocked.*  The separate,
-unresolved step is that even a `4/3`-gap LP needs a constructive `O(1)`-ratio rounding rule.
+unresolved step is that even a `15/11`-gap LP needs a constructive `O(1)`-ratio rounding rule.
 
-Two things the measurement **refutes**, both of which the brief asserted or implied:
+Three things the measurement **refutes**, two of them asserted or implied by the brief and one
+of them my own pre-measurement inference:
 
 1. *"The fixed-`k` instance has consecutive-ones structure, so its gap is 1."*  **False for
    `k >= 2`**: consecutive-ones needs *unique* occurrences.  Measured maxima over all binary
    `n <= 12`: `k = 1` gap `1` (and that one is PROVED below), `k = 2` gap `4/3`, `k = 3` gap
    `3/2`.  The single-`k` relaxations are strictly *weaker* than the full one.
-2. *My own pre-measurement inference "`gap_full >= gap_k`"* — **false**.  Adding the longer
+2. *The conjecture "`gamma/LP* <= 4/3` for every binary string"* (the natural guess after the
+   `n <= 12` scan, and the sharp form of C2 in `attractor-approx.md` restricted to `4/3`):
+   **refuted at `n = 13`** by `0110101101110` (`gamma = 3`, `LP* = 11/5 = 2.2`, gap
+   `15/11 = 1.3636`).  It survives only in the weaker form `<= 15/11`, for the lengths measured
+   (`n <= 16` exhaustively, plus sampled/hill-climbed texts to `n = 64`).
+3. *My own pre-measurement inference "`gap_full >= gap_k`"* — **false**.  Adding the longer
    factors adds constraints, which raises `LP*`, and can raise `gamma` not at all: the full
    instance of `111111101110` has gap `1` while its `k = 3` instance has gap `3/2`.  The
    difficulty is present **at a single fixed length**, and mixing lengths *reduces* the gap.
@@ -80,7 +87,9 @@ Two things the measurement **refutes**, both of which the brief asserted or impl
 This is KP18 §3's formulation (PROVED-by-definition); `gamma` is its integer optimum.
 
 **(1a) The universe can be reduced to suffix-tree nodes, for the LP as well as the integer
-program (PROVED here, from KPRR18 Lemma 11's decomposition).**  Two factors owned by one
+program (MY-INFERENCE from KPRR18 Lemma 11's decomposition; the integer part is
+tools/attractor's R1, the LP part is the observation that an implied constraint may be
+dropped).**  Two factors owned by one
 suffix-tree node share their occurrence set, and a longer window at the same start contains
 the shorter one, so `C(f) ⊇ C(shortest factor of the node)`.  A covering constraint for a
 superset set is *implied* by the constraint for the subset, so deleting every non-shortest
@@ -150,8 +159,10 @@ rewritten or modified.
 
 Maximum over **all** `2^n` binary and `3^n` ternary texts of each length.  Last two columns:
 how many texts exceed 1, and the argmax text with its `(gamma, LP*)`.  Generated by
-`python3 gap.py --growth 12 --growth-ternary 8 --ks 1,2,3 --fast` (40 s), extended per length
-below with `--growth 16 --ks 1`.
+`python3 gap.py --growth 12 --growth-ternary 8 --ks 1,2,3 --fast` (40 s) for `n <= 12`, then
+`--growth 16 --ks 1 --fast` (15 min, 131 070 texts) for the rest.  The single-`k` column was not
+recomputed for `n >= 13` (only the full universe was, to keep the scan inside its budget), so
+those cells read `–`: the `k <= 3` maxima are established for `n <= 12` only.
 
 | n | binary texts | **max gap** | # gap > 1 | argmax text | (gamma, LP*) | max single-k gap |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -167,6 +178,10 @@ below with `--growth 16 --ks 1`.
 | 10 | 1024 | **9/7** | 110 | `0010011010` | (3, 7/3) | 3/2 (k=3) |
 | 11 | 2048 | **9/7** | 200 | `00100110100` | (3, 7/3) | 3/2 (k=3) |
 | 12 | 4096 | **4/3** | 408 | `001010010001` | (3, 9/4) | 3/2 (k=3) |
+| 13 | 8192 | **15/11** | 808 | `0110101101110` | (3, 11/5) | – |
+| 14 | 16384 | **4/3** | 1668 | `00110111101001` | (4, 3) | – |
+| 15 | 32768 | **4/3** | 3424 | `001000010110011` | (4, 3) | – |
+| 16 | 65536 | **4/3** | 7312 | `0001000010110011` | (4, 3) | – |
 
 | n | ternary texts | max gap | # gap > 1 | argmax text | (gamma, LP*) |
 | --- | --- | --- | --- | --- | --- |
@@ -187,8 +202,13 @@ below with `--growth 16 --ks 1`.
 | ternary `n <= 8` | 9840 | 6 | 9084 (92.32 %) | `8/7` ×540, `6/5` ×162 | `4/3` ×24 |
 
 The full binary histogram: `1`: 7416, `6/5`: 546, `9/7`: 156, `9/8`: 40, `5/4`: 12, `15/13`:
-8, `4/3`: 4, `21/17`: 4, `12/11`: 4.  It is a tight cluster just above 1: no instance in the
-exhaustive range is worse than `4/3`, and none is worse than `3/2` in any single-`k` universe.
+8, `4/3`: 4, `21/17`: 4, `12/11`: 4.  It is a tight cluster just above 1: no instance with
+`n <= 12` is worse than `4/3`, nothing with `n <= 16` is worse than `15/11`, and nothing is
+worse than `3/2` in any single-`k` universe at `n <= 12`.  Over `n <= 16` the number of
+non-integral binary texts is 4, 16, 36, 110, 200, 408, 808, 1668, 3424, 7312 for `n = 7..16`
+— it doubles every length, i.e. the *fraction* settles at about 11 %, while the maximum stays
+put.  That is the signature of a bounded gap that a small fraction of instances approach, not
+of a gap that grows with `n`.
 
 **The four `4/3` texts** (each `gamma = 3`, `LP* = 9/4`; the LP certificate is on file in
 `check.py`, which recomputes the pair):
@@ -204,6 +224,57 @@ What the witness looks like: the fractional solution splits its weight over posi
 cover repeated *short* factors (`000`, `010`, `0010`, `0110`), and no integral set of 9/4-sized
 positions can do the same job with 3 positions — the integral optimum needs 3, the LP only 2.25.
 This is a "fractional cover of a handful of repeated short factors" gap, not a big gadget.
+
+**The maximum over all binary strings with `n <= 16` is `15/11 = 1.3636`, at `n = 13`**, and it is
+attained by exactly four texts (verified by scanning all 8192 texts of length 13):
+
+| text | n | gamma | gamma positions | LP* | gap | dual support |
+| --- | --- | --- | --- | --- | --- | --- |
+| `0110101101110` | 13 | 3 | 3, 8, 9 | 11/5 | 15/11 | `y(0)=1/5`, `y(1101)=y(110)=y(11)=1/5`, `y(011010)=y(10110)=2/5`, `y(111)=3/5` |
+| `0111011010110` | 13 | 3 | 1, 4, 7 | 11/5 | 15/11 | (same shape) |
+| `1000100101001` | 13 | 3 | 1, 4, 7 | 11/5 | 15/11 | (same shape) |
+| `1001010010001` | 13 | 3 | 3, 8, 9 | 11/5 | 15/11 | (same shape) |
+
+Each is a one-symbol extension of an `n = 12` `4/3` witness (`001010010001` → `1001010010001`),
+so the two maxima are the same construction at consecutive lengths, not two phenomena.  The LP
+for `0110101101110` is `x = (3:1/5, 4:1/5, 5:3/5, 8:1/5, 9:2/5, 10:3/5)`, `sum x = 11/5`, and the
+pair certificate (both sides feasible, `sum x = sum y = 11/5`) closes; the primal route and the
+`n(n+1)/2`-element factor universe both agree (`gamma = 3`, `LP* = 11/5`).  Note `delta = 2` in all eight witnesses,
+so the LP is 10 % above KNP's `delta` at `n = 13` and 12.5 % above it at `n = 12` — the
+`delta <= gamma` bound of KNP23 is *not* what the LP is tracking: the LP sees more than `delta`
+does, which is why the gap here is small in the first place.
+
+**Fit of the trend** (`gap.py --growth 16` prints this; `n >= 3`, 14 points; floats are used
+*only* for the fit — no bound in this note comes from it):
+
+| model | c | residual SS / total SS | max abs residual |
+| --- | --- | --- | --- |
+| constant | 1.217 | **0.300** | 0.217 |
+| `1 + c/n^(1/3)` | 0.380 | 0.456 | 0.263 |
+| `1 + c/sqrt(n)` | 0.481 | 0.539 | 0.278 |
+| `1 + c/log2 n` | 0.474 | 0.562 | 0.299 |
+
+The **bounded-constant** model explains the observed maxima best (residual 0.30 of the total),
+and among the three decaying shapes the faster-decaying `n^(-1/3)` beats `1/log n` — the opposite
+of log-driven growth.  More telling than the residuals is *what each model predicts next*, because
+all three decaying shapes are monotone **decreasing** in `n` while the observed maxima rise
+(`1` → `6/5` → `9/7` → `4/3` → `15/11`) and then hold:
+
+| model (fitted on `n <= 16`) | c | predicts at `n = 16` | at `n = 64` | at `n = 128` | at `n = 1024` |
+| --- | --- | --- | --- | --- | --- |
+| constant | 1.217 | 1.217 | 1.217 | 1.217 | 1.217 |
+| `1 + c/n^(1/3)` | 0.380 | 1.151 | 1.095 | 1.075 | 1.038 |
+| `1 + c/sqrt(n)` | 0.481 | 1.120 | 1.060 | 1.042 | 1.015 |
+| `1 + c/log2 n` | 0.474 | 1.118 | 1.079 | 1.068 | 1.047 |
+| **measured maximum** | — | **1.333** | — | — | — |
+
+So the decaying models pay for their fit by predicting that *no* instance above `~1.08` exists at
+`n = 128`, while the plateau model predicts the maximum stays near `1.2–1.36`.  That is a sharp,
+falsifiable split, and it needs no exhaustive `2^128` sweep: **the instrument is `--hunt` at
+`n = 64, 128, 256` for hours.**  A single instance with gap `> 1.15` at `n = 128` refutes all three
+decaying shapes; a maximum of `~1.05` there supports them and refutes the plateau.  The exhaustive
+sweep that would settle it directly is `n = 20` (`10^6` texts, a day of this exact LP) and is out
+of reach beyond that.
 
 ### 3.2 Families and random texts (large n)
 
@@ -227,9 +298,12 @@ measured; one (`thue-morse 2^9`, n = 512) hit its 180 s LP budget and is reporte
   since there most factors occur once, `C(f)` is a single interval, and the instance is an
   interval-stabbing-like one, which is LP-integral.
 * **Hill-climbing over texts** (`--hunt`: random restarts, single-symbol mutations, accept on
-  ties) at `n = 13, 16, 20, 24, 32, 48, 64` found `4/3` at `n = 13` (`1100110100010`,
-  `gamma = 4, LP* = 3`), `9/7` at `n = 16`, `4/3` again at `n = 20, 24` — and never more.  A
-  search, not a bound.
+  ties, 150 s per length) at `n = 13, 16, 20, 24, 32, 48, 64`: the best gaps found were `4/3`
+  (n = 13, 20, 24), `9/7` (n = 16), `6/5` (n = 32), `21/19` (n = 48), `12/11` (n = 64).  Beyond
+  `n ≈ 24` the search **loses** ground — random-ish long texts are nearly integral — so the only
+  way to keep the maximum up is the structured construction behind the `n = 12, 13` witnesses, and
+  the hunt did not rediscover it from scratch at `n >= 20`.  A search, not a bound; it says the
+  maximum did not grow, not that it cannot.
 
 ### 3.3 The single-`k` universes — where the fractional difficulty lives
 
@@ -248,6 +322,13 @@ measured; one (`thue-morse 2^9`, n = 512) hit its 180 s LP budget and is reporte
 needs its own position, and one occurrence per symbol suffices).  LP: `x_p = 1/count(S[p])` is
 feasible with value `sigma`, and summing the `sigma` constraints gives the same lower bound.
 `check.py` asserts `gamma_1 = LP*_1 = sigma` on every text swept.
+
+**The single-`k` maximum does not grow either.**  A hill-climb in the `k = 3` universe
+(`--hunt-k 3`, 150 s per length) found `3/2` at `n = 10` (`1102110211`, `gamma_3 = 2`,
+`LP*_3 = 4/3`) and `n = 14` (`01110110111101`, same values), then `9/7` at `n = 20`, `5/4` at
+`n = 28`, `6/5` at `n = 40`: the same picture as the full universe — a maximum that stays at
+`3/2` and then loses ground.  `3/2` is the largest gap seen anywhere in this lane, and it is a
+*single-length* instance.
 
 **`k >= 2` is not integral, and the brief's reason for expecting otherwise is wrong.**  The
 consecutive-ones property holds only when every factor has a *unique* occurrence: then `C(f)`
@@ -281,17 +362,26 @@ experiment, not a result.
 
 **Supported by the data (MY-COMPUTATION; empirical, not a theorem).**
 
-1. `gamma/LP* <= 4/3` on every instance solved exactly here: 8190 binary `n <= 12`, 9840
-   ternary `n <= 8`, 59 morphic/random texts to `n = 987`, plus hill-climbed texts to `n = 64`.
-2. The typical instance is exactly integral (90.6 % / 92.3 % at small `n`; 33/36 random texts
-   at `n` up to 128; all Fibonacci words).
-3. The per-length maximum drifts up slowly (`1 → 6/5 → 9/7 → 4/3`) and the count of
-   non-integral instances grows roughly geometrically with `n`.  Neither the maximum nor its
-   growth rate looks like `Theta(log n)` over this range (`log2 12 = 3.58`).
+1. `gamma/LP* <= 15/11` on every instance solved exactly here: 131 070 binary texts with
+   `n <= 16` (exhaustively, so this is the *true* maximum for those lengths), 9840 ternary
+   texts with `n <= 8`, 59 morphic/random texts to `n = 987`, plus hill-climbed texts to
+   `n = 64`.  The maximum `15/11 = 1.3636` is at `n = 13`; every length `12..16` has its
+   maximum in `[4/3, 15/11]`.
+2. The typical instance is exactly integral (89.3 % of binary texts `n <= 16`, 92.3 % of
+   ternary `n <= 8`, 33/36 random texts to `n = 128`, all 15 Fibonacci words).
+3. The per-length maximum is a *plateau* (`1, 6/5, 9/7, 9/7, 9/7, 9/7, 4/3, 15/11, 4/3, 4/3,
+   4/3` for `n = 6..16`), and a one-parameter fit prefers a **bounded constant** over
+   `1 + c/log n`, `1 + c/sqrt(n)` or `1 + c/n^(1/3)`.  The count of non-integral texts doubles
+   with `n` (4, 16, 36, 110, 200, 408, 808, 1668, 3424, 7312 for `n = 7..16`), so the *fraction*
+   stays at `10-11 %` (9.9 % at `n = 13`, 11.2 % at `n = 16`) while the maximum does not move.  Neither
+   the maximum nor its trend looks like `Theta(log n)` over this range (`log2 16 = 4`).
 
-**Not claimed.**  That the gap is `O(1)` as a theorem.  `n <= 12` cannot separate `O(1)` from
-`Theta(log n)`: the latter is compatible with `1.33` at `n = 12` if the constant is small
-(`c log2 12 <= 1.33` needs `c <= 0.53`).  What *is* excluded is the crude hypothesis "the
+**Not claimed.**  That the gap is `O(1)` as a theorem.  `n <= 16` cannot separate `O(1)` from
+`Theta(log n)`: fitted on `n <= 16`, `1 + c/log2 n` needs `c = 0.47` and then predicts `1.07` at
+`n = 128` — i.e. it predicts the gap is *already decaying*, which the exhaustive data contradicts
+(the maxima rise through `n = 13`).  The discriminating experiments are in §3.1's prediction table:
+`--hunt` at `n = 64..256` (one instance with gap `> 1.15` at `n = 128` refutes every decaying
+shape), and the exhaustive sweep at `n = 17..20` if a day of compute is available.  What *is* excluded is the crude hypothesis "the
 attractor LP inherits the generic `Theta(log |U|)` set-cover gap on ordinary texts" — on the
 texts measured the LP is tight or nearly tight.  Also not claimed: that a small gap gives a
 constant-factor *algorithm*; rounding a fractional cover of these `C`-sets is a separate
@@ -301,9 +391,10 @@ problem, untouched here.
 
 | claim | status | what settles it |
 | --- | --- | --- |
-| `gamma/LP* = O(1)` uniformly | OPEN — no counterexample found up to `n = 987` on families, `n = 12` exhaustively | a family with a growing gap (search at `n = 64..256`, or an adversarial construction); or a duality/TDI proof on the node matrix |
+| `gamma/LP* = O(1)` uniformly | OPEN — the maximum is `15/11` over all `n <= 16` binary texts, `1` on Fibonacci up to `n = 987` | a family with a growing gap (`--hunt` at `n = 64..256`, or an adversarial construction); or a duality/TDI proof on the node matrix |
+| `gamma/LP* <= 15/11` for **every** binary string | VERIFIED for `n <= 16` and open above; the weaker `<= 4/3` is **REFUTED** (`n = 13`) | the `n <= 16` sweep is exhaustive (see §3.1); above it, search |
 | `gamma/LP* = Theta(log n)` for some family | UNSUPPORTED — none found | exhibit one: the single-`k` universes are the plausible place (see 3.3) |
-| the `4/3` maximum is attained only at `n = 12` for small `n` | MY-COMPUTATION (`n <= 16` below) | the exhaustive scan, one more length |
+| the maximum `15/11` is attained only at `n = 13` among `n <= 16` | MY-COMPUTATION (exhaustive) | the exhaustive scan at `n = 17..20` (`2^20` texts is already impractical; `--hunt` is the instrument) |
 | `LP* >= delta` | MY-INFERENCE, checked exactly on ~18 000 instances | the one-paragraph proof in §1b is complete; a Lean lane could formalize it |
 | the literature facts (`H_d` rounding, `Theta(log)` set-cover gap, consecutive-ones TU) | UNVERIFIED here (not opened this session) | open the DOIs listed under *Sources* |
 
@@ -313,17 +404,19 @@ problem, untouched here.
 cd tools/gap
 timeout 300 python3 instance.py                                   # all universes on a few texts
 timeout 900 python3 gap.py --growth 12 --growth-ternary 8 --ks 1,2,3 --fast   # §3.1, 40 s
+timeout 1800 python3 gap.py --growth 16 --ks 1 --fast                          # §3.1, 15 min
 timeout 600 python3 gap.py --family all --ks 1,2,3 --le-k --fast --max-seconds 180  # §3.2
 timeout 900 python3 gap.py --hunt 20,24,32,48 --hunt-seconds 150 --ks 1 --fast      # §3.2
-timeout 900 python3 check.py                                      # the acceptance tests, ~75 s
+timeout 900 python3 check.py                                      # the acceptance tests, ~140 s
 ```
 
 Every run above is under `timeout`; every loop in the code asserts progress (the exact search
 raises on its node cap, the LP raises `LPTimeout` at its deadline, the sweeps raise on any
 invariant violation) so a hang or a budget overrun produces *no* number rather than a wrong
-one.  `check.py` exits non-zero if any of the invariants `LP* <= gamma`, `LP* >= delta`
-(or `>= d_k/k` for the single-`k` universes), dual/primal certificate closure, the two LP
-routes, the vertex-enumeration cross-check, or the `gamma` cross-checks fails.
+one.  `check.py` (142 347 checks, 138 s on this machine) exits non-zero if any of these fails: the
+invariants `LP* <= gamma` and `LP* >= delta` (or `>= d_k/k` for the single-`k` universes), the
+dual/primal certificate closure, agreement of the two LP routes, the vertex-enumeration
+cross-check, or the `gamma` cross-checks.
 
 ## 6. Relation to the earlier note and to the Lean lane
 
@@ -331,16 +424,33 @@ routes, the vertex-enumeration cross-check, or the `gamma` cross-checks fails.
   **C2**: "*the LP integrality gap on this family is `O(1)`, sharply `OPT_LP >= gamma/2`*",
   with the experiment "for all `2^n` binary strings, `n <= 12`, exact `gamma` and the LP
   optimum in exact rational arithmetic".  **That experiment is now run and
-  C2's sharp form is confirmed at these scales**: the worst ratio is `gamma/LP* = 4/3`, i.e.
-  `LP* >= 0.75 gamma`, comfortably above the conjectured `gamma/2`.  C2 as stated (`O(1)`) is
-  *not* refuted by anything measured here.  The same note's claim in §2(b)-(c) that "the
+  C2's sharp form is confirmed at these scales**: the worst ratio over all binary `n <= 16` is
+  `gamma/LP* = 15/11`, i.e. `LP* >= 0.733 gamma`, comfortably above the conjectured `gamma/2`.
+  C2 as stated (`O(1)`) is *not* refuted by anything measured here — and C2 is sharper than what
+  the data supports in one direction: its `O(1)` is not established, only `<= 15/11` on
+  `n <= 16`.  The same note's claim in §2(b)-(c) that "the
   problem is already NP-complete for one fixed constant `k >= 3`" (KPRR18) is consistent with
   3.3 above: the single-`k` universe is where the fractional weakness (and the hardness) sits.
 * `docs/research/attractor-approx.md` §3 lists "LP dual" as a lower bound with "unknown"
   tightness and "needs a checkable rational dual".  This lane supplies exactly that machine
   (`Cover.lp` returns the dual `y` with the certificate), and the measurement says the LP dual
-  is *very* tight: on the exhaustive range `LP* >= (3/4) gamma`, so an LP-dual lower bound is
-  within 25 % of `gamma` on every small instance and exactly tight on most.
+  is *very* tight: on the exhaustive range `LP* >= (11/15) gamma ≈ 0.733 gamma`, so an LP-dual
+  lower bound is within 27 % of `gamma` on every binary instance with `n <= 16` and exactly tight
+  on ~89 % of them.  That is the practical answer to "should a tool ship an LP-dual lower bound?":
+  yes — it dominates the 0/1 packing bound and `delta` on most instances, and it is certified by
+  a rational dual vector.
+* **Terminology, to avoid the collision AGENTS.md warns about.**  `factors_k` in this note is
+  the *`k`-sharp* attractor of `hardness-attractor.md` §2(f) — factors of length **exactly** `k`
+  — and `factors_le_k` is the `k`-attractor (all factors of length **at most** `k`).  The brief
+  said "universe = length-k factors only", so its table is the `k`-sharp one; both are reported
+  because they behave differently (`{2}`-sharp has gap `4/3` while `{<=2}` is integral).
+  `hardness-related-binary.md` §4 states the correct condition for integrality ("with one
+  occurrence per factor … consecutive-ones/TU; with ≥ 2 occurrences … a union of equal-length
+  intervals and no TU structure survives"), and §3.3 here measures exactly that: `k`-sharp `= 1`
+  is integral, `k`-sharp `>= 2` is not.  `docs/research/attractor-approx.md` §2(b)'s phrasing
+  ("the LP is integral by the consecutive-ones property", with no uniqueness caveat) is the one
+  place that reads as a claim about *all* fixed-`k` instances; the measurement refutes it and the
+  sibling note already carries the correction.  I did not edit that file (not this lane's).
 * For a Lean lane: the only formalizable item produced here is `LP* >= delta` (§1b), a
   counting argument over `d_k`; and `gamma_1 = sigma = LP*_1` (§3.3).  The measurements
   themselves are Python, cheap to re-run, and are the honest source for the numbers.

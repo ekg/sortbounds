@@ -248,6 +248,11 @@ a swarmed lane with its own independent review:
 | **B** (implementer) | What is the **LP integrality gap** of the attractor cover? | if `O(1)`, a constant-factor approximation is within reach; if `Θ(log n)`, LP-based methods are stuck at the log factor. Nobody has measured it — requires an exact rational simplex, plus the *fixed-`k`* gap where consecutive-ones structure should force gap 1 |
 | **C** (theorist + experimenter) | When is `γ = ⌈δ⌉`? | the anytime search found *closed* brackets on every repetitive family tried. If that pattern is structural, `γ` is computable in `O(n)` exactly where it matters; if not, the gap's growth rate is the quantity to know |
 
+**Lane B first data (exact, rational LP):** over all 510 binary strings `n ≤ 8`, the maximum
+integrality gap is **9/7 ≈ 1.2857** (`01101001` and `10010110`: `γ = 3`, `LP* = 7/3`),
+the median is exactly 1, and 490/510 have gap 1.  That is nowhere near `Θ(log n)` — if the
+maximum stays flat as `n` grows, a constant-factor LP-based approximation is plausible.
+
 Standing rules carried into all three: no fabricated number, `timeout` on every run, progress
 assertion in every loop, every "γ" backed by a *closed* bracket rather than an upper bound,
 and an independent reviewer per lane.

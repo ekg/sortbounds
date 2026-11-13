@@ -141,3 +141,33 @@ Grounded candidates, in order of tractability:
 2. `Ω(r)` words for `O(m + occ)` locate — must defeat all index families, not just
    BWT-based ones.
 3. A non-systematic lower bound for exact substring search — the Gál–Miltersen gap.
+
+## Theorems this programme produced (not measurements)
+
+Everything below is kernel-checked in Lean 4 with no `sorry`/`axiom`/`native_decide`, and is in
+the `make trust` audit (136 theorems, all on `propext`/`Classical.choice`/`Quot.sound`).
+
+| # | statement | module | why it matters |
+| --- | --- | --- | --- |
+| T1 | `δ ≤ γ` for the **minimum** attractor (unfloored, rational) | `Repetitiveness.deltaQ_le_minAttractorSize` | the published `δ ≤ γ` was available here only against a *given* attractor; every use of it against `γ` itself rests on this |
+| T2 | `γ(B_m) ≥ 2^m/m` and `γ_k(B_m) ≤ 2^k`, hence **`γ/γ_k ≥ 2^m/(m·2^k) → ∞` for every fixed `k`** | `DeBruijn` + `AttractorK` | kills *all* bounded-length relaxations of `γ` — the `k`-attractor family, the natural polynomial object at `σ = 2`, is unbounded away from `γ`. This is why the only hardness question that matters is `k = n` |
+| T3 | the attractor set-cover LP is **not integral**: `γ = 3`, `LP* = 11/5`, gap `15/11` on `0110101101110` | `AttractorLP` | the LP route cannot be "the LP is essentially integral"; any `O(1)`-ratio algorithm must **round**, and rounding is the remaining open problem |
+
+T2 and T3 are, as far as our surveys go, unstated in the literature: the `k`-attractor hierarchy is
+defined in KP18 but its ratios are not analysed, and no integrality gap for the attractor LP has
+been published.
+
+### What each theorem rules out
+
+* T2 rules out: "compute `γ₂`/`γ_k` (polynomial at `σ = 2`) and you are within a constant factor",
+  "iterative deepening over `k`", and any argument that confines the difficulty to short factors.
+* T3 rules out: "the LP is near-integral, so `γ` is approximable via LP + minor fix-up" as an
+  *integrality* claim — the slack is real, so the algorithm must construct a rounding.
+* Together they narrow the open problem to: **round the attractor LP with ratio `O(1)`, or prove
+  `σ = 2, k = n` hardness.**
+
+### What they do *not* do
+
+They do not settle boundedness of the LP gap (measured `15/11` maximal for `n ≤ 16`, no proof),
+and they do not touch the `σ = 2` hardness question. Λ lane status is in `hardness-attractor.md`
+(open) and `sigma2-gadget.md` (three refutations + one surviving necessary condition).

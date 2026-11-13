@@ -279,6 +279,14 @@ lengths.  `γ/LP* ≤ γ/δ` always (since `LP* ≥ δ`), so the LP gap can only
 `δ`-gap — and every measurement has `γ − ⌈δ⌉ ≤ 3`, which would force the LP gap `→ 1` at scale.
 Exhaustive `n = 17` was **not** completed.  `docs/research/lp-gap-growth.md`.
 
+### `LP* ≥ δ`, machine-checked (2026-11-13)
+
+`AttractorLP/DeltaBound.lean`: `deltaQ_le_primalValue` — every primal-feasible fractional cover
+of the attractor LP has value at least `δ` (weighted counting: `d_j ≤ j · Σ x`, then `sup'`).
+Corollary `gamma_div_primal_le`: `γ/Σx ≤ γ/δ`.  So the LP gap **cannot exceed** the `δ`-gap; with
+`γ − ⌈δ⌉ ≤ 3` in every measurement, the LP gap is forced toward `1` at scale.  `make trust`:
+141 theorems.
+
 ### Answers (2026-11-13)
 
 | lane | verdict |

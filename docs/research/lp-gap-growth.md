@@ -66,6 +66,26 @@ instance and is *not* separately verified.
   argument applies to any fractional cover), **`γ/LP* ≤ γ/δ` always**.  So the LP gap can only
   grow by growing `γ/δ`; the measured `γ − ⌈δ⌉ ≤ 3` regime would force the LP gap `→ 1` at scale.
 
+## 3b. The structural inequality is now a theorem
+
+`SortBounds/Projects/AttractorLP/DeltaBound.lean` (211 lines, kernel-checked):
+
+```lean
+theorem distinctFactors_subset_factorUniverse (hj : 1 ≤ j) : distinctFactors s j ⊆ factorUniverse s
+theorem card_filter_coverageSet_le (p) : #(factors of length j covering p) ≤ j
+theorem sum_distinctFactors_coverage :   -- the weighted double-count
+    ∑ f ∈ distinctFactors s j, ∑ p ∈ coverageSet s f, x p =
+      ∑ p, x p * #({f of length j : p ∈ C(f)})
+theorem factor_card_le_primal_sum (hx : PrimalFeasible s x) : d_j ≤ j * ∑ p, x p
+theorem deltaQ_le_primalValue (hx : PrimalFeasible s x) : deltaQ s ≤ ∑ p, x p
+theorem gamma_div_primal_le (hx) (hδ : 0 < deltaQ s) :
+    (γ : ℚ) / (∑ p, x p) ≤ (γ : ℚ) / deltaQ s
+```
+
+So **every primal-feasible fractional cover has value at least `δ`**, hence the LP gap is at most
+the `δ`-gap — the `γ/LP* ≤ γ/δ` used in §3 is no longer an inference but a theorem.  Apply it to
+the `15/11` witness: `deltaQ lp13 ≤ 11/5` (with `δ = 2` attained there).
+
 ## 4. What must be run next (and what would settle it)
 
 1. **Exhaustive `n = 17`** — was *not* completed (the lane timed out).  `2^17 = 131 072` texts;

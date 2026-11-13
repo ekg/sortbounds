@@ -141,6 +141,9 @@ open SortBounds
 #print axioms SortBounds.Projects.DeBruijn.isAttractorK_self_iff
 #print axioms SortBounds.Projects.DeBruijn.minAttractorKSize_anti
 #print axioms SortBounds.Projects.DeBruijn.gamma_ratio_ge_isDeBruijn
+#print axioms SortBounds.Projects.AttractorLP.deltaQ_le_primalValue
+#print axioms SortBounds.Projects.AttractorLP.gamma_div_primal_le
+#print axioms SortBounds.Projects.AttractorLP.card_filter_coverageSet_le
 #print axioms SortBounds.Projects.AttractorLP.weak_duality
 #print axioms SortBounds.Projects.AttractorLP.lp13_gamma
 #print axioms SortBounds.Projects.AttractorLP.lp13_primal

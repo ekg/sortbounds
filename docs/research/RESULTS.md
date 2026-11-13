@@ -91,9 +91,11 @@ a theorem rather than a Python routine.
 Every **fractional** cover has value at least `δ` (weighted counting: `d_j ≤ j·Σx`).  So the LP
 optimum is floor-bounded by KNP's bound, and the LP gap is capped by the `δ`-gap.
 
-**Consequence.** The LP gap is not an independent quantity.  With `γ − ⌈δ⌉ ≤ 3` in every
-exhaustive measurement, the LP gap is forced toward `1` at scale; the measured band `1.36–1.40`
-below is then unsurprising rather than lucky.
+**Consequence.** The LP gap is not an independent quantity: it is capped by the `δ`-gap.  It does
+**not** follow that the LP gap is bounded — that would need a bound on `γ/δ` over binary text, which
+is open.  (An earlier version of this note claimed the measured `γ − ⌈δ⌉ ≤ 3` "forces the LP gap to
+`1` at scale"; that is withdrawn, since those measurements are exhaustive only to `n = 18` and a
+binary family with `γ/δ → ∞` would carry the LP gap with it.)
 
 ### T6 the certified bracket brackets `LP*` too
 

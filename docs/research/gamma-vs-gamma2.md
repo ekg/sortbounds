@@ -130,11 +130,15 @@ needs the bound against the *minimum*, which follows because some attractor atta
 
 ## What would be the next theorem of this shape
 
-* `γ / γ_k` unbounded for every fixed `k`: same proof, since `γ_k(B_k) ≤ d_k = 2^k`… this only
-  gives `γ_k ≤ 2^k`, which grows. A sharper construction (a family where `γ_k` stays
-  polynomial while `γ ≥ 2^k/k`) would give `γ/γ_k → ∞` for **every** fixed `k`. Candidate: the
-  family in `space.md`'s separation (`S_n = b a^{2^j-1} b` at powers of two), where `δ ≤ 2`
-  but `γ ≥ ½⌊log n⌋` — a *logarithmic* gap only.
+* **A correction.** An earlier draft of this note proposed `S_j = b a^{2^j−1} b` as a family with
+  `δ ≤ 2` and `γ ≥ ½⌊log n⌋`, on the strength of a recollection of `space.md`'s separation.  It is
+  **wrong**: computed exactly (`tools/attractor`, packing + search bracket, `j = 2..9`,
+  `n = 5..513`), `δ(S_j) = 2` and `γ(S_j) = 2` — the bracket is `[2, 2]` at every `j`.  The reason
+  is immediate in hindsight: mark one `a` position and one `b` position, and every factor of
+  `b a^m b` is either all-`a` or contains a `b`.  So that family exhibits **no** `γ/δ` gap, and the
+  claim that `γ − δ` can be driven up by padding is unsupported by it.  (KNP Thm III.3 does give
+  `γ = Ω(δ log(n/δ))` for every `n`, `δ` — but over a general alphabet; whether a **binary** family
+  achieves it is open, and is open problem 2 of `RESULTS.md`.)
 * `γ / δ ≥ log n` on a **binary** family: the KNP separation is stated for `γ` vs `δ` on
   general strings; instantiating it on binary would answer whether `δ` is a `Θ(log n)`
   approximation there (the LP data suggests the *LP* is not, but `δ` and `LP*` are different).

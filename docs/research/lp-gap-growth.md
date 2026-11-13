@@ -62,9 +62,16 @@ instance and is *not* separately verified.
   boundedness — a beam search that loses candidates at larger `n` (as it visibly does at
   `n ≥ 33`) cannot establish a maximum.
 * `γ` takes the values `3`, `4`, `5`; the instances with `γ = 3, δ = 2` are the ones that reach
-  `18/13`.  Since `LP* ≥ δ` is a theorem (`δ` is a lower bound for the LP, KNP's counting
-  argument applies to any fractional cover), **`γ/LP* ≤ γ/δ` always**.  So the LP gap can only
-  grow by growing `γ/δ`; the measured `γ − ⌈δ⌉ ≤ 3` regime would force the LP gap `→ 1` at scale.
+  `18/13`.  Since `LP* ≥ δ` is a theorem (`AttractorLP.deltaQ_le_primalValue`: every *fractional*
+  cover has value at least `δ`), **`γ/LP* ≤ γ/δ` always**.  So the LP gap can only grow by growing
+  `γ/δ`.
+* **What that does *not* say.**  An earlier version of this section concluded that the measured
+  `γ − ⌈δ⌉ ≤ 3` "forces the LP gap to `1` at scale".  That inference is **withdrawn**: those
+  measurements are exhaustive only to `n = 18`, and KNP Thm III.3 gives `γ = Ω(δ log(n/δ))` in
+  general, so a *binary* family with `γ/δ → ∞` would make the LP gap grow too.  Whether such a
+  binary family exists is open (open problem 2 of `RESULTS.md`), and no family we have checked does
+  it — `b a^{2^j−1} b`, the natural candidate, has `γ = δ = 2` at every length
+  (`gamma-vs-gamma2.md`).  **The LP gap's boundedness is open, and the data neither way.**
 
 ## 3b. The structural inequality is now a theorem
 

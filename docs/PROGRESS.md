@@ -261,10 +261,19 @@ quoting the sentence that fixes each alphabet. Then a synthesis claim-register a
 adversarial review whose mandate is: *does anything actually answer the question, or is it a
 gadget sketch dressed as a theorem?*
 
-**Lane B first data (exact, rational LP):** over all 510 binary strings `n ≤ 8`, the maximum
-integrality gap is **9/7 ≈ 1.2857** (`01101001` and `10010110`: `γ = 3`, `LP* = 7/3`),
-the median is exactly 1, and 490/510 have gap 1.  That is nowhere near `Θ(log n)` — if the
-maximum stays flat as `n` grows, a constant-factor LP-based approximation is plausible.
+**Lane B growth data** (exact rational LP, all binary strings, exhaustive):
+
+| n | 1–6 | 7 | 8–11 | 12 |
+| --- | --- | --- | --- | --- |
+| max gap | 1 | 6/5 = 1.20 | 9/7 ≈ 1.286 | **4/3 ≈ 1.333** |
+| # with gap > 1 | 0 | 4 | 16…200 | 408 |
+
+Read: (i) **not** the `Θ(log n)` of general set cover — `4/3` at `n = 12` against `log₂12 ≈ 3.58`;
+(ii) **not** a small-`k` artefact either — the *single-`k`* column already has `k = 2` at `4/3`
+(and `k = 1` at 1), while `k = 3` reaches `3/2`; (iii) the median is exactly 1 and only ~10 % of
+strings at `n = 12` have any gap.  So the covering family looks **benign**, and the conjecture to
+test is `γ/LP* ≤ 4/3` for every binary string — checkable, and the lane is sampling `n = 14..16`
+to look for a witness above it.
 
 Standing rules carried into all three: no fabricated number, `timeout` on every run, progress
 assertion in every loop, every "γ" backed by a *closed* bracket rather than an upper bound,

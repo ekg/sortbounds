@@ -250,7 +250,18 @@ def sweep(strings, label, quick=False):
                       "LP*_1 = %s != sigma = %d on %r (the k=1 gap is not 1)"
                       % (lpk.value, sigma, txt))
         if ti.n <= (8 if quick else 10):
+            c1 = ti.cover("factors_le_k", 1)
+            check(Fraction(c1.exact_min_cover()[0]) / c1.lp().value == 1,
+                  "the single-symbol universe of %r is not integral" % (txt,))
             cle = ti.cover("factors_le_k", 2)
+            # measured: the {1,2} universe is exactly integral on ALL 8188 BINARY texts
+            # n <= 12 -- but not on ternary ones (010212 has gap 4/3 there), so the
+            # binary-only scope is part of the claim
+            if len(set(ti.sym)) == 2:
+                gle = Fraction(cle.exact_min_cover()[0]) / cle.lp().value
+                check(gle == 1,
+                      "the {1,2} universe of the binary text %r is not integral (gap %s)"
+                      % (txt, gle))
             check(cle.lp().value <= lp.value,
                   "LP*_{<=2} = %s > LP*_full = %s on %r"
                   % (cle.lp().value, lp.value, txt))

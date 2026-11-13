@@ -444,10 +444,10 @@ def main(argv=None):
 
     if args.growth:
         lines.append(growth_table(corpus_binary(args.growth, 1), args, "binary",
-                                  args.growth))
+                                  args.growth, sink=everything))
     if args.growth_ternary:
         lines.append(growth_table(corpus_ternary(args.growth_ternary, 1), args, "ternary",
-                                  args.growth_ternary))
+                                  args.growth_ternary, sink=everything))
 
     if args.hunt:
         for n in [int(t) for t in args.hunt.split(",") if t.strip()]:
@@ -488,7 +488,7 @@ def main(argv=None):
     return 0
 
 
-def growth_table(items, args, alphabet, max_n):
+def growth_table(items, args, alphabet, max_n, sink=None):
     """Per length: max gap, the text attaining it, and how many texts exceed 1.
 
     This is the shape of the answer to "O(1) or Theta(log n)": a bounded maximum at every
@@ -506,6 +506,8 @@ def growth_table(items, args, alphabet, max_n):
         rec["label"] = label
         rec["corpus"] = "%s growth" % alphabet
         by_n.setdefault(rec["n"], []).append(rec)
+        if sink is not None:
+            sink.append(rec)
         if (i + 1) % args.progress == 0:
             print("     growth %s: %d/%d, %.1fs" % (alphabet, i + 1, len(items),
                                                     time.monotonic() - t0),

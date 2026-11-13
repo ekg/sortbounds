@@ -113,29 +113,6 @@ class Cover:
                 raise ValueError("position %r outside 0..%d" % (p, self.n - 1))
         return all(any(p in pts for p in row) for row in self.rows)
 
-    def uncovered(self, gamma):
-        """The labels of the elements no position of gamma covers."""
-        pts = set(gamma)
-        return [self.labels[e] for e, row in enumerate(self.rows)
-                if not any(p in pts for p in row)]
-
-    def minimal_rows(self):
-        """Drop rows that contain another row: their constraint is implied.
-
-        Returns a list of (label, row) with pairwise distinct inclusion-minimal rows.
-        Valid for the set-cover problem (any hit set for the subset is a hit set for
-        the superset) and for the covering LP (same implication, coefficient 1), so it
-        is only ever used to make the exact search and the tableau smaller; the answer
-        is re-checked against `self.rows`.
-        """
-        uniq = sorted({row for row in self.rows}, key=lambda r: (len(r), r))
-        keep = []
-        for row in uniq:
-            rs = set(row)
-            if not any(set(k) <= rs for k in keep):
-                keep.append(row)
-        return keep
-
     # -- exact integer optimum ---------------------------------------------
 
     def exact_min_cover(self, node_cap=4000000):

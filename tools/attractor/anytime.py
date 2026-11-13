@@ -38,6 +38,7 @@ amount of work, so the deadline is respected to within one round).
 """
 
 import argparse
+import heapq
 import json
 import random
 import sys
@@ -88,14 +89,23 @@ def _covered(inst, gamma):
 def greedy(inst, deadline=None, rng=None, top=1):
     """Max-coverage greedy over the node universe.  Deterministic when top == 1.
 
-    Each round scores every position by how many still-uncovered nodes it covers
-    and adds the best one (with top > 1, a uniformly random one among the `top`
-    best -- the GRASP restart used by search).  Raises if a round cannot strictly
-    decrease the number of uncovered nodes, so it cannot spin.
+    Lazy (CELF) evaluation: gains only shrink as the cover grows, so a cached
+    gain is an upper bound; the heap is popped and the top entry recomputed until
+    the best entry is current.  That picks exactly the position an exhaustive
+    scan would pick (check.py compares the two) while doing far fewer popcounts,
+    which matters because a round over all n positions is what a user waits for
+    before the first upper bound appears.
+
+    With top > 1 a uniformly random one of the `top` best positions is taken --
+    the GRASP restart used by search.  Raises if a round cannot strictly decrease
+    the number of uncovered nodes, so it cannot spin.
     """
     full = inst.full_mask
+    cm = inst.cover_masks
     covered = 0
     gamma = []
+    heap = [(-_popcount(cm[p]), 0, p) for p in range(inst.n)]
+    heapq.heapify(heap)
     rounds = 0
     while covered != full:
         rounds += 1
@@ -103,23 +113,22 @@ def greedy(inst, deadline=None, rng=None, top=1):
             raise RuntimeError("greedy did not terminate in n+1 rounds")
         if _past(deadline):
             raise _Stop()
-        best_gain = 0
-        cand = []
-        cm = inst.cover_masks
-        for p in range(inst.n):
-            g = _popcount(cm[p] & ~covered)
-            if g > best_gain:
-                best_gain = g
-                cand = [p]
-            elif g == best_gain and g > 0:
-                cand.append(p)
-        if best_gain == 0:
-            raise RuntimeError("greedy stalled with %d uncovered nodes"
-                               % _popcount(full & ~covered))
-        if top <= 1 or len(cand) == 1:
-            p = cand[0]
-        else:
-            p = rng.choice(cand[:top])
+        picks = []
+        while len(picks) < top:
+            if not heap:
+                raise RuntimeError("greedy stalled with %d uncovered nodes"
+                                   % _popcount(full & ~covered))
+            neg, stamp, p = heapq.heappop(heap)
+            if stamp == rounds:              # cached gain is current: this is a max
+                picks.append((p, -neg))
+                continue
+            gain = _popcount(cm[p] & ~covered)
+            if gain == 0:                    # p has become useless; drop it
+                continue
+            heapq.heappush(heap, (-gain, rounds, p))
+        for p, gain in picks:                # keep them available for later rounds
+            heapq.heappush(heap, (-gain, rounds, p))
+        p = picks[0][0] if len(picks) == 1 else rng.choice(picks)[0]
         gamma.append(p)
         covered |= cm[p]
     return gamma
@@ -172,41 +181,63 @@ def local_search(inst, gamma, deadline=None, rng=None, max_rounds=1000):
 
 
 def _two_to_one(inst, gamma, full, cm):
-    """Replace two positions by one if the cover survives; then prune."""
+    """Replace two positions by one if the cover survives; then prune.
+
+    For sorted gamma = g_0..g_{m-1} the cover of gamma minus a pair is
+    prefix[i] | middle(i,j) | suffix[j+1], so one pass per i over the pair's
+    second index keeps the whole scan at O(m) mask unions per i.
+    """
     g = sorted(gamma)
-    for i in range(len(g)):
-        for j in range(i + 1, len(g)):
-            rest = [q for q in g if q != g[i] and q != g[j]]
-            need = full & ~_covered(inst, rest)
-            if need == 0:
-                return prune(inst, rest)
-            for p in range(inst.n):
-                if cm[p] & need == need:
-                    return prune(inst, rest + [p])
+    m = len(g)
+    prefix = [0] * (m + 1)
+    for i in range(m):
+        prefix[i + 1] = prefix[i] | cm[g[i]]
+    suffix = [0] * (m + 1)
+    for i in range(m - 1, -1, -1):
+        suffix[i] = suffix[i + 1] | cm[g[i]]
+    for i in range(m):
+        if prefix[i] == full:                      # g[i] and everything after it
+            return prune(inst, g[:i])              # are redundant
+        mid = 0
+        for j in range(i + 1, m):
+            rest_cov = prefix[i] | mid | suffix[j + 1]
+            need = full & ~rest_cov
+            got = inst.position_covering(need)      # -1 means need is already empty
+            if got == -1:
+                return prune(inst, [q for q in g if q != g[i] and q != g[j]])
+            if got is not None:
+                rest = [q for q in g if q != g[i] and q != g[j]]
+                return prune(inst, rest + [got])
+            mid |= cm[g[j]]
     return None
 
 
 def _swap_then_prune(inst, gamma, full, cm, deadline, rng):
     """1->1 swap that unlocks a prune.  Returns the pruned attractor or None."""
     g = sorted(gamma)
-    order = list(g)
+    m = len(g)
+    prefix = [0] * (m + 1)
+    for i in range(m):
+        prefix[i + 1] = prefix[i] | cm[g[i]]
+    suffix = [0] * (m + 1)
+    for i in range(m - 1, -1, -1):
+        suffix[i] = suffix[i + 1] | cm[g[i]]
+    order = list(range(m))
     if rng is not None:
         rng.shuffle(order)
-    for a in order:
+    for i in order:
         if _past(deadline):
             return None
-        rest = [q for q in g if q != a]
-        rest_cov = _covered(inst, rest)
-        need = full & ~rest_cov
-        if need == 0:
+        rest = g[:i] + g[i + 1:]
+        need = full & ~(prefix[i] | suffix[i + 1])
+        got = inst.position_covering(need)          # -1 means need is already empty
+        if got == -1:
             return prune(inst, rest)
-        for p in range(inst.n):
-            if p in g:
-                continue
-            if cm[p] & need == need:
-                cand = prune(inst, rest + [p])
-                if len(cand) < len(g):
-                    return cand
+        if got is None or got in g:
+            continue
+        cand = prune(inst, rest + [got])
+        if len(cand) < m:
+            return cand
     return None
 
 
@@ -215,7 +246,8 @@ def _swap_then_prune(inst, gamma, full, cm, deadline, rng):
 # --------------------------------------------------------------------------
 
 
-def decision(inst, k, deadline=None, node_cap=200000, coverers=None):
+def decision(inst, k, deadline=None, node_cap=200000, coverers=None,
+             packing_mask=0):
     """Is there an attractor of size <= k?  Bounded DFS over the node universe.
 
     Returns (solution_or_None, status) with status in
@@ -228,13 +260,17 @@ def decision(inst, k, deadline=None, node_cap=200000, coverers=None):
     element covers all solutions.  Two positions with the same effect on the
     uncovered set are tried once, and a failed (uncovered-set, slots) state is
     memoized, so the DFS tree is smaller than the naive one but still complete.
+
+    `packing_mask` (bits of a certified packing family) is a free lower bound at
+    every node: each still-uncovered member of a pairwise C-disjoint family needs
+    a position of its own, so slots must be at least as large as their number.
     """
     full = inst.full_mask
     if full == 0:
         return [], "found"
     cm = inst.cover_masks
     if coverers is None:
-        coverers = _coverers(inst)
+        coverers = inst.coverers()
     # elements ordered by how many positions could cover them: branching on the
     # earliest such element that is still uncovered keeps the fan-out small.
     order = sorted(range(len(inst.nodes)), key=lambda v: len(coverers[v]))
@@ -258,6 +294,8 @@ def decision(inst, k, deadline=None, node_cap=200000, coverers=None):
         size = _popcount(uncovered)
         if size > slots * max_gain:
             return False
+        if _popcount(packing_mask & uncovered) > slots:
+            return False
         key = (uncovered, slots)
         if key in memo:
             return False
@@ -267,12 +305,20 @@ def decision(inst, k, deadline=None, node_cap=200000, coverers=None):
                 branch_elem = v
                 break
         assert branch_elem >= 0
-        tried = {}
+        # Try the position that covers most of what is left first: the DFS then
+        # reaches a full cover almost greedily, which is what makes it useful for
+        # improving the upper bound, while the ordering cannot affect the
+        # completeness of an infeasibility proof.
+        cand = []
+        seen = set()
         for p in coverers[branch_elem]:
             piece = cm[p] & uncovered
-            if piece in tried:
+            if piece in seen:
                 continue
-            tried[piece] = p
+            seen.add(piece)
+            cand.append((_popcount(piece), p))
+        cand.sort(reverse=True)
+        for _gain, p in cand:
             chosen.append(p)
             if rec(uncovered & ~cm[p], slots - 1):
                 return True
@@ -287,18 +333,6 @@ def decision(inst, k, deadline=None, node_cap=200000, coverers=None):
     if ok:
         return list(chosen), "found"
     return None, "infeasible"
-
-
-def _coverers(inst):
-    """coverers[v] = positions p whose cover contains node v (transpose of cover_masks)."""
-    coverers = [[] for _ in inst.nodes]
-    for p, mask in enumerate(inst.cover_masks):
-        u = mask
-        while u:
-            b = u & -u
-            coverers[b.bit_length() - 1].append(p)
-            u ^= b
-    return coverers
 
 
 def exact_gamma(inst, deadline=None, node_cap=200000, lb=1):
@@ -328,7 +362,7 @@ def exact_gamma(inst, deadline=None, node_cap=200000, lb=1):
 # --------------------------------------------------------------------------
 
 
-def search(inst, budget_s=60.0, seed=0, node_cap=200000, verbose=False):
+def search(inst, budget_s=60.0, seed=0, node_cap=200000):
     """Yield dicts {"t", "gamma", "ub", "lb", ...} on every improvement and at the end.
 
     Monotone: ub strictly decreases at every yield, and the final record repeats
@@ -338,7 +372,6 @@ def search(inst, budget_s=60.0, seed=0, node_cap=200000, verbose=False):
     deadline = _deadline(budget_s)
     rng = random.Random(seed)
     n = inst.n
-    log = [] if verbose else None
 
     delta = inst.delta()
     delta_int = int(ceil(delta))
@@ -349,11 +382,12 @@ def search(inst, budget_s=60.0, seed=0, node_cap=200000, verbose=False):
     if not ok_pack:
         raise AssertionError("packing certificate failed to re-check")
     lb = max(delta_int, pack_k)
-    lb_why = []
-    if delta_int >= lb:
-        lb_why.append("delta")
-    if pack_k >= lb:
-        lb_why.append("packing")
+    if delta_int > pack_k:
+        lb_source = "delta"
+    elif pack_k > delta_int:
+        lb_source = "packing"
+    else:
+        lb_source = "delta+packing"
 
     state = {"t": round(time.monotonic() - t0, 3), "gamma": [], "ub": n,
              "lb": lb, "phase": "start", "delta": str(delta),
@@ -365,6 +399,10 @@ def search(inst, budget_s=60.0, seed=0, node_cap=200000, verbose=False):
         return
 
     best = [None]                       # boxed so consider() can rebind it
+
+    def converged():
+        """True once the bracket is closed: no attractor can beat len(best)."""
+        return best[0] is not None and lb >= len(best[0])
 
     def consider(cand, phase):
         """Verify cand; return an improvement record, or None if it is not smaller."""
@@ -391,39 +429,49 @@ def search(inst, budget_s=60.0, seed=0, node_cap=200000, verbose=False):
         yield rec
 
     # 3 local search ---------------------------------------------------------
-    if not _past(deadline):
+    if not converged() and not _past(deadline):
         rec = consider(local_search(inst, best[0], deadline=deadline, rng=rng),
                        "local-search")
         if rec is not None:
             yield rec
 
-    # 5 GRASP restarts (before the exact tail: cheap upper-bound work first)
+    # 5 GRASP restarts (before the exact tail: cheaper upper-bound work first).
+    # They get at most half of the remaining budget, so a hopeless instance
+    # cannot starve the exact tail.
     restart = 0
-    while not _past(deadline) and restart < 64:
+    idle = 0                             # restarts since the last improvement
+    restart_deadline = deadline
+    if deadline is not None:
+        restart_deadline = time.monotonic() + 0.5 * (deadline - time.monotonic())
+    while not converged() and not _past(restart_deadline) and idle < 64:
         restart += 1
+        idle += 1
         try:
-            g = greedy(inst, deadline=deadline, rng=rng, top=3)
+            g = greedy(inst, deadline=restart_deadline, rng=rng, top=3)
         except _Stop:
             break
         cand = prune(inst, g)
         try:
-            cand = local_search(inst, cand, deadline=deadline, rng=rng)
+            cand = local_search(inst, cand, deadline=restart_deadline, rng=rng)
         except _Stop:
             pass
         rec = consider(cand, "restart-%d" % restart)
         if rec is not None:
             yield rec
-            restart = 0
+            idle = 0
 
     # 4 exact tail -----------------------------------------------------------
-    if not _past(deadline):
-        coverers = _coverers(inst)
+    if not converged() and not _past(deadline):
+        coverers = inst.coverers()
+        packing_mask = 0
+        for v, _f, _s in pack_w:
+            packing_mask |= 1 << v
         k = max(lb, 1)
         while k < len(best[0]):
             if _past(deadline):
                 break
             sol, status = decision(inst, k, deadline=deadline, node_cap=node_cap,
-                                   coverers=coverers)
+                                   coverers=coverers, packing_mask=packing_mask)
             if status == "found":
                 rec = consider(sol, "exact")
                 if rec is not None:
@@ -431,8 +479,7 @@ def search(inst, budget_s=60.0, seed=0, node_cap=200000, verbose=False):
                 break
             if status == "infeasible":
                 lb = k + 1                    # certified: no attractor of size <= k
-                if "exact" not in lb_why:
-                    lb_why.append("exact")
+                lb_source = "exact tail"
                 k = lb
                 if k > len(best[0]):
                     raise RuntimeError("exact tail proved lb > ub")
@@ -444,11 +491,9 @@ def search(inst, budget_s=60.0, seed=0, node_cap=200000, verbose=False):
                   "gamma": list(best[0]) if best[0] is not None else [],
                   "ub": len(best[0]) if best[0] is not None else n,
                   "lb": lb, "phase": "done", "done": True,
-                  "lb_sources": lb_why, "restarts": restart,
+                  "lb_source": lb_source, "restarts": restart,
                   "certified_exact": best[0] is not None and len(best[0]) == lb,
                   "elapsed": round(time.monotonic() - t0, 3)})
-    if log is not None:
-        final["log"] = log
     yield final
 
 
@@ -492,8 +537,8 @@ def main(argv=None):
                        node_cap=args.node_cap):
         rows.append(step)
         if not args.json:
-            print("%7.3fs  ub=%s  lb=%s  phase=%-10s gamma=%s"
-                  % (step["t"], step["ub"], step["lb"], step["phase"],
+            print("%7.3fs  bracket=[%d, %d]  phase=%-11s gamma=%s"
+                  % (step["t"], step["lb"], step["ub"], step["phase"],
                      step["gamma"] if len(step["gamma"]) <= 40 else "<%d positions>"
                      % len(step["gamma"])))
     if args.json:
@@ -503,9 +548,17 @@ def main(argv=None):
     last = rows[-1]
     print("input       : %s" % label)
     print("n           : %d" % inst.n)
-    print("delta       : %s" % last.get("delta"))
-    print("packing     : %d  (certified lower bound: %d pairwise disjoint factors)"
-          % (last.get("packing", 0), last.get("packing", 0)))
+    print("delta       : %s  (KNP: delta <= gamma)" % last.get("delta"))
+    pack_k, pack_w = inst.packing_bound(seed=args.seed)
+    ok_pack, detail = inst.certify_packing(pack_w)
+    shown = [str(f) for _v, _f, f in pack_w[:12]]
+    print("packing     : %d  (gamma >= %d: %d factors, pairwise disjoint crossing-position"
+          " sets)" % (pack_k, pack_k, pack_k))
+    print("witnesses   : %s%s"
+          % (" ".join(shown) if shown else "none",
+             "" if len(pack_w) <= 12 else " ... and %d more" % (len(pack_w) - 12)))
+    print("              re-checked from the text: %s"
+          % ("OK" if ok_pack else "FAILED: %s" % (detail,)))
     print("bracket     : %d <= gamma <= %d%s"
           % (last["lb"], last["ub"],
              "   ==> gamma = %d exactly" % last["ub"] if last["lb"] >= last["ub"] else ""))

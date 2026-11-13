@@ -42,7 +42,9 @@ attractor-specific code here is independent of repmeter's greedy bookkeeping.
 """
 
 import os
+import random
 import sys
+import time
 from bisect import bisect_left
 from fractions import Fraction
 
@@ -280,6 +282,52 @@ class Instance:
             mask |= self.cover_masks[p]
         return mask
 
+    def coverers(self):
+        """coverers[v] = the positions p whose cover contains node v (cached)."""
+        cached = getattr(self, "_coverers_cache", None)
+        if cached is not None:
+            return cached
+        coverers = [[] for _ in self.nodes]
+        for p, mask in enumerate(self.cover_masks):
+            u = mask
+            while u:
+                b = u & -u
+                coverers[b.bit_length() - 1].append(p)
+                u ^= b
+        self._coverers_cache = coverers
+        return coverers
+
+    def rarest_element(self, need):
+        """Of the nodes in `need`, the one with the fewest covering positions."""
+        coverers = self.coverers()
+        best, best_n = -1, None
+        u = need
+        while u:
+            b = u & -u
+            v = b.bit_length() - 1
+            u ^= b
+            cnt = len(coverers[v])
+            if best_n is None or cnt < best_n:
+                best, best_n = v, cnt
+                if cnt <= 1:
+                    break
+        return best
+
+    def position_covering(self, need):
+        """A single position whose cover contains every node in `need`, or None.
+
+        Only positions covering the rarest node of `need` can qualify, which is
+        what keeps the local search's inner loop short.
+        """
+        if need == 0:
+            return -1
+        e = self.rarest_element(need)
+        cm = self.cover_masks
+        for p in self.coverers()[e]:
+            if cm[p] & need == need:
+                return p
+        return None
+
     def uncovered_nodes(self, gamma):
         """Number of nodes (not factors) not covered by gamma."""
         return bin(self.full_mask & ~self.covered_nodes(gamma)).count("1")
@@ -303,7 +351,8 @@ class Instance:
         covered occurrence of the shortest one covers all longer factors there.
         The shortest factor of each node is therefore the only length that has to
         be tested, and check.py cross-checks that claim against a brute-force
-        enumeration of all windows for every binary text of length <= 12.
+        enumeration of every window: all position sets of every binary text of
+        length <= 8, and random position sets of longer texts.
         """
         n = self.n
         pts = sorted(set(gamma))
@@ -349,7 +398,6 @@ class Instance:
         `certify_packing`.  Returns (k, witnesses) with witnesses a list of
         (node_index, factor as list of ints, factor as str).
         """
-        import random
         nodes = self.nodes
         m = len(nodes)
         if m == 0:
@@ -359,7 +407,7 @@ class Instance:
         best = []
         rng = random.Random(seed)
         for it in range(restarts):
-            if deadline is not None and it and _past(deadline):
+            if deadline is not None and it and time.monotonic() > deadline:
                 break
             if it == 0:
                 order = order_base
@@ -381,8 +429,8 @@ class Instance:
             if len(chosen) > len(best):
                 best = chosen
         best.sort()
-        return len(best), [(v, self.node_factor(v), factor_str(self.sym, self.node_factor(v)))
-                           for v in best]
+        return len(best), [(v, self.node_factor(v),
+                            factor_str(self.sym, self.node_factor(v))) for v in best]
 
     def certify_packing(self, witnesses):
         """Re-check a packing from the text alone; returns (ok, detail).
@@ -396,14 +444,17 @@ class Instance:
         n = self.n
         sets = []
         for w in witnesses:
-            factor = w[1] if isinstance(w, (tuple, list)) else w
+            if not (isinstance(w, (tuple, list)) and len(w) == 3):
+                raise TypeError("a packing witness is the (node, factor, text) triple "
+                                "returned by packing_bound, not %r" % (w,))
+            factor = list(w[1])
             length = len(factor)
             if length == 0:
                 return False, "empty factor"
             hits = set()
             found = False
             for i in range(0, n - length + 1):
-                if self.sym[i:i + length] == list(factor):
+                if self.sym[i:i + length] == factor:
                     found = True
                     hits.update(range(i, i + length))
             if not found:
@@ -422,7 +473,14 @@ class Instance:
 
 
 def factor_str(sym, factor):
-    """Render a factor as text when it is printable, else as byte values."""
+    """Render a factor as text when it is printable, else as byte values.
+
+    Texts built from raw symbols 0..9 (repmeter's fibonacci/thue-morse/random-binary
+    generators) are rendered as digits, which is what makes a binary witness
+    readable as e.g. 0110.
+    """
+    if factor and all(0 <= c <= 9 for c in factor):
+        return "".join(str(c) for c in factor)
     bs = bytes(c for c in factor if 0 <= c < 256)
     if len(bs) != len(factor):
         return str(list(factor))
@@ -433,6 +491,3 @@ def factor_str(sym, factor):
     return s if s.isprintable() else str(list(factor))
 
 
-def _past(deadline):
-    import time
-    return time.monotonic() > deadline

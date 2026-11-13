@@ -210,8 +210,8 @@ def family_cases():
     for k in range(7, 21):
         cases.append(("Fibonacci (Sturmian)", "F_%d" % k, {"kind": "fibonacci", "k": k}))
 
-    # 4. Thue-Morse t_k, lengths 4 .. 4096.
-    for k in range(2, 13):
+    # 4. Thue-Morse t_k, lengths 4 .. 8192.
+    for k in range(2, 14):
         cases.append(("Thue-Morse", "t_%d" % k, {"kind": "thue-morse", "k": k}))
 
     # 5. Balanced periodic words of rational slope p/q (NOT Sturmian: periodic).
@@ -220,8 +220,9 @@ def family_cases():
             cases.append(("balanced periodic p/q", "%d/%d n=%d" % (p, q, n),
                           {"kind": "mechanical", "n": n, "p": p, "q": q}))
 
-    # 6. de Bruijn sequences: every length-k word exactly once.
-    for k in range(2, 8):
+    # 6. de Bruijn sequences: every length-k word exactly once.  k = 8 (n = 256) is the
+    # last order whose bracket the search leaves open, which is itself a data point.
+    for k in range(2, 9):
         cases.append(("de Bruijn sigma=2", "k=%d n=%d" % (k, 1 << k),
                       {"kind": "debruijn", "k": k}))
     cases.append(("de Bruijn sigma=3", "k=2 n=9", {"kind": "debruijn", "k": 2, "sigma": 3}))

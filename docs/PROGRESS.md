@@ -261,6 +261,12 @@ quoting the sentence that fixes each alphabet. Then a synthesis claim-register a
 adversarial review whose mandate is: *does anything actually answer the question, or is it a
 gadget sketch dressed as a theorem?*
 
+**Correction to my own reading of the `k = 2` data:** I said "the whole difficulty is
+concentrated in factors of length 2". The LP gap at `k = 2` is indeed already `4/3`, but
+`γ − γ₂` reaches **3** by `n = 17` (`docs/research/sigma2-algorithm.md`: `bbbaabaabbababaaa`,
+`γ = 5`, `γ₂ = 2`, sampled), so `γ` itself does separate from the 2-attractor — the
+localisation is only about the *LP*, not about `γ`.
+
 **Lane B growth data** (exact rational LP, all binary strings, exhaustive):
 
 | n | 1–6 | 7 | 8–11 | 12 |

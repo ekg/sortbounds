@@ -48,8 +48,9 @@ Three independent cross-checks (`check.py validate`, all passing):
    builds the distinct-factor universe directly from the string and solves min set cover by iterative
    deepening; it agrees with `anytime` on all 1023 words with `n ≤ 10`.
 2. **`γ` is complement-invariant** on all `2^n` words, `n ≤ 12` (8190 words) — used only as a check,
-   and to halve the enumeration (each `n` row counts `2^(n−1)` representatives; the printed `n`
-   column of `gap` shows the true number of words covered).
+   and to halve the enumeration: `check.py` iterates the `2^(n−1)` words starting with `a`, so the
+   `words` column of Table 2 is the number of *representatives* while the exhaustive claim covers
+   all `2^n` words (the complement of each representative, which has the same `γ`).
 3. **Literature anchors reproduce**: `γ(Fibonacci_m) = 2` for `|F| ∈ {8,13,21,34,55,89,100}`
    (MRRRS19 / BBGKM26), `γ(t_n) = 4` for Thue–Morse of length 16, 32 (KTMSIT20).
 
@@ -71,7 +72,7 @@ Two facts measured in passing, both COMPUTATIONALLY-CHECKED and both new to me:
 Rows `n ≤ 13` are **exhaustive over all `2^n` binary words**; rows `14 ≤ n ≤ 17` are **2000 uniform
 random words each** (marked SAMPLED). No word was excluded for an unclosed bracket (`incomplete = 0`).
 
-| n | words | max(γ−⌈δ⌉) | max(γ−γ₂) | #{γ>⌈δ⌉} | argmax γ−⌈δ⌉ | argmax γ−γ₂ |
+| n | words (rep.) | max(γ−⌈δ⌉) | max(γ−γ₂) | #{γ>⌈δ⌉} | argmax γ−⌈δ⌉ | argmax γ−γ₂ |
 |---|---|---|---|---|---|---|
 | 2 | 2 | 0 | 0 | 0/2 | `ab` | `ab` |
 | 3 | 4 | 0 | 0 | 0/4 | | |
@@ -254,8 +255,8 @@ is consistent with the `γ_2 < γ` phenomena of §2, but the tail is what matter
 **Second, sharper negative inside this route**: the bound `k* ≤ minlen_max` (the longest
 "shortest factor" over suffix-tree nodes — once `k` reaches it every node's own representative is
 covered) is the only *a priori* bound I have, and `minlen_max` is `Θ(n)` on the witnesses above
-(`minlen_max = 5` for the `n=12` witness, `7` for `abababab`), so even the structural bound is not
-small.
+(`minlen_max = 6` for the `n=12` witness `aaaaabaaaabb`, `7` for `abababab`), so even the structural
+bound is not small.
 
 ---
 

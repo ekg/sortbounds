@@ -242,6 +242,18 @@ success here, which is why the note is required to state falsifiable conjectures
 Whether a *guaranteed* small-attractor algorithm exists reduces to three questions, each now
 a swarmed lane with its own independent review:
 
+### Answers (2026-11-13)
+
+| lane | verdict |
+| --- | --- |
+| **A** | **OPEN, and now constrained.** No source proves `σ = 2` hardness and none gives an algorithm; three explicit binary reductions are **refuted** (an inversion `τ=1 → γ=5` vs `τ=2 → γ=3` at the same `n`, `|T|`), and a **proved necessary condition** survives: any threshold candidate must have `γ(T_G)` depend only on the *isomorphism class* of `G`. Neighbour note: SGP is NP-complete for fixed alphabets `σ ≥ 17` (Casel et al. 2021) and *open at `σ = 2`* — with one **UNVERIFIED** 2026 preprint (arXiv:2610.32298v2, Thm 1.4) claiming binary SGP hardness; `γ ≤ g` does **not** transfer that to `γ`. |
+| **B** | **The LP gap is small, not `log n`**: max `γ/LP* = 15/11` at `n = 13`, exhaustive to `n ≤ 16`, 89–92 % of instances exactly integral, Fibonacci integral at every length to 987. No log-growth family found. But a small gap is **not** an algorithm: a constructive rounding rule is missing. |
+| **C** | **`γ = ⌈δ⌉` is family-specific, not general.** Proved for Thue–Morse `n ≥ 6` (and fails at `n = 4,5`, and at TM prefixes 25–59); `γ = δ` proved for unary/Sturmian/Fibonacci only because `δ = d₁ = σ`. Measured over 117 texts in 13 families: `γ = ⌈δ⌉` on 69 rows, `>` on 32, 16 undecided — with `γ` printed **only** where the certified bracket is closed. `γ` is not a function of the `d`-profile (41/123 classes split). |
+
+The three questions converge on one conclusion: **no cheap structural route to `γ` survives**; the
+two live research directions are a real `σ = 2` reduction (with the isomorphism-class filter as a
+screening test) and an `O(1)`-gap LP rounding rule.
+
 | lane | question | why it decides something |
 | --- | --- | --- |
 | **A** (2 researchers) | Is minimum-attractor NP-hard on a **binary** alphabet? | every published reduction uses a *growing* alphabet; `σ = 2` is where corpora live. If binary is not hard, exact-on-binary is not fantasy; if it is, say which gadgets make it so |

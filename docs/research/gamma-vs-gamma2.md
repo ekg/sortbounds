@@ -69,6 +69,20 @@ direction**: "compute `γ₂` (polynomial at `σ = 2`) and you are within a cons
 the most promising structural route in `sigma2-algorithm.md`; the theorem refutes it outright,
 and it explains *why* the `k*`-growth (`k*(s) ≈ n/2`) that lane measured is not an artefact.
 
+## Corollary: every fixed `k` fails, not just `k = 2`
+
+The proof above never used `k = 2` in step 4 except through `γ₂ ≤ d₂`.  For **any** fixed `k`,
+`γ_k(B_m) ≤ d_k(B_m) = 2^k` whenever `k ≤ m` (choose one position inside an occurrence of each
+distinct `k`-gram; that set covers every factor of length `≤ k`, since such a factor is contained
+in an occurring `k`-gram).  So for `m ≥ k`:
+
+> **`γ(B_m) / γ_k(B_m) ≥ 2^m / (m · 2^k) → ∞` as `m → ∞`, for every fixed `k`.**
+
+**No fixed-length attractor approximates `γ` within any factor.**  The `k`-attractor hierarchy is
+unbounded at every level, so no bounded-length relaxation can be the basis of an approximation
+algorithm — which is exactly why the only hardness question that matters is the full-length one
+(`k = n`, i.e. `σ = 2` hardness in `hardness-attractor.md`).
+
 ## Machine-checked in this repository
 
 The inequality is a theorem in Lean 4, not only prose (`SortBounds/Projects/DeBruijn/`):

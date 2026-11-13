@@ -1,0 +1,11 @@
+[   3.4s] n=20 seed=0 evaluated=123   3.4s rows=1  NEW BEST
+[   4.7s] n=28 seed=0 evaluated=123   4.7s rows=1  NEW BEST
+[   5.4s] n=32 seed=0 evaluated=123   5.3s rows=1  NEW BEST
+[   8.5s] n=40 seed=0 evaluated=123   5.1s rows=1  NEW BEST
+[  11.9s] n=48 seed=0 evaluated=123   7.2s rows=1  NEW BEST
+[  14.6s] n=64 seed=0 evaluated=123   9.2s rows=1  NEW BEST
+[  24.2s] n=80 seed=0 evaluated=123  15.7s rows=1  NEW BEST
+[  39.9s] n=96 seed=0 evaluated=123  27.9s rows=1  NEW BEST
+[  60.9s] n=128 seed=0 evaluated=123  46.4s rows=1  NEW BEST
+[ 197.3s] n=160 seed=0 evaluated=123 173.1s rows=1  NEW BEST
+[ 300.1s] n=192 seed=0 evaluated=123 260.2s rows=1  NEW BEST

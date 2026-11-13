@@ -1,0 +1,37 @@
+[   2.4s] n=20 seed=0 evaluated=23   2.4s rows=2  NEW BEST
+[   2.9s] n=24 seed=0 evaluated=23   2.9s rows=2  NEW BEST
+[   4.4s] n=28 seed=0 evaluated=23   4.4s rows=2  NEW BEST
+[   6.0s] n=32 seed=0 evaluated=23   3.6s rows=2  NEW BEST
+[   8.0s] n=36 seed=0 evaluated=23   5.1s rows=2  NEW BEST
+[  10.9s] n=40 seed=0 evaluated=23   6.5s rows=2  NEW BEST
+[  12.6s] n=44 seed=0 evaluated=23   6.5s rows=2  NEW BEST
+[  15.0s] n=48 seed=0 evaluated=23   7.0s rows=2  NEW BEST
+[  18.3s] n=52 seed=0 evaluated=23   7.4s rows=2  NEW BEST
+[  22.3s] n=56 seed=0 evaluated=23   9.7s rows=2  NEW BEST
+[  24.6s] n=60 seed=0 evaluated=23   9.5s rows=2  NEW BEST
+[  28.4s] n=64 seed=0 evaluated=23  10.1s rows=2  NEW BEST
+[  40.1s] n=96 seed=0 evaluated=23  17.8s rows=2  NEW BEST
+[  53.8s] n=128 seed=0 evaluated=23  29.2s rows=2  NEW BEST
+[  69.3s] n=160 seed=0 evaluated=23  40.9s rows=2  NEW BEST
+[  92.4s] n=192 seed=0 evaluated=23  52.3s rows=2  NEW BEST
+[ 136.8s] n=256 seed=0 evaluated=23  83.0s rows=2  NEW BEST
+
+=== curve: max certified gap per length ===
+  n how    family         delta      ceil lb   ub   gap  text
+ 20 closed climb(runs-max 14/5       3    5    5    2    00000110110001111110
+ 24 closed climb(runs-max 3          3    5    5    2    111000011001101100000010
+ 28 closed climb(extend-s 3          3    6    6    3    1110010010101101100101100110
+ 32 closed climb(extend-s 3          3    6    6    3    11100001101100011000011001100100
+ 36 closed climb(extend-s 4          4    7    7    3    111010001011100110100110011100101111
+ 40 closed climb(separato 15/4       4    7    7    3    1111010011000110001110111010001100110010
+ 44 closed climb(square-s 33/7       5    8    8    3    01011100010001001110010010011000001000111010
+ 48 closed climb(extend-s 34/7       5    8    8    3    111000011011000110000110011001000000001101011111
+ 52 closed climb(runs-max 5          5    9    9    4    1111001010101001011100101110011101011100000001110111
+ 56 closed climb(runs-max 23/4       6    10   10   4    00011111100001000010110011111111010111111011000011000001
+ 60 closed climb(extend-s 5          5    9    9    4    000111011100011100011000010101000111110011101110111000111011
+ 64 closed climb(extend-s 5          5    9    9    4    0001110111000111000111100001010001101100111011001110001110110010
+ 96 closed climb(random)  8          8    13   13   5    0001010111001000111001000111010010010101111001000110011000110010111010
+128 closed climb(runs-max 10         10   17   17   7    1010001101100011011110100100110001110011000110111110011101101011000001
+160 closed climb(runs-max 129/10     13   20   20   7    0001010011000111000110011001110001110011111100111101001111110011101001
+192 closed climb(square-s 16         16   24   24   8    1100110110111010000110110101111111101111100010101000100010101010011010
+256 closed climb(runs-max 99/5       20   30   30   10   0100011000110001100110110011101011100011011100010011011000111000110100

@@ -1,0 +1,20 @@
+[  24.9s] n=20 seed=0 evaluated=40  24.9s rows=1
+[  25.7s] n=20 seed=1 evaluated=40  25.7s rows=1
+[  30.6s] n=24 seed=0 evaluated=39  30.6s rows=1  NEW BEST
+[  57.7s] n=24 seed=1 evaluated=39  32.8s rows=1
+[  64.0s] n=28 seed=0 evaluated=38  38.3s rows=1
+[  74.2s] n=28 seed=1 evaluated=38  43.6s rows=1
+[ 104.5s] n=32 seed=1 evaluated=37  40.5s rows=1
+[ 109.7s] n=32 seed=0 evaluated=37  52.0s rows=1
+[ 126.1s] n=40 seed=0 evaluated=35  51.9s rows=1  NEW BEST
+[ 149.8s] n=40 seed=1 evaluated=35  45.3s rows=1
+[ 171.7s] n=48 seed=0 evaluated=33  62.0s rows=1  NEW BEST
+[ 190.5s] n=48 seed=1 evaluated=33  64.4s rows=1
+[ 214.0s] n=56 seed=0 evaluated=31  64.2s rows=1  NEW BEST
+[ 231.1s] n=56 seed=1 evaluated=31  59.4s rows=1
+[ 251.5s] n=64 seed=0 evaluated=29  61.0s rows=1  NEW BEST
+[ 275.6s] n=64 seed=1 evaluated=29  61.6s rows=1
+[ 326.8s] n=80 seed=0 evaluated=28  95.7s rows=1  NEW BEST
+[ 342.5s] n=80 seed=1 evaluated=28  91.0s rows=1
+[ 450.6s] n=96 seed=0 evaluated=28 175.1s rows=1  NEW BEST
+[ 534.8s] n=96 seed=1 evaluated=28 208.0s rows=1

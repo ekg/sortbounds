@@ -303,6 +303,24 @@ Corollary `gamma_div_primal_le`: `γ/Σx ≤ γ/δ`.  So the LP gap **cannot exc
 Every closed bracket in `tools/attractor` rests on that packing lemma; it is now a theorem, not a
 Python routine.  `make trust`: 145 theorems.
 
+### `γ − δ` grows on binary: 4 at `n = 96` (2026-11-13)
+
+A binary witness with **`γ = 6`, `δ = 2`** (`n = 96`), verified independently at the definition
+level (attractor `{4,5,12,49,69,71}` plus six factors whose coverage sets are pairwise disjoint):
+
+```
+011011000011000000001100000000011000000011000000000110000000110000000110000000001100000000011000
+packing: 0000000001100000000, 000000001100000001100000000, 1000000001,
+         100000001100000001, 100001, 101
+```
+
+So `γ − ⌈δ⌉ = 4` on binary, improving the previous record of 3 (`Packing.s32_*`, kernel-checked at
+`n = 32`).  The search's curve at `δ = 2` is `2, 3, 3, 3, 4, 3, 4, 3` over `n = 20 … 192`
+(`tools/gammadelta/`, brackets closed in every row) — roughly `+1` per doubling, i.e. consistent
+with `Θ(log n)` and **not** with `γ − δ = O(1)` on binary.  This is a measurement, not a theorem;
+it is the evidence that open problem 2 of `RESULTS.md` (is `γ/δ` bounded on binary?) has a
+*negative* answer, which would put the LP gap back in play.
+
 ### Answers (2026-11-13)
 
 | lane | verdict |

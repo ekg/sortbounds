@@ -131,6 +131,12 @@ open SortBounds
 #print axioms SortBounds.Projects.SAIS.suffix_compare_eq_of_lcp
 #print axioms SortBounds.Projects.SAIS.cmpFrom_lcp_advance
 #print axioms SortBounds.Projects.SAIS.three_mul_naiveInspectSum
+#print axioms SortBounds.Projects.Repetitiveness.deltaQ_le_minAttractorSize
+#print axioms SortBounds.Projects.DeBruijn.card_distinctFactors_of_coversAllWords
+#print axioms SortBounds.Projects.DeBruijn.deltaQ_isDeBruijn
+#print axioms SortBounds.Projects.DeBruijn.gamma_ge_of_isDeBruijn
+#print axioms SortBounds.Projects.DeBruijn.isDeBruijn_two
+#print axioms SortBounds.Projects.DeBruijn.isDeBruijn_three
 #print axioms SortBounds.Projects.SAIS.verify_linear_time
 #print axioms SortBounds.Projects.SAIS.compare_lt_iff_saRank_lt
 #print axioms SortBounds.Projects.SAIS.lcp_suffix_eq_inf'_of_increasing

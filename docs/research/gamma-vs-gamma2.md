@@ -69,6 +69,32 @@ direction**: "compute `γ₂` (polynomial at `σ = 2`) and you are within a cons
 the most promising structural route in `sigma2-algorithm.md`; the theorem refutes it outright,
 and it explains *why* the `k*`-growth (`k*(s) ≈ n/2`) that lane measured is not an artefact.
 
+## Machine-checked in this repository
+
+The inequality is a theorem in Lean 4, not only prose (`SortBounds/Projects/DeBruijn/`):
+
+```lean
+theorem card_distinctFactors_of_coversAllWords {s : List Bool} {i : ℕ}
+    (h : CoversAllWords s i) : (distinctFactors s i).card = 2 ^ i
+
+theorem deltaQ_isDeBruijn {s : List Bool} {k : ℕ} (hk : 2 ≤ k) (h : IsDeBruijn s k) :
+    deltaQ s = (2 ^ k : ℚ) / k
+
+theorem gamma_ge_of_isDeBruijn {s : List Bool} {k : ℕ} (hk : 2 ≤ k) (h : IsDeBruijn s k) :
+    (2 ^ k : ℚ) / k ≤ (minAttractorSize s : ℚ)
+```
+
+with `IsDeBruijn s k` = "`|s| = 2^k + k − 1` and every binary `k`-gram occurs in `s`".  The
+hypothesis is not vacuous: `isDeBruijn_two` (`00110`) and `isDeBruijn_three` (`0001011100`) are
+discharged by `decide`, and `gamma_ge_of_isDeBruijn` instantiated at `k = 3` gives `8/3 ≤ γ`.
+All five theorems are in the axiom audit (`make trust`: 127 theorems, only
+`propext`/`Classical.choice`/`Quot.sound`).
+
+The step `δ ≤ γ` used above is `deltaQ_le_minAttractorSize`, proved in the same commit: the
+existing `deltaQ_le_card_attractor` bounded `δ` by the size of a *given* attractor; the theorem
+needs the bound against the *minimum*, which follows because some attractor attains
+`minAttractorSize`.
+
 ## What would be the next theorem of this shape
 
 * `γ / γ_k` unbounded for every fixed `k`: same proof, since `γ_k(B_k) ≤ d_k = 2^k`… this only

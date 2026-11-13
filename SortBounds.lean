@@ -18,6 +18,7 @@ import SortBounds.Projects.Repetitiveness.Count
 import SortBounds.Projects.Repetitiveness.Measures
 import SortBounds.Projects.Repetitiveness.Certify
 import SortBounds.Projects.Repetitiveness.Greedy
+import SortBounds.Projects.Algorithms.Measure
 import SortBounds.Instances.Radix
 import SortBounds.Instances.MergeSort
 import SortBounds.Instances.Network

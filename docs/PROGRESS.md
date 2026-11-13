@@ -22,6 +22,7 @@ other models"** — every open lane is about a model where the answer changes.
 | `Core` | bits per probe | `card_le_pow_of_prefixFree`, `logb_le_of_le_pow`, **`mean_cost_ge_logb`** (Kraft + Gibbs, any `b`) | **DONE** | frame complete |
 | `Comparison` | comparison sorts | `exists_input_cost_ge_quarter`, `avg_cost_ge_log2_factorial` | **DONE** | frozen |
 | `Instances` | where the bound breaks | `radixSort_keys_congr`, `msortCount_le`, `factorial_le_two_pow_length_of_sortsAll`, `sortsAll_of_sorts_zeroOne` | **DONE** | frozen |
+| `Algorithms` | executable measures, SA/BWT/`r` | `deltaCompute_eq`, `suffixArray_perm`/`_sorted`, `measure_spec` | **DONE** | SA-IS (fast SA), LZ/grammar measures |
 | `Repetitiveness` | string attractors; certification | `delta_le_gamma`, `checkAttractor_eq_true_iff`, `greedyAttractor_isAttractor`, `delta_le_greedyAttractor_card` | **DONE** (formalizes known facts; no literature-novel claim) | characterisation `γ = δ` refuted (KNP III.3) | `distinctFactors_card_le_mul_attractor` (KNP Lem. II.4), `substringComplexity_le_minAttractorSize` (`δ ≤ γ`), `…_le_slp` (`δ ≤ g`) | **M0/M1 DONE** | characterization `γ = δ` **refuted** (KNP Thm III.3: `δ ≤ 2`, `γ ≥ ½log n`) |
 | `BestCase` | best case | **`pred_le_cost`** (`n − 1` on every input), `exists_correct_cost_id_eq'` (attained) | **DONE** | — |
 | `FordJohnson` | exact comparison counts, upper bound | `fjCountJ_table` (`F(4..11) = 5,7,10,13,16,19,22,26`), `fjCountJ_eq_sum`, **`fjCountJ_attains`** (the count is *attained*) | **M2/M3/M4 DONE** | list→`Tree` transfer (lane `FjTree`) |

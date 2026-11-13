@@ -27,6 +27,10 @@ open SortBounds
 #print axioms SortBounds.Projects.Repetitiveness.checkAttractor_eq_true_iff
 #print axioms SortBounds.Projects.Repetitiveness.greedyAttractor_isAttractor
 #print axioms SortBounds.Projects.Repetitiveness.delta_le_greedyAttractor_card
+#print axioms SortBounds.Projects.Algorithms.deltaCompute_eq
+#print axioms SortBounds.Projects.Algorithms.suffixArray_perm
+#print axioms SortBounds.Projects.Algorithms.suffixArray_sorted
+#print axioms SortBounds.Projects.Algorithms.measure_spec
 #print axioms SortBounds.run_prune
 #print axioms SortBounds.factorial_le_two_pow_worstCase
 #print axioms SortBounds.exists_input_cost_ge

@@ -71,6 +71,39 @@ reports "not computed" instead of hanging. Last run:
 OK
 ```
 
+## `rindex.py` — an actual (run-length FM) index you can query
+
+`measure.py` measures. `rindex.py` **searches**: it builds the BWT of `T$` as runs, and
+answers count/locate by backward search over the run structure.
+
+```sh
+python3 tools/repmeter/rindex.py --selftest                     # 15275 queries vs brute force
+python3 tools/repmeter/rindex.py --text "mississippi" --m 3
+python3 tools/repmeter/rindex.py --gen fibonacci:20 --m 6 --queries 100
+```
+
+* `count`: `O(m log r)` — a binary search over run starts per rank query.
+* `locate`: `O(m log r + occ·s)` — LF-walk per occurrence down to a sampled SA row
+  (`s` = stride, default 32), **not** the r-index's move structure, so it is slower than
+  the real thing.
+* Self-test: on **all** binary strings of length ≤ 9 and all patterns of length ≤ 3,
+  `count` and `locate` agree with brute force (15275 queries, 0 mismatches).
+
+Measured space (words; `n` = text length):
+
+| input | `n` | `r` | index | vs `n` |
+| --- | --- | --- | --- | --- |
+| `mississippi` | 11 | 9 | 69 | 627 % (overhead dominates at tiny `n`) |
+| Fibonacci `F₂₁` | 17711 | **22** | 667 | **3.8 %** |
+| Thue–Morse `2¹⁶` | 65536 | **46** | 2282 | **3.5 %** |
+| random binary | 4096 | 2061 | 10437 | 255 % (worse than an FM-index) |
+
+Both directions are the honest result: on repetitive text the index is ~3.5 % of the text,
+on random text it is *larger* than the text, exactly as `r ≈ n/2` predicts. The random case
+is inflated by this implementation's prefix-count arrays (`O(r·σ)` words, i.e. `O(r)` per
+distinct symbol); a wavelet-tree or sampled-rank implementation is `O(r)` and would not
+blow up — so the 255 % is a defect of *this* code, not of the model.
+
 ## What this does not do
 
 * **No `γ` beyond `n ≤ 14`** — it is NP-hard (ESA'18: finding the smallest `k`-attractor is

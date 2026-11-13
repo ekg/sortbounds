@@ -267,4 +267,64 @@ theorem gamma_delta_add_two_false : ¬ ∀ s : List Bool,
   rw [s32_gamma, s32_delta] at h32
   norm_num at h32
 
+/-! ### The certified bracket, in general form
+
+Both lower bounds the toolchain can certify -- `δ` and a packing -- are `≤ LP*`, and `LP* ≤ γ`.
+So the bracket `[max(δ, packing), γ]` that `tools/attractor` reports is a *valid* bracket for the
+LP optimum as well: `max(δ, |F|) ≤ LP* ≤ γ`.  The right-hand inequality is `γ ≥ LP*` trivially
+(the LP relaxes the integer problem), so we state it as `Σx ≤ γ` for every feasible `x`.
+-/
+
+/-- **A packing is an LP lower bound**: because the coverage sets are pairwise disjoint, a
+primal-feasible `x` must spend total weight at least `|F|` — one unit on each disjoint set. -/
+theorem card_le_primalValue_of_pairwiseDisjoint {s : List α} (F : Finset (List α))
+    (hF : ∀ f ∈ F, f ∈ AttractorLP.factorUniverse s)
+    (hdisj : ∀ f ∈ F, ∀ g ∈ F, f ≠ g → Disjoint (coverageSet s f) (coverageSet s g))
+    {x : Fin s.length → ℚ} (hx : AttractorLP.PrimalFeasible s x) :
+    (F.card : ℚ) ≤ ∑ p, x p := by
+  classical
+  set U : Finset (Fin s.length) := F.biUnion (fun f => coverageSet s f) with hU
+  have hpd : Set.PairwiseDisjoint (↑F) (fun f => coverageSet s f) := by
+    intro f hf g hg hne
+    exact hdisj f (Finset.mem_coe.1 hf) g (Finset.mem_coe.1 hg) hne
+  -- the weight on the disjoint union is the sum of the weights on the pieces
+  have hsplit : ∑ p ∈ U, x p = ∑ f ∈ F, ∑ p ∈ coverageSet s f, x p := by
+    rw [hU, Finset.sum_biUnion hpd]
+  have hlow : (F.card : ℚ) ≤ ∑ f ∈ F, ∑ p ∈ coverageSet s f, x p := by
+    calc (F.card : ℚ) = ∑ _f ∈ F, (1 : ℚ) := by simp
+      _ ≤ ∑ f ∈ F, ∑ p ∈ coverageSet s f, x p :=
+          Finset.sum_le_sum fun f hf => hx.2 f (hF f hf)
+  calc (F.card : ℚ) ≤ ∑ f ∈ F, ∑ p ∈ coverageSet s f, x p := hlow
+    _ = ∑ p ∈ U, x p := hsplit.symm
+    _ ≤ ∑ p, x p :=
+        Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ U) fun p _ _ => hx.1 p
+
+/-- **`LP* ≤ γ`**, in certificate form: the indicator of a minimum attractor is primal feasible and
+has value `γ`, so the LP optimum is at most `γ`.  (An *arbitrary* feasible `x` can exceed `γ` —
+the all-ones vector does — so this is an existence statement, not a universal one.) -/
+theorem exists_primalValue_le_minAttractorSize (s : List α) :
+    ∃ x : Fin s.length → ℚ,
+      AttractorLP.PrimalFeasible s x ∧ ∑ p, x p ≤ (minAttractorSize s : ℚ) := by
+  classical
+  obtain ⟨Γ, hΓ, hcard⟩ := exists_attractor_card_eq_minAttractorSize s
+  set x : Fin s.length → ℚ := fun p => if p ∈ Γ then 1 else 0 with hxdef
+  have hnonneg : ∀ p, (0 : ℚ) ≤ x p := fun p => by
+    simp only [hxdef]; split_ifs <;> norm_num
+  have hcover : ∀ f ∈ AttractorLP.factorUniverse s, (1 : ℚ) ≤ ∑ p ∈ coverageSet s f, x p := by
+    intro f hf
+    obtain ⟨p, hp⟩ := (AttractorLP.isAttractor_iff_coverageSet Γ).1 hΓ f hf
+    obtain ⟨hpC, hpG⟩ := Finset.mem_inter.1 hp
+    have hsingle : x p ≤ ∑ q ∈ coverageSet s f, x q :=
+      Finset.single_le_sum (f := x) (fun q _ => hnonneg q) hpC
+    have : x p = 1 := by simp only [hxdef]; rw [if_pos hpG]
+    rw [this] at hsingle
+    exact hsingle
+  refine ⟨x, ⟨hnonneg, hcover⟩, ?_⟩
+  have hsum : ∑ p : Fin s.length, x p = (Γ.card : ℚ) := by
+    have h1 : (Finset.univ.filter (fun p : Fin s.length => p ∈ Γ)) = Γ := by
+      ext p; simp
+    rw [← Finset.sum_filter]
+    rw [h1, Finset.sum_const, nsmul_eq_mul, mul_one, Nat.cast_inj]
+  rw [hsum, hcard]
+
 end SortBounds.Projects.Packing

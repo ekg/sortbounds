@@ -156,7 +156,9 @@ the `make trust` audit (136 theorems, all on `propext`/`Classical.choice`/`Quot.
 | T4 | **`γ ≤ ⌈δ⌉ + 2` is FALSE**: `γ = 6`, `δ = 3` at `n = 32` | `Packing` | kills the last "δ plus a small constant" hope; proved with the **packing certificate** `γ ≥ F.card` for pairwise disjoint coverage sets — the lemma every bracket in `tools/attractor` rests on, now formal |
 | T5 | **`LP* ≥ δ`** for every fractional cover, hence `γ/LP* ≤ γ/δ` | `AttractorLP/DeltaBound.lean` | the LP gap is *not an independent quantity*: it is capped by the `δ`-gap. With `γ − ⌈δ⌉ ≤ 3` measured, the LP gap is forced toward `1` at scale, and the measured `1.36–1.40` band is unsurprising |
 
-T2–T5 are, as far as our surveys go, unstated in the literature: the `k`-attractor hierarchy is
+| T6 | **the certified bracket is a bracket for `LP*` too**: `|F| ≤ Σx` for a packing `F` and any feasible `x`, `δ ≤ Σx`, and `∃x` feasible with `Σx ≤ γ` | `Packing` + `AttractorLP/DeltaBound` | `max(δ, packing) ≤ LP* ≤ γ`: the interval the tooling reports is a valid bracket for the LP optimum as well, which is why the LP measurements are trustworthy certificates and not just heuristic upper bounds |
+
+T2–T6 are, as far as our surveys go, unstated in the literature: the `k`-attractor hierarchy is
 defined in KP18 but its ratios are not analysed, and no integrality gap for the attractor LP has
 been published.
 

@@ -141,6 +141,8 @@ open SortBounds
 #print axioms SortBounds.Projects.DeBruijn.isAttractorK_self_iff
 #print axioms SortBounds.Projects.DeBruijn.minAttractorKSize_anti
 #print axioms SortBounds.Projects.DeBruijn.gamma_ratio_ge_isDeBruijn
+#print axioms SortBounds.Projects.Packing.card_le_primalValue_of_pairwiseDisjoint
+#print axioms SortBounds.Projects.Packing.exists_primalValue_le_minAttractorSize
 #print axioms SortBounds.Projects.Packing.card_le_minAttractorSize_of_pairwiseDisjoint
 #print axioms SortBounds.Projects.Packing.s32_gamma
 #print axioms SortBounds.Projects.Packing.s32_delta

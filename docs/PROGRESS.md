@@ -297,6 +297,8 @@ Corollary `gamma_div_primal_le`: `γ/Σx ≤ γ/δ`.  So the LP gap **cannot exc
 | `s32_gamma_ge` / `s32_gamma` | `γ(s32) = 6`, with `s32 = bbbaaaabbabbaaabbaaaabbaabbaabaa` |
 | `s32_delta` | `δ(s32) = 3` |
 | `gamma_delta_add_two_false` | **`¬ ∀ s : List Bool, γ ≤ δ + 2`** |
+| `card_le_primalValue_of_pairwiseDisjoint` | a packing is also an **LP** lower bound: `|F| ≤ Σx` |
+| `exists_primalValue_le_minAttractorSize` | `LP* ≤ γ` (indicator of a minimum attractor is feasible) |
 
 Every closed bracket in `tools/attractor` rests on that packing lemma; it is now a theorem, not a
 Python routine.  `make trust`: 145 theorems.

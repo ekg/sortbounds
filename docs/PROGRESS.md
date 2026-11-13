@@ -230,8 +230,9 @@ Thue–Morse. It does not — there `δ > packing` and it is `⌈δ⌉` that clo
 packing bound wins on *incompressible* text, which is the opposite regime. The lane's
 README had it right; I misread the table.)*
 
-The open theoretical question, stated sharply: `γ/δ` can be `Θ(log n log log n)`, so any
-algorithm whose *lower bound* is only `δ` cannot beat a `log n` factor — is `O(log n)`
+The open theoretical question, stated sharply: `γ/δ = Θ(log(n/δ))` is achievable
+(KNP23 Thm III.3) — *not* the `Θ(log n log log n)` figure, which is `r/δ` (KK Thm 4.3) —
+so any algorithm whose lower bound is only `δ` cannot beat a `log n` factor — is `O(log n)`
 inherent for `γ`, or does the interval structure admit a constant-factor (or exact on
 restricted families) algorithm?  A failed constant-factor attempt is as informative as a
 success here, which is why the note is required to state falsifiable conjectures.

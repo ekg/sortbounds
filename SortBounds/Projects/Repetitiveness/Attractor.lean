@@ -222,4 +222,36 @@ example : (distinctFactors ababa 3).card ≤ 3 * ababaAttractor.card :=
 example : ¬ ((distinctFactors ababa 0).card ≤ 0 * ababaAttractor.card) := by
   decide
 
+/-! ### The rational substring complexity
+
+`substringComplexity` uses `ℕ` division, so the machine-checked statement is
+`floor(δ) ≤ |Γ|` — which is weaker than KNP's `δ ≤ γ` when `γ` is an integer between
+`floor(δ)` and `δ` (e.g. `δ = 3.5`, `γ = 3`).  The rational form is the same counting
+argument, so we state and prove it too. -/
+
+/-- KNP's `δ` without flooring: `max_k d_k / k` over `1 ≤ k ≤ n`. -/
+noncomputable def deltaQ (s : List α) : ℚ :=
+  if h : 1 ≤ s.length then
+    (Finset.Icc 1 s.length).sup'
+      ⟨1, Finset.mem_Icc.mpr ⟨le_rfl, h⟩⟩
+      (fun k => ((distinctFactors s k).card : ℚ) / (k : ℚ))
+  else 0
+
+/-- **`δ ≤ |Γ|` in the rational form** — the unfloored KNP inequality. -/
+theorem deltaQ_le_card_attractor {s : List α} {Γ : Finset (Fin s.length)}
+    (hΓ : IsAttractor s Γ) : deltaQ s ≤ (Γ.card : ℚ) := by
+  classical
+  unfold deltaQ
+  split_ifs with h
+  · apply Finset.sup'_le
+    intro k hk
+    obtain ⟨hk1, _⟩ := Finset.mem_Icc.mp hk
+    have hkpos : (0 : ℚ) < (k : ℚ) := by exact_mod_cast lt_of_lt_of_le Nat.zero_lt_one hk1
+    rw [div_le_iff₀ hkpos]
+    have hd := distinctFactors_card_le_mul_attractor (s := s) (Γ := Γ) hΓ k hk1
+    have hd' : ((distinctFactors s k).card : ℚ) ≤ (k : ℚ) * (Γ.card : ℚ) := by exact_mod_cast hd
+    rw [mul_comm] at hd'
+    exact hd'
+  · exact_mod_cast Nat.zero_le Γ.card
+
 end SortBounds.Projects.Repetitiveness

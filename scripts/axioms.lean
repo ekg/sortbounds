@@ -24,6 +24,7 @@ open SortBounds
 #print axioms SortBounds.Projects.Repetitiveness.substringComplexity_le_slp
 #print axioms SortBounds.Projects.Repetitiveness.substringComplexity_le_minAttractorSize
 #print axioms SortBounds.Projects.Repetitiveness.delta_le_gamma
+#print axioms SortBounds.Projects.Repetitiveness.deltaQ_le_card_attractor
 #print axioms SortBounds.Projects.Repetitiveness.checkAttractor_eq_true_iff
 #print axioms SortBounds.Projects.Repetitiveness.greedyAttractor_isAttractor
 #print axioms SortBounds.Projects.Repetitiveness.delta_le_greedyAttractor_card

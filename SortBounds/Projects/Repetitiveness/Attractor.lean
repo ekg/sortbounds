@@ -254,4 +254,11 @@ theorem deltaQ_le_card_attractor {s : List α} {Γ : Finset (Fin s.length)}
     exact hd'
   · exact_mod_cast Nat.zero_le Γ.card
 
+/-- **`δ ≤ γ` for the minimum attractor itself** (not merely for each attractor): every
+attractor has size `≥ deltaQ`, and some attractor attains `minAttractorSize`. -/
+theorem deltaQ_le_minAttractorSize (s : List α) : deltaQ s ≤ (minAttractorSize s : ℚ) := by
+  obtain ⟨Γ, hΓ, hcard⟩ := exists_attractor_card_eq_minAttractorSize s
+  rw [← hcard]
+  exact deltaQ_le_card_attractor hΓ
+
 end SortBounds.Projects.Repetitiveness

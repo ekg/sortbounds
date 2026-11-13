@@ -236,7 +236,23 @@ attained by exactly four texts (verified by scanning all 8192 texts of length 13
 | `1001010010001` | 13 | 3 | 3, 8, 9 | 11/5 | 15/11 | (same shape) |
 
 Each is a one-symbol extension of an `n = 12` `4/3` witness (`001010010001` → `1001010010001`),
-so the two maxima are the same construction at consecutive lengths, not two phenomena.  The LP
+so the two maxima are the same construction at consecutive lengths, not two phenomena.  **This is now a theorem, not only a computation.**  `SortBounds/Projects/AttractorLP/`
+(`Gap.lean` + `Witness.lean`, kernel-checked, no `sorry`) proves, for `s = 0110101101110`:
+
+```lean
+theorem weak_duality (hx : PrimalFeasible s x) (hy : DualFeasible s y) :
+    (∑ f ∈ factorUniverse s, y f) ≤ ∑ p, x p            -- elementary, no LP theory
+theorem lp13_gamma : minAttractorSize lp13 = 3
+theorem lp13_primal : ∃ x, PrimalFeasible lp13 x ∧ ∑ p, x p = 11 / 5
+theorem lp13_dual   : ∃ y, DualFeasible lp13 y ∧ ∑ f ∈ factorUniverse lp13, y f = 11 / 5
+theorem lp13_gap : minAttractorSize lp13 = 3 ∧ (11/5 : ℚ) < 3 ∧ (3:ℚ)/(11/5) = 15/11
+```
+
+so the two-sided equality `LP* = 11/5` needs no simplex: the exhibited pair has equal value and
+weak duality closes both directions.  What remains a computation (not a theorem) is that `15/11`
+is the maximum over `n ≤ 16`, and what remains open is whether it is bounded at all.
+
+The LP
 for `0110101101110` is `x = (3:1/5, 4:1/5, 5:3/5, 8:1/5, 9:2/5, 10:3/5)`, `sum x = 11/5`, and the
 pair certificate (both sides feasible, `sum x = sum y = 11/5`) closes; the primal route and the
 `n(n+1)/2`-element factor universe both agree (`gamma = 3`, `LP* = 11/5`).  Note `delta = 2` in all eight witnesses,

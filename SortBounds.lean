@@ -20,6 +20,8 @@ import SortBounds.Projects.Repetitiveness.Certify
 import SortBounds.Projects.Repetitiveness.Greedy
 import SortBounds.Projects.DeBruijn.DeBruijn
 import SortBounds.Projects.DeBruijn.AttractorK
+import SortBounds.Projects.AttractorLP.Gap
+import SortBounds.Projects.AttractorLP.Witness
 import SortBounds.Projects.Algorithms.Measure
 import SortBounds.Instances.Radix
 import SortBounds.Instances.MergeSort

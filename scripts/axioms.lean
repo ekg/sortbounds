@@ -139,6 +139,11 @@ open SortBounds
 #print axioms SortBounds.Projects.DeBruijn.isAttractorK_self_iff
 #print axioms SortBounds.Projects.DeBruijn.minAttractorKSize_anti
 #print axioms SortBounds.Projects.DeBruijn.gamma_ratio_ge_isDeBruijn
+#print axioms SortBounds.Projects.AttractorLP.weak_duality
+#print axioms SortBounds.Projects.AttractorLP.lp13_gamma
+#print axioms SortBounds.Projects.AttractorLP.lp13_primal
+#print axioms SortBounds.Projects.AttractorLP.lp13_dual
+#print axioms SortBounds.Projects.AttractorLP.lp13_gap
 #print axioms SortBounds.Projects.DeBruijn.isDeBruijn_two
 #print axioms SortBounds.Projects.DeBruijn.isDeBruijn_three
 #print axioms SortBounds.Projects.SAIS.verify_linear_time

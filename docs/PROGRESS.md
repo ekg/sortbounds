@@ -254,6 +254,15 @@ a swarmed lane with its own independent review:
 
 `docs/research/gamma-vs-gamma2.md`.
 
+### A theorem: the attractor LP is not integral (2026-11-13)
+
+| `γ(LP₁₃) = 3`, `LP* = 11/5`, `γ/LP* = 15/11` | `s = 0110101101110`, kernel-checked |
+| --- | --- |
+| `SortBounds/Projects/AttractorLP/Gap.lean` | `coverageSet`, `factorUniverse`, `PrimalFeasible`, `DualFeasible`, `weak_duality` (elementary, no LP theory) |
+| `SortBounds/Projects/AttractorLP/Witness.lean` | `lp13_gamma`, `lp13_primal`, `lp13_dual`, `lp13_gap` |
+| why it matters | the LP route to an approximate `γ` is *not* an integrality argument: the relaxation genuinely falls below the integer optimum, so any `O(1)`-ratio algorithm must round, and the rounding question is now the only question |
+| what is *not* claimed | that `15/11` is the supremum (that is the computation to `n ≤ 16`), nor that the gap is bounded |
+
 ### Answers (2026-11-13)
 
 | lane | verdict |

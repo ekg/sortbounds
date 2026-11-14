@@ -49,7 +49,7 @@ Consequences, which replace C1/C1′ and C2:
 
 | | |
 | --- | --- |
-| **evidence** | 11 values, `n = 8 … 8192`, every bracket closed (packing LB = attractor UB) |
+| **evidence** | 12 values, `n = 8 … 16384` (adds `j = 14`: `γ = 8`), every bracket closed (packing LB = attractor UB) |
 | **why it is plausible** | pairs of consecutive powers of two interleave; each scale contributes one position, and the parity of `log₂ n` explains the ceiling |
 | **decisive experiment** | one more scale (`n = 16384, 32768`) to confirm `9`, or a proof: an explicit packing of `⌈j/2⌉+1` disjoint coverage sets (lower bound) and an explicit attractor of that size (upper bound) |
 | **status** | **EVIDENCE**, and the natural Lean target — both directions are constructive and scale-free |

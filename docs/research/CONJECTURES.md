@@ -19,6 +19,13 @@ family with `δ = 2` for every length, computed with closed brackets:
 | `γ` | 3 | 3 | 4 | 4 | 5 | 5 | 6 | 6 | 7 | 7 | 8 |
 | `γ/δ` | 1.5 | 1.5 | 2.0 | 2.0 | 2.5 | 2.5 | 3.0 | 3.0 | **3.5** | 3.5 | **4.0** |
 
+**This is also published, not merely counterexampled.**  KNP's *IEEE TIT* Thm III.4 (absent from
+arXiv v3) covers `σ = 2` explicitly: for `9σ ≤ Δ ≤ n log σ/(2 log n)` there is `S` with
+`δ(S) ≤ Δ` and `γ(S) = Ω(Δ log(n log σ/(Δ log n)))`.  So `γ/δ → ∞` on binary text is a theorem for
+`δ ≥ 18`; see `binary-separation.md` (quote recovered from a killed lane, **needs first-hand
+re-verification**).  Our `T_j` adds the `δ = 2` case, below that theorem's threshold, with an exact
+formula.
+
 for `T_n` = the binary string with `1` exactly at positions `2^0, 2^1, 2^2, …` (i.e.
 `t = {t_i = 1 iff i+1 is a power of two}`).  `δ(T_n) = 2` for every `n`, while
 `γ(T_n) = ⌈log₂ n / 2⌉ + 1` on all eleven computed lengths (`n = 2^3 … 2^13`), so

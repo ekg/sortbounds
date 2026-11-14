@@ -138,7 +138,10 @@ independently (`tools/gap/check.py`: 142 347 checks; `tools/attractor/check.py`:
    `hardness-related-binary.md`, including one **UNVERIFIED** 2026 preprint claiming binary SLP
    hardness).  Surviving necessary condition for any reduction: `γ(T_G)` must depend only on the
    isomorphism class of `G` (`sigma2-gadget.md`).
-2. **Is `γ/δ` bounded on binary text?**  **No — answered (as a counterexample).**  The
+2. **Is `γ/δ` bounded on binary text?**  **No — and it is answered in the literature**: KNP
+   *IEEE TIT* Thm III.4 covers `σ ≥ 2` explicitly, giving `γ = Ω(Δ log(n log σ/(Δ log n)))` with
+   `δ ≤ Δ` for `9σ ≤ Δ ≤ n log σ/(2 log n)` (`binary-separation.md`; the quote is second-hand and
+   needs checking against the page image).  Our own explicit counterexample:  The
    powers-of-two family `T_n` (a `1` at positions `2^0, 2^1, …`) has `δ = 2` at every length and
    `γ = ⌈log₂ n/2⌉ + 1`, i.e. `γ/δ → ∞` on binary text, matching KNP's general bound.  Both ends of
    every bracket are certified (`n = 8 … 8192`).  The next question is not whether the ratio grows

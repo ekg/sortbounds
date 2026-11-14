@@ -71,13 +71,18 @@ plus weak duality (`Σy ≤ Σx`, elementary — swap the two sums and use the t
 **Consequence.** An `O(1)`-ratio algorithm for `γ` cannot rest on the LP being near-integral: the
 relaxation genuinely falls below the integer optimum, so rounding is the remaining problem.
 
-### T4 `γ ≤ ⌈δ⌉ + 2` is false, and the packing certificate is formal
+### T4 `γ ≤ ⌈δ⌉ + 2` is false (and `+3` too), and the packing certificate is formal
 
 `Packing.card_le_minAttractorSize_of_pairwiseDisjoint`, `s32_gamma`, `s32_delta`,
 `gamma_delta_add_two_false`
 
-For `s32 = bbbaaaabbabbaaabbaaaabbaabbaabaa` (`n = 32`): `γ = 6`, `δ = 3`.  Six factors with
-pairwise disjoint coverage sets give `γ ≥ 6`; a 6-position attractor gives `γ ≤ 6`.
+For `s32 = bbbaaaabbabbaaabbaaaabbaabbaabaa` (`n = 32`): `γ = 6`, `δ = 3`, so `γ ≤ δ + 2` fails.
+For `s48 = 010011011100110000001100000000000011000001100001` (`n = 48`): `γ = 7`, `δ = 3`, so
+`γ ≤ δ + 3` fails as well — the seven factors `010, 01101, 11001, 10000001, 10000000,
+0000011000001, 100001` **partition** the 48 positions into disjoint coverage sets.
+
+Six (resp. seven) factors with pairwise disjoint coverage sets give the lower bound; a matching
+attractor gives the upper bound.
 
 The packing lemma is general: if the coverage sets of a factor set `F` are pairwise disjoint then
 `|F| ≤ γ`.  That is the certificate every closed bracket in `tools/attractor` rests on — it is now

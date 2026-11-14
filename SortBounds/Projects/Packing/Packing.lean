@@ -341,15 +341,16 @@ end SortBounds.Projects.Packing
 `README2.md`'s upgrade of the refutation.  `s48` has a **seven**-factor packing whose coverage
 sets *partition* the 48 positions (so `γ ≥ 7`), an attractor of size 7 (so `γ ≤ 7`), and
 `δ = 3` — hence `γ = δ + 4` and `γ ≤ ⌈δ⌉ + 3` fails.  The proofs are the `s32` proofs with the
-data changed; only the cost of the two large checks changed (see the timings in
-`README2.md`'s log). -/
+data changed; only the cost of the row check changed (timings in `README2.md`'s log). -/
 
 namespace SortBounds.Projects.Packing
 
 open SortBounds.Projects.Repetitiveness SortBounds.Projects.AttractorLP
 
--- `s48_covers` decides `coverageSet` for all 894 factors of a length-48 text: ~5× the work of
--- `s32_covers`, which needed 200 000 heartbeats exceeded (~95 s).  Measured below.
+-- `s48_covers` decides `coverageSet` for all 894 factors of a length-48 text: ~5× the reduction
+-- of `s32_covers` above, measured (with `set_option profiler true`) at 306 s of tactic execution
+-- plus 239 s of kernel type checking.  The default 200 000 heartbeat budget is far too small;
+-- 8 000 000 suffices.  Peak RSS for the file is 37 GB — see the module header.
 set_option maxHeartbeats 8000000
 
 /-- The witness text of `README2.md`, written `0/1` there:

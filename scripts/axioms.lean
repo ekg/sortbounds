@@ -144,6 +144,9 @@ open SortBounds
 #print axioms SortBounds.Projects.Packing.card_le_primalValue_of_pairwiseDisjoint
 #print axioms SortBounds.Projects.Packing.exists_primalValue_le_minAttractorSize
 #print axioms SortBounds.Projects.Packing.card_le_minAttractorSize_of_pairwiseDisjoint
+#print axioms SortBounds.Projects.Packing.s48_gamma
+#print axioms SortBounds.Projects.Packing.s48_delta
+#print axioms SortBounds.Projects.Packing.gamma_delta_add_three_false
 #print axioms SortBounds.Projects.Packing.s32_gamma
 #print axioms SortBounds.Projects.Packing.s32_delta
 #print axioms SortBounds.Projects.Packing.gamma_delta_add_two_false

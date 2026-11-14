@@ -36,6 +36,11 @@ One directory per lane, one namespace per lane, one writer per directory
 
 * Only the integrator runs `lake build` and `git`. Lane workers use
   `lake env lean <file>` (no oleans written, no build races).
+* **A lane must write its deliverable to disk as it goes.**  On 2026-11-14 three async
+  runners were SIGTERM'd in one sweep (`stale-run reconciliation`, no OOM, ~11 h wall time).
+  The lane that had already written a compiling file was salvaged intact; the two that kept
+  their work in tool output lost everything.  Save after every theorem / every table row.
+  `options.timeoutMs` does not protect a run; only a written file does.
 * Every lane gets a **fresh-context reviewer** as its second stage. Reviewers
   exist because they have caught real errors the kernel cannot: a false prose
   claim about `Ω(n² log n)` and a vacuity gap in a model's semantics.

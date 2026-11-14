@@ -71,3 +71,16 @@ Module names follow the path: `SortBounds/Projects/SN/Table.lean` is
 | A research question with a target theorem | `SortBounds/Projects/<Name>/` |
 | Status, ownership, blockers | `docs/PROGRESS.md` |
 | Claims about other people's work | `docs/PRIOR-ART.md` |
+
+## Harness failure modes seen in practice
+
+* **All async runners SIGTERM'd at the same instant.**  2026-11-14 04:23:54: three lanes
+  (`f57d713a` Packing/s48, `460b16d4` KNP-literature, `682924fc` PowersOfTwo) died simultaneously
+  with `signal SIGTERM`, marked "stale-run reconciliation".  No OOM (`dmesg`: 0 kills, 56 GB free),
+  no compiler error — an external kill of the runner processes after ~11 h of wall time.
+  **Lesson: a lane must write its deliverable to disk as it goes.**  `f57d713a` had already
+  written a complete, compiling `s48` block and was salvaged by the integrator; the other two had
+  written nothing and lost everything.  `options.timeoutMs` did not prevent this.
+* **30-minute attention notices are not failures.**  A lane blocked in `bash` for 240 s is usually
+  a `decide`, a `lean` build, or a `sleep` poll.  Polling with `sleep` burns the budget without
+  producing anything: prefer writing intermediate results to a file and reading them back.
